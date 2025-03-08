@@ -11,6 +11,7 @@ access_token_secret = "hJfLRxRehfRDiT6Q88w48PX1s8FlHG22UaJj5P8l8JDEB"
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
+print("Twitter API setup complete")
 
 # Search term
 individual_name = "Sheikh Tamim ibn Hamad Al Thani"
@@ -32,9 +33,11 @@ for tweet in tweets:
     })
 
 tweet_df = pd.DataFrame(tweet_data)
+print(f"Fetched {len(tweet_data)} tweets")
 
 # NewsAPI setup (replace with your own API key)
 newsapi = NewsApiClient(api_key="af50310533d54cd59dd04feef26400cf")
+print("NewsAPI setup complete")
 
 # Fetch news articles from UK and US sources
 articles = newsapi.get_everything(
@@ -58,6 +61,7 @@ for article in articles["articles"]:
     })
 
 article_df = pd.DataFrame(article_data)
+print(f"Fetched {len(article_data)} news articles")
 
 # Save to CSV
 tweet_df.to_csv("tweets.csv", index=False)
