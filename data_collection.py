@@ -34,7 +34,7 @@ for tweet in tweets:
 tweet_df = pd.DataFrame(tweet_data)
 
 # NewsAPI setup (replace with your own API key)
-newsapi = NewsApiClient(api_key="your_api_key")
+newsapi = NewsApiClient(api_key="af50310533d54cd59dd04feef26400cf")
 
 # Fetch news articles from UK and US sources
 articles = newsapi.get_everything(
