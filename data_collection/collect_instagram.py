@@ -81,4 +81,4 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     for query in query_variations:
-        collect_instagram_data(query=query, output_file=f"instagram_data_{query.replace(' ', '_')}.csv")
+        collect_instagram_data(query=query, output_file=f"csv_files/instagram_data_{query.replace(' ', '_')}.csv")

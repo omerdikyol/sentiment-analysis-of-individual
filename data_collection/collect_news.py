@@ -13,7 +13,7 @@ def collect_news_data(output_file="news_data.csv"):
 
     newsapi = NewsApiClient(api_key=api_key)
 
-    # UK and US news sources
+    # UK and US news sources (including TV broadcasters)
     uk_sources = [
         "bbc.co.uk", "theguardian.com", "telegraph.co.uk", "independent.co.uk", "dailymail.co.uk",
         "thetimes.co.uk", "ft.com", "standard.co.uk", "mirror.co.uk", "express.co.uk",
@@ -34,15 +34,19 @@ def collect_news_data(output_file="news_data.csv"):
     ]
     all_sources = ",".join(uk_sources + us_sources)
 
-    # Calculate 29 days ago
-    today = datetime.now()
-    days_ago_29 = today - timedelta(days=28)
-    from_date = days_ago_29.strftime("%Y-%m-%d")
+    # TV-specific domains
+    tv_domains = [
+        "bbc.co.uk", "sky.com", "itv.com", "channel4.com",  # UK TV
+        "cnn.com", "abcnews.go.com", "nbcnews.com", "cbsnews.com", "msnbc.com", "foxnews.com", "pbs.org"  # US TV
+    ]
 
-    # Initialize an empty DataFrame for all results
+    # Calculate 28 days ago
+    today = datetime.now()
+    days_ago_28 = today - timedelta(days=28)
+    from_date = days_ago_28.strftime("%Y-%m-%d")
+
     all_article_data = []
 
-    # Run for each query variation separately
     for query in query_variations:
         try:
             print(f"\nFetching articles for query: '{query}' from {len(uk_sources)} UK and {len(us_sources)} US sources...")
@@ -51,7 +55,7 @@ def collect_news_data(output_file="news_data.csv"):
                 q=query,
                 language="en",
                 sort_by="publishedAt",
-                page_size=100,  # Max per query
+                page_size=100,
                 domains=all_sources,
                 from_param=from_date
             )
@@ -70,8 +74,9 @@ def collect_news_data(output_file="news_data.csv"):
             for article in articles:
                 domain = article["url"].split("/")[2].lower()
                 country = "uk" if any(uk in domain for uk in uk_sources) else "us"
+                source_type = "Television" if domain in tv_domains else "News"
                 all_article_data.append({
-                    "source": "News",
+                    "source": source_type,
                     "platform": article["source"]["name"],
                     "type": "post",
                     "post_id": article["url"].split("/")[-1],
@@ -97,13 +102,21 @@ def collect_news_data(output_file="news_data.csv"):
             except pd.errors.EmptyDataError:
                 print(f"Warning: The file '{output_file}' is empty. Creating a new file.")
         df.to_csv(output_file, index=False)
-        print(f"\nCollected {len(all_article_data)} total articles from UK/US news sources across all queries. Saved to '{output_file}'.")
+        
+        # Count TV vs News articles
+        tv_count = len(df[df["source"] == "Television"])
+        news_count = len(df[df["source"] == "News"])
+        print(f"\nCollected {len(all_article_data)} total articles from UK/US sources across all queries.")
+        print(f" - Television articles: {tv_count}")
+        print(f" - Newspaper articles: {news_count}")
+        print(f"Saved to '{output_file}'.")
     else:
         print("\nNo articles collected across all queries. Check API key, query relevance, or source coverage.")
-        df = pd.DataFrame()
+        df = pd.DataFrame(columns=["source", "platform", "type", "post_id", "date", "text", "retweets", "likes", "user_location", "country", "comments"])
         df.to_csv(output_file, index=False)
+        print(f"Created empty '{output_file}' with headers.")
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%Y%m%d")
-    collect_news_data(output_file=f"news_data_{today}.csv")
+    collect_news_data(output_file=f"csv_files/news_data_{today}.csv")
