@@ -4,6 +4,8 @@ import os
 import glob
 from datetime import datetime
 from dateutil import parser
+import re
+from difflib import SequenceMatcher
 
 # Define model info
 MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment"
@@ -35,6 +37,33 @@ def get_sentiment_hf(text):
     result = sentiment_pipeline(str(text)[:280])[0]
     label_map = {"LABEL_0": "negative", "LABEL_1": "neutral", "LABEL_2": "positive"}
     return label_map[result["label"]], result["score"]
+
+# Text cleaning function for better duplicate detection
+def normalize_text(text):
+    if pd.isna(text) or not isinstance(text, str):
+        return ""
+    # Convert to lowercase
+    text = text.lower()
+    # Remove extra whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    # Remove URLs
+    text = re.sub(r'https?://\S+', '', text)
+    # Remove special characters but keep basic punctuation
+    text = re.sub(r'[^\w\s.,?!-]', '', text)
+    return text
+
+# Function to check if two texts are similar
+def is_similar_text(text1, text2, threshold=0.85):
+    if pd.isna(text1) or pd.isna(text2):
+        return False
+    
+    # For very short texts, require exact match
+    if len(text1) < 10 or len(text2) < 10:
+        return text1 == text2
+    
+    # For longer texts, use sequence matcher
+    similarity = SequenceMatcher(None, text1, text2).ratio()
+    return similarity >= threshold
 
 # Define the columns to keep
 columns_to_keep = ["source", "platform", "type", "date", "text", "url", "published_at"]
@@ -92,6 +121,56 @@ if not dataframes:
 
 # Combine posts
 combined_df = pd.concat(dataframes, ignore_index=True)
+
+print(f"Total records before duplicate removal: {len(combined_df)}")
+
+# Create normalized text column for duplicate detection
+combined_df['normalized_text'] = combined_df['text'].apply(normalize_text)
+combined_df['normalized_url'] = combined_df['url'].apply(normalize_text)
+
+# First pass: Remove exact duplicates
+combined_df = combined_df.drop_duplicates(subset=['normalized_text', 'normalized_url'])
+
+print(f"Records after removing exact duplicates: {len(combined_df)}")
+
+# Second pass: Remove similar content (more computationally intensive)
+# Create a copy of the dataframe to iterate through
+df_copy = combined_df.copy()
+indices_to_drop = []
+
+# Process in chunks to avoid memory issues with large datasets
+chunk_size = 10000
+for i in range(0, len(df_copy), chunk_size):
+    chunk = df_copy.iloc[i:i+chunk_size]
+    
+    for idx1, row1 in chunk.iterrows():
+        # Skip if already marked for removal
+        if idx1 in indices_to_drop:
+            continue
+            
+        # Compare with all remaining rows
+        for idx2, row2 in df_copy.iloc[idx1+1:].iterrows():
+            # Skip if already marked for removal
+            if idx2 in indices_to_drop:
+                continue
+                
+            # If the sources and dates are the same or similar
+            if row1['source'] == row2['source']:
+                # Check for text similarity
+                if is_similar_text(row1['normalized_text'], row2['normalized_text']):
+                    # Keep the row with more information (longer text)
+                    if len(str(row1['text'])) < len(str(row2['text'])):
+                        indices_to_drop.append(idx1)
+                    else:
+                        indices_to_drop.append(idx2)
+                    break
+
+# Remove similar duplicates
+combined_df = combined_df.drop(indices_to_drop)
+print(f"Records after removing similar duplicates: {len(combined_df)}")
+
+# Drop the temporary columns used for deduplication
+combined_df = combined_df.drop(columns=['normalized_text', 'normalized_url'])
 
 # Split comments into separate rows if "comments" column exists
 comment_rows = []
@@ -157,6 +236,13 @@ except Exception as e:
 # Save with date and time
 current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 output_filename = f"processed/processed_data_{current_time}.csv"
+dashboard_filename = "sentiment-dashboard/public/processed_data.csv"
 os.makedirs("processed", exist_ok=True)  # Ensure directory exists
+
+# Save to processing directory with timestamp
 full_df.to_csv(output_filename, index=False)
+# Also save directly to dashboard folder for the web app
+full_df.to_csv(dashboard_filename, index=False)
+
 print(f"Data processing complete. Processed {len(full_df)} records. Saved to '{output_filename}'.")
+print(f"Data also saved to dashboard location: '{dashboard_filename}'")
