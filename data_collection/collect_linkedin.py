@@ -76,4 +76,4 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     for query in query_variations:
-        collect_linkedin_data(query=query, output_file=f"linkedin_data_{query.replace(' ', '_')}.csv")
+        collect_linkedin_data(query=query, output_file=f"csv_files/linkedin_data_{query.replace(' ', '_')}.csv")
