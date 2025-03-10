@@ -9,6 +9,7 @@ import re
 from difflib import SequenceMatcher
 from pathlib import Path
 import logging
+import unicodedata
 
 # Configure logging
 logging.basicConfig(
@@ -95,6 +96,213 @@ class DataProcessor:
         except Exception as e:
             logger.warning(f"Could not parse date '{date_str}': {str(e)}")
             return None
+
+    def detect_country(self, row):
+        """
+        Detect country information based on available data.
+        Supported countries: US, UK, Qatar
+        Uses a scoring system to determine the most likely country.
+        """
+        # If country already exists and is valid, don't overwrite it
+        if not pd.isna(row.get('country')) and row['country'] not in ['none', 'unknown', '']:
+            return row['country'].lower()
+        
+        # Initialize text for analysis
+        text = str(row.get('text', '')).lower() if not pd.isna(row.get('text')) else ''
+        platform = str(row.get('platform', '')).lower() if not pd.isna(row.get('platform')) else ''
+        source = str(row.get('source', '')).lower() if not pd.isna(row.get('source')) else ''
+        user_location = str(row.get('user_location', '')).lower() if not pd.isna(row.get('user_location')) else ''
+        user_name = str(row.get('user_name', '')).lower() if not pd.isna(row.get('user_name')) else ''
+        user_handle = str(row.get('user_handle', '')).lower() if not pd.isna(row.get('user_handle')) else ''
+        
+        # Initialize country scores
+        country_scores = {'US': 0, 'UK': 0, 'Qatar': 0}
+        
+        # Helper function to detect language patterns
+        def detect_language_patterns(text):
+            # American English patterns
+            us_patterns = ['color', 'center', 'favorite', 'analyze', 'organize', 'defense', 'license', 'traveling']
+            # British English patterns
+            uk_patterns = ['colour', 'centre', 'favourite', 'analyse', 'organise', 'defence', 'licence', 'travelling']
+            # Arabic transliteration patterns
+            qatar_patterns = ['al-', 'bin ', 'ibn ', 'abdul', 'sheikh', 'sharia', 'majlis', 'emir']
+            
+            us_count = sum(1 for pattern in us_patterns if pattern in text)
+            uk_count = sum(1 for pattern in uk_patterns if pattern in text)
+            qatar_count = sum(1 for pattern in qatar_patterns if pattern in text)
+            
+            return {'US': us_count, 'UK': uk_count, 'Qatar': qatar_count}
+        
+        # Helper function to detect Arabic script
+        def contains_arabic(text):
+            arabic_ranges = [
+                (0x0600, 0x06FF),  # Arabic
+                (0x0750, 0x077F),  # Arabic Supplement
+                (0x08A0, 0x08FF),  # Arabic Extended-A
+                (0xFB50, 0xFDFF),  # Arabic Presentation Forms-A
+                (0xFE70, 0xFEFF),  # Arabic Presentation Forms-B
+            ]
+            
+            for char in text:
+                code_point = ord(char)
+                if any(start <= code_point <= end for start, end in arabic_ranges):
+                    return True
+            return False
+        
+        # Check for social media platforms
+        if source.lower() in ['x', 'twitter', 'facebook', 'instagram', 'tiktok'] or platform.lower() in ['x', 'twitter', 'facebook', 'instagram', 'tiktok']:
+            # Check user_location
+            if user_location:
+                if any(loc in user_location for loc in ['usa', 'united states', 'america', 'us ', 'u.s', 'u.s.a']):
+                    country_scores['US'] += 3
+                elif any(loc in user_location for loc in ['uk', 'united kingdom', 'england', 'scotland', 'wales', 'britain', 'great britain']):
+                    country_scores['UK'] += 3
+                elif any(loc in user_location for loc in ['qatar', 'doha']):
+                    country_scores['Qatar'] += 3
+                
+                # Check for cities/states
+                us_locations = ['new york', 'california', 'texas', 'florida', 'chicago', 'los angeles', 'boston', 'washington', 'seattle', 'atlanta']
+                uk_locations = ['london', 'manchester', 'liverpool', 'birmingham', 'leeds', 'glasgow', 'edinburgh', 'bristol', 'cardiff', 'belfast']
+                qatar_locations = ['doha', 'al wakrah', 'al rayyan', 'lusail', 'al khor', 'dukhan', 'mesaieed', 'al shamal']
+                
+                for loc in us_locations:
+                    if loc in user_location:
+                        country_scores['US'] += 2
+                for loc in uk_locations:
+                    if loc in user_location:
+                        country_scores['UK'] += 2
+                for loc in qatar_locations:
+                    if loc in user_location:
+                        country_scores['Qatar'] += 2
+            
+            # Check username and handle
+            for name in [user_name, user_handle]:
+                if name:
+                    # Check for country codes
+                    if re.search(r'\b(us|usa|america)\b', name) or name.endswith('_us') or name.endswith('_usa'):
+                        country_scores['US'] += 2
+                    elif re.search(r'\b(uk|gb|britain)\b', name) or name.endswith('_uk') or name.endswith('_gb'):
+                        country_scores['UK'] += 2
+                    elif re.search(r'\b(qa|qatar)\b', name) or name.endswith('_qa') or name.endswith('_qatar'):
+                        country_scores['Qatar'] += 2
+                    
+                    # Check for city/state names
+                    if any(city in name for city in ['nyc', 'newyork', 'chicago', 'la', 'losangeles', 'boston', 'texas', 'florida', 'cali', 'california']):
+                        country_scores['US'] += 1
+                    elif any(city in name for city in ['london', 'manchester', 'liverpool', 'birmingham', 'leeds', 'glasgow', 'edinburgh']):
+                        country_scores['UK'] += 1
+                    elif any(city in name for city in ['doha', 'alwakrah', 'rayyan', 'lusail']):
+                        country_scores['Qatar'] += 1
+                    
+                    # Check for common name patterns
+                    if name.startswith('american') or 'american' in name:
+                        country_scores['US'] += 1
+                    elif name.startswith('british') or 'british' in name:
+                        country_scores['UK'] += 1
+                    elif name.startswith('qatari') or 'qatari' in name:
+                        country_scores['Qatar'] += 1
+                    
+                    # Check for Arabic names (common in Qatar)
+                    if any(pattern in name for pattern in ['al-', 'bin-', 'ibn-', 'abdul', 'sheikh']):
+                        country_scores['Qatar'] += 2
+                    
+                    # Check for Arabic script
+                    if contains_arabic(name):
+                        country_scores['Qatar'] += 3
+            
+            # Check text content for country mentions
+            us_terms = ['america', 'american', 'washington', 'new york', 'california', 'texas', 'usa', 'united states', 'white house', 'congress', 'nfl', 'nba']
+            uk_terms = ['britain', 'british', 'london', 'manchester', 'liverpool', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'bbc', 'nhs', 'parliament']
+            qatar_terms = ['qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian', 'sharia', 'islamic']
+            
+            for term in us_terms:
+                if term in text:
+                    country_scores['US'] += 1
+            for term in uk_terms:
+                if term in text:
+                    country_scores['UK'] += 1
+            for term in qatar_terms:
+                if term in text:
+                    country_scores['Qatar'] += 1
+            
+            # Check for language patterns
+            language_scores = detect_language_patterns(text)
+            for country, score in language_scores.items():
+                country_scores[country] += score
+            
+            # Check for Arabic script in text (strong indicator for Qatar)
+            if contains_arabic(text):
+                country_scores['Qatar'] += 3
+        
+        # Check for news sources
+        elif source.lower() == 'news' or platform.lower() in ['cnn', 'bbc', 'fox', 'nbc', 'abc', 'cbs', 'newsweek', 'huffpost', 'pbs']:
+            # Check source domain/name (highest priority for news)
+            if platform:
+                us_sources = ['cnn', 'fox', 'nbc', 'abc', 'cbs', 'usa today', 'new york times', 'washington post', 'huffpost', 'newsweek', 'politico', 'bloomberg', 'cnbc']
+                uk_sources = ['bbc', 'guardian', 'telegraph', 'independent', 'daily mail', 'mirror', 'sun', 'times', 'economist', 'financial times', 'sky news']
+                qatar_sources = ['al jazeera', 'gulf times', 'peninsula', 'qatar tribune', 'diwan.gov.qa', 'gco.gov.qa', 'qatar news agency', 'qatar day', 'gulf news']
+                
+                for src in us_sources:
+                    if src in platform.lower():
+                        country_scores['US'] += 4
+                for src in uk_sources:
+                    if src in platform.lower():
+                        country_scores['UK'] += 4
+                for src in qatar_sources:
+                    if src in platform.lower():
+                        country_scores['Qatar'] += 4
+            
+            # Check user_location (domain) for news sources
+            if user_location:
+                if '.com' in user_location or '.org' in user_location:
+                    us_domains = ['cnn', 'foxnews', 'nbc', 'abc', 'cbs', 'usatoday', 'nytimes', 'washingtonpost', 'wsj', 'latimes']
+                    uk_domains = ['bbc', 'guardian', 'telegraph', 'independent', 'dailymail', 'ft.com', 'economist', 'reuters']
+                    qatar_domains = ['aljazeera', 'gulf-times', 'thepeninsulaqatar', 'qatar', 'qna.org.qa', 'dohanews']
+                    
+                    for domain in us_domains:
+                        if domain in user_location:
+                            country_scores['US'] += 3
+                    for domain in uk_domains:
+                        if domain in user_location:
+                            country_scores['UK'] += 3
+                    for domain in qatar_domains:
+                        if domain in user_location:
+                            country_scores['Qatar'] += 3
+            
+            # Check text content for country mentions
+            us_terms = ['america', 'american', 'washington', 'new york', 'california', 'texas', 'usa', 'united states', 'white house', 'congress']
+            uk_terms = ['britain', 'british', 'london', 'manchester', 'liverpool', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'parliament']
+            qatar_terms = ['qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian']
+            
+            for term in us_terms:
+                if term in text:
+                    country_scores['US'] += 1
+            for term in uk_terms:
+                if term in text:
+                    country_scores['UK'] += 1
+            for term in qatar_terms:
+                if term in text:
+                    country_scores['Qatar'] += 1
+            
+            # Check for language patterns
+            language_scores = detect_language_patterns(text)
+            for country, score in language_scores.items():
+                country_scores[country] += score
+            
+            # Check for Arabic script in text (strong indicator for Qatar)
+            if contains_arabic(text):
+                country_scores['Qatar'] += 3
+        
+        # Determine the country with the highest score
+        max_score = max(country_scores.values())
+        if max_score > 0:
+            # Get the country with the highest score
+            for country, score in country_scores.items():
+                if score == max_score:
+                    return country.lower()
+        
+        # Default to unknown if no country could be determined
+        return 'unknown'
 
     def load_raw_data(self):
         """Load all raw data files"""
@@ -185,6 +393,11 @@ class DataProcessor:
 
         df = df.drop(indices_to_drop)
         logger.info(f"Records after removing similar content: {len(df)}")
+
+        # Detect country information
+        logger.info("Detecting country information...")
+        df['country'] = df.apply(self.detect_country, axis=1)
+        logger.info(f"Country distribution: {df['country'].value_counts().to_dict()}")
 
         # Apply sentiment analysis
         logger.info("Applying sentiment analysis...")
