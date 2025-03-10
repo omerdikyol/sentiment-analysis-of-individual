@@ -51,6 +51,9 @@ class DataService {
     
     console.log('After filtering, remaining records:', filteredData.length);
 
+    // Add country data to entries based on keywords
+    this.addCountryData(filteredData);
+
     // Convert sentiment_score to number and parse dates
     filteredData.forEach(item => {
       // Make sure sentiment_score is treated as a number
@@ -99,6 +102,12 @@ class DataService {
     
     // Get mentions by platform
     const mentionsByPlatform = this.getMentionsByPlatform(filteredData);
+    
+    // Get available countries
+    const availableCountries = this.getAvailableCountries(filteredData);
+    
+    // Get mentions by country
+    const mentionsByCountry = this.getMentionsByCountry(filteredData);
 
     return {
       rawData: filteredData,
@@ -107,8 +116,73 @@ class DataService {
       sentimentByDate,
       topSentiment,
       bottomSentiment,
-      mentionsByPlatform
+      mentionsByPlatform,
+      availableCountries,
+      mentionsByCountry
     };
+  }
+
+  // Add function to assign countries based on keywords
+  addCountryData(data) {
+    // Keywords that indicate a country
+    const usKeywords = ['us', 'usa', 'united states', 'america', 'american', 'washington', 'new york', 'california', 'trump'];
+    const ukKeywords = ['uk', 'united kingdom', 'britain', 'british', 'london', 'england', 'scotland', 'wales'];
+    const qatarKeywords = ['qatar', 'doha', 'qatari', 'al thani', 'sheikh tamim', 'emir', 'al-thani'];
+    
+    data.forEach(item => {
+      // Use text content to determine country if available
+      const text = (item.text || '').toLowerCase();
+      
+      if (!item.country) {
+        // Check for Qatari content first as it's most relevant to this dataset
+        if (qatarKeywords.some(keyword => text.includes(keyword))) {
+          item.country = 'Qatar';
+        }
+        // Check for UK content
+        else if (ukKeywords.some(keyword => text.includes(keyword))) {
+          item.country = 'UK';
+        } 
+        // Check for US content
+        else if (usKeywords.some(keyword => text.includes(keyword))) {
+          item.country = 'US';
+        }
+        // Default if no match
+        else {
+          // Use source to guess if possible
+          const source = (item.source || '').toLowerCase();
+          const platform = (item.platform || '').toLowerCase();
+          
+          if (['cnn', 'fox', 'nbc', 'cbs', 'usa today', 'new york times', 'washington post', 'newsweek', 'huffpost'].some(s => source.includes(s) || platform.includes(s))) {
+            item.country = 'US';
+          }
+          else if (['bbc', 'guardian', 'telegraph', 'independent', 'daily mail'].some(s => source.includes(s) || platform.includes(s))) {
+            item.country = 'UK';
+          }
+          else if (['al jazeera', 'gulf times', 'peninsula', 'qatar tribune', 'qna'].some(s => source.includes(s) || platform.includes(s))) {
+            item.country = 'Qatar';
+          }
+          else {
+            // If still no match, make an educated guess based on domain if URL exists
+            const url = item.url || '';
+            if (url.includes('.uk') || url.includes('.co.uk')) {
+              item.country = 'UK';
+            }
+            else if (url.includes('.us') || url.includes('.gov') || url.includes('.edu')) {
+              item.country = 'US';
+            }
+            else if (url.includes('.qa') || url.includes('qatarliving') || url.includes('doha')) {
+              item.country = 'Qatar';
+            }
+            else {
+              // Default to Qatar since this is a Qatar-focused dataset
+              item.country = 'Qatar';
+            }
+          }
+        }
+      }
+    });
+    
+    console.log('Countries assigned to data entries');
   }
 
   calculateMetrics(data) {
@@ -261,6 +335,57 @@ class DataService {
     return Object.entries(platforms)
       .map(([platform, count]) => ({ platform, count }))
       .sort((a, b) => b.count - a.count);
+  }
+
+  getAvailableCountries(data) {
+    // For this specific dataset, we know these are the three countries mentioned
+    return ['US', 'UK', 'Qatar'];
+  }
+  
+  getMentionsByCountry(data) {
+    const countries = {
+      'US': { total: 0, positive: 0, neutral: 0, negative: 0 },
+      'UK': { total: 0, positive: 0, neutral: 0, negative: 0 },
+      'Qatar': { total: 0, positive: 0, neutral: 0, negative: 0 }
+    };
+    
+    data.forEach(item => {
+      const country = item.country || 'Qatar'; // Default to Qatar for this dataset
+      
+      if (!countries[country]) {
+        countries[country] = {
+          total: 0,
+          positive: 0,
+          neutral: 0,
+          negative: 0
+        };
+      }
+      
+      countries[country].total++;
+      
+      if (item.sentiment_label) {
+        countries[country][item.sentiment_label]++;
+      }
+    });
+    
+    // Convert to array and add percentages
+    return Object.entries(countries)
+      .map(([country, stats]) => ({ 
+        country, 
+        ...stats,
+        positivePercentage: stats.total > 0 ? (stats.positive / stats.total * 100).toFixed(1) : '0.0',
+        negativePercentage: stats.total > 0 ? (stats.negative / stats.total * 100).toFixed(1) : '0.0',
+        neutralPercentage: stats.total > 0 ? (stats.neutral / stats.total * 100).toFixed(1) : '0.0',
+      }))
+      .sort((a, b) => b.total - a.total);
+  }
+  
+  filterDataByCountry(data, country) {
+    if (!country || country === 'All Countries') {
+      return data;
+    }
+    
+    return data.filter(item => (item.country || 'Qatar') === country);
   }
 }
 
