@@ -4,13 +4,21 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from query_variations import query_variations
+from pathlib import Path
 
-def collect_news_data(output_file="news_data.csv"):
+def collect_news_data(output_file=None):
     load_dotenv()
-    api_key = os.getenv("NEWSAPI_KEY")
+    api_key = os.getenv("NEWS_API_KEY")
     if not api_key:
-        raise ValueError("NEWSAPI_KEY must be set in .env")
+        raise ValueError("NEWS_API_KEY must be set in .env")
 
+    # Ensure output directory exists
+    if output_file is None:
+        today = datetime.now().strftime("%Y%m%d")
+        output_file = str(Path(__file__).parent.parent.parent / "data" / "raw" / f"news_data_{today}.csv")
+    
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    
     newsapi = NewsApiClient(api_key=api_key)
 
     # UK and US news sources (including TV broadcasters)
@@ -117,6 +125,6 @@ def collect_news_data(output_file="news_data.csv"):
         print(f"Created empty '{output_file}' with headers.")
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%Y%m%d")
-    collect_news_data(output_file=f"csv_files/news_data_{today}.csv")
+    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"news_data_{today}.csv"
+    collect_news_data(output_file=str(output_path))

@@ -10,13 +10,21 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from query_variations import query_variations
+from pathlib import Path
 
-def collect_social_searcher(output_file="social_searcher_data.csv"):
+def collect_social_searcher(output_file=None):
     load_dotenv()
     email = os.getenv("SOCIAL_SEARCHER_EMAIL")
     password = os.getenv("SOCIAL_SEARCHER_PASSWORD")
     if not email or not password:
         raise ValueError("SOCIAL_SEARCHER_EMAIL and SOCIAL_SEARCHER_PASSWORD must be set in .env")
+
+    # Ensure output directory exists
+    if output_file is None:
+        today = datetime.now().strftime("%Y%m%d")
+        output_file = str(Path(__file__).parent.parent.parent / "data" / "raw" / f"social_searcher_data_{today}.csv")
+    
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     options = Options()
     options.headless = True  # Set to True for production
@@ -164,6 +172,6 @@ def collect_social_searcher(output_file="social_searcher_data.csv"):
         driver.quit()
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%Y%m%d")
-    collect_social_searcher(output_file=f"csv_files/social_searcher_data_{today}.csv")
+    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"social_searcher_data_{today}.csv"
+    collect_social_searcher(output_file=str(output_path))

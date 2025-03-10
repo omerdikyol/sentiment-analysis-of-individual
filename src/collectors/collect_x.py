@@ -10,6 +10,7 @@ import os
 from dotenv import load_dotenv
 from query_variations import query_variations
 from datetime import datetime
+from pathlib import Path
 
 def clear_cache_and_cookies(driver):
     driver.delete_all_cookies()
@@ -121,16 +122,26 @@ def collect_x_data(driver, wait, query="Tamim ibn Hamad Al Thani", max_posts=20,
     print(f"Total posts collected: {len(post_data)}")
     return post_data
 
-if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+def main(output_file=None):
     load_dotenv()
-    username = os.getenv("X_USERNAME")
-    password = os.getenv("X_PASSWORD")
     email = os.getenv("X_EMAIL")
-    if not username or not password or not email:
-        raise ValueError("X_USERNAME, X_PASSWORD, and X_EMAIL must be set in .env")
+    password = os.getenv("X_PASSWORD")
+    if not email or not password:
+        raise ValueError("X_EMAIL and X_PASSWORD must be set in .env")
+
+    # Ensure output directory exists
+    if output_file is None:
+        today = datetime.now().strftime("%Y%m%d")
+        output_file = str(Path(__file__).parent.parent.parent / "data" / "raw" / f"x_data_{today}.csv")
+    
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    username = os.getenv("X_USERNAME")
+    if not username:
+        raise ValueError("X_USERNAME must be set in .env")
+
     options = Options()
-    options.headless = False  # Keep False for debugging
+    options.headless = True  # Keep False for debugging
     options.add_argument("--disable-blink-features=AutomationControlled")  # Avoid bot detection
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
     options.add_argument("--no-sandbox")  # Additional evasion
@@ -147,9 +158,11 @@ if __name__ == "__main__":
         print(f"Fatal error in X scraping: {e}")
     finally:
         df = pd.DataFrame(all_post_data)
-        current_date = datetime.now().strftime("%Y%m%d")
-        print("Current directory:", os.getcwd())
-        output_file = f"csv_files/x_data_{current_date}.csv"
         df.to_csv(output_file, index=False)
         print(f"Collected {len(all_post_data)} X posts with comments. Saved to '{output_file}'.")
         driver.quit()
+
+if __name__ == "__main__":
+    today = datetime.now().strftime("%Y%m%d")
+    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"x_data_{today}.csv"
+    main(output_file=str(output_path))

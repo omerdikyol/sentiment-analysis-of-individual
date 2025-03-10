@@ -33,6 +33,7 @@ import MentionLineChart from './components/MentionLineChart';
 import SentimentLineChart from './components/SentimentLineChart';
 import PlatformBarChart from './components/PlatformBarChart';
 import SentimentTable from './components/SentimentTable';
+import SentimentData from './components/SentimentData';
 
 // Import services
 import DataService from './services/DataService';

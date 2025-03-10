@@ -10,16 +10,30 @@ from dotenv import load_dotenv
 from datetime import datetime
 import requests
 import shutil
+from pathlib import Path
 
-def collect_mention_data(output_file="mention_data.csv"):
+def collect_mention_data(output_file=None):
     load_dotenv()
+    api_key = os.getenv("MENTION_API_KEY")
+    account_id = os.getenv("MENTION_ACCOUNT_ID")
+    alert_id = os.getenv("MENTION_ALERT_ID")
+    if not all([api_key, account_id, alert_id]):
+        raise ValueError("MENTION_API_KEY, MENTION_ACCOUNT_ID, and MENTION_ALERT_ID must be set in .env")
+
+    # Ensure output directory exists
+    if output_file is None:
+        today = datetime.now().strftime("%Y%m%d")
+        output_file = str(Path(__file__).parent.parent.parent / "data" / "raw" / f"mention_data_{today}.csv")
+    
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
     email = os.getenv("MENTION_EMAIL")
     password = os.getenv("MENTION_PASSWORD")
     if not email or not password:
         raise ValueError("MENTION_EMAIL and MENTION_PASSWORD must be set in .env")
 
     options = Options()
-    options.headless = False  # Keep False for debugging
+    options.headless = True  # Keep False for debugging
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
     driver = webdriver.Chrome(options=options)
@@ -117,7 +131,6 @@ def collect_mention_data(output_file="mention_data.csv"):
             raise Exception(f"Failed to download CSV. Status code: {response.status_code}")
 
         # Step 9: Move the temporary file to the output location
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)  # Ensure directory exists
         shutil.move(temp_file, output_file)
         print(f"Moved downloaded CSV to '{output_file}'.")
 
@@ -134,6 +147,6 @@ def collect_mention_data(output_file="mention_data.csv"):
         driver.quit()
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     today = datetime.now().strftime("%Y%m%d")
-    collect_mention_data(output_file=f"csv_files/mention_data_{today}.csv")
+    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"mention_data_{today}.csv"
+    collect_mention_data(output_file=str(output_path))
