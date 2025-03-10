@@ -23,7 +23,8 @@ import {
   ThumbDown as ThumbDownIcon,
   StackedLineChart as StackedLineChartIcon,
   Dashboard as DashboardIcon,
-  KeyboardArrowUp as KeyboardArrowUpIcon
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  Public as PublicIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -34,6 +35,8 @@ import SentimentLineChart from './components/SentimentLineChart';
 import PlatformBarChart from './components/PlatformBarChart';
 import SentimentTable from './components/SentimentTable';
 import SentimentData from './components/SentimentData';
+import CountryFilter from './components/CountryFilter';
+import CountryBarChart from './components/CountryBarChart';
 
 // Import services
 import DataService from './services/DataService';
@@ -164,6 +167,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState('All Countries');
+  const [filteredData, setFilteredData] = useState(null);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -171,6 +176,7 @@ function App() {
         setLoading(true);
         const result = await DataService.loadData();
         setData(result);
+        setFilteredData(result);
         
         // Add a small delay to ensure animations are seen
         setTimeout(() => {
@@ -185,6 +191,42 @@ function App() {
     
     fetchData();
   }, []);
+  
+  // Apply country filter when selected country changes
+  useEffect(() => {
+    if (!data) return;
+    
+    if (selectedCountry === 'All Countries') {
+      setFilteredData(data);
+      return;
+    }
+    
+    // Filter raw data by country
+    const filteredRawData = DataService.filterDataByCountry(data.rawData, selectedCountry);
+    
+    // Recalculate metrics and charts with filtered data
+    const metrics = DataService.calculateMetrics(filteredRawData);
+    const mentionsByDate = DataService.getMentionsByDate(filteredRawData);
+    const sentimentByDate = DataService.getSentimentByDate(filteredRawData);
+    const topSentiment = DataService.getTopSentiment(filteredRawData, 5);
+    const bottomSentiment = DataService.getBottomSentiment(filteredRawData, 5);
+    const mentionsByPlatform = DataService.getMentionsByPlatform(filteredRawData);
+    
+    setFilteredData({
+      ...data,
+      rawData: filteredRawData,
+      metrics,
+      mentionsByDate,
+      sentimentByDate,
+      topSentiment,
+      bottomSentiment,
+      mentionsByPlatform
+    });
+  }, [selectedCountry, data]);
+  
+  const handleCountryChange = (country) => {
+    setSelectedCountry(country);
+  };
   
   if (loading) {
     return (
@@ -309,6 +351,17 @@ function App() {
             initial="hidden"
             animate="visible"
           >
+            {/* Country Filter - aligned to the left */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 3 }}>
+              <motion.div variants={itemVariants}>
+                <CountryFilter 
+                  countries={data?.availableCountries || []} 
+                  selectedCountry={selectedCountry}
+                  onCountryChange={handleCountryChange}
+                />
+              </motion.div>
+            </Box>
+            
             {/* Metrics Overview */}
             <motion.div variants={itemVariants}>
               <SectionHeader title="Overview" />
@@ -320,7 +373,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Total Mentions" 
-                    value={data?.metrics?.totalMentions || 0} 
+                    value={filteredData?.metrics?.totalMentions || 0} 
                     icon={<MessageIcon />} 
                     color="#3f51b5"
                   />
@@ -330,7 +383,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Positive Mentions" 
-                    value={data?.metrics?.positiveMentions || 0} 
+                    value={filteredData?.metrics?.positiveMentions || 0} 
                     icon={<FavoriteIcon />} 
                     color="#4caf50"
                   />
@@ -340,7 +393,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Negative Mentions" 
-                    value={data?.metrics?.negativeMentions || 0} 
+                    value={filteredData?.metrics?.negativeMentions || 0} 
                     icon={<ThumbDownIcon />} 
                     color="#f44336"
                   />
@@ -350,7 +403,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Presence Score" 
-                    value={`${data?.metrics?.presenceScore || 0}%`} 
+                    value={`${filteredData?.metrics?.presenceScore || 0}%`} 
                     icon={<StackedLineChartIcon />} 
                     color="#ff9800"
                   />
@@ -361,7 +414,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Positive Sentiment" 
-                    value={`${data?.metrics?.positivePercentage || 0}%`} 
+                    value={`${filteredData?.metrics?.positivePercentage || 0}%`} 
                     color="#4caf50"
                   />
                 </motion.div>
@@ -370,7 +423,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Neutral Sentiment" 
-                    value={`${data?.metrics?.neutralPercentage || 0}%`} 
+                    value={`${filteredData?.metrics?.neutralPercentage || 0}%`} 
                     color="#2196f3"
                   />
                 </motion.div>
@@ -379,7 +432,7 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Negative Sentiment" 
-                    value={`${data?.metrics?.negativePercentage || 0}%`} 
+                    value={`${filteredData?.metrics?.negativePercentage || 0}%`} 
                     color="#f44336"
                   />
                 </motion.div>
@@ -388,9 +441,23 @@ function App() {
                 <motion.div variants={itemVariants}>
                   <MetricCard 
                     title="Social Media Mentions" 
-                    value={data?.metrics?.socialMediaMentions || 0} 
+                    value={filteredData?.metrics?.socialMediaMentions || 0} 
                     color="#9c27b0"
                   />
+                </motion.div>
+              </Grid>
+              
+              {/* Geographic Analysis */}
+              <Grid item xs={12}>
+                <motion.div variants={itemVariants}>
+                  <SectionHeader title="Geographic Analysis" />
+                </motion.div>
+              </Grid>
+              
+              {/* Country Bar Chart */}
+              <Grid item xs={12}>
+                <motion.div variants={itemVariants}>
+                  <CountryBarChart mentionsByCountry={data?.mentionsByCountry || []} />
                 </motion.div>
               </Grid>
               
@@ -404,21 +471,21 @@ function App() {
               {/* Mentions Line Chart */}
               <Grid item xs={12} md={6}>
                 <motion.div variants={itemVariants}>
-                  <MentionLineChart mentionsByDate={data?.mentionsByDate || []} />
+                  <MentionLineChart mentionsByDate={filteredData?.mentionsByDate || []} />
                 </motion.div>
               </Grid>
               
               {/* Sentiment Line Chart */}
               <Grid item xs={12} md={6}>
                 <motion.div variants={itemVariants}>
-                  <SentimentLineChart sentimentByDate={data?.sentimentByDate || []} />
+                  <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate || []} />
                 </motion.div>
               </Grid>
               
               {/* Platform Bar Chart */}
               <Grid item xs={12}>
                 <motion.div variants={itemVariants}>
-                  <PlatformBarChart mentionsByPlatform={data?.mentionsByPlatform || []} />
+                  <PlatformBarChart mentionsByPlatform={filteredData?.mentionsByPlatform || []} />
                 </motion.div>
               </Grid>
               
@@ -433,8 +500,8 @@ function App() {
               <Grid item xs={12} md={6}>
                 <motion.div variants={itemVariants}>
                   <SentimentTable 
-                    topSentiment={data?.topSentiment || []} 
-                    bottomSentiment={data?.bottomSentiment || []}
+                    topSentiment={filteredData?.topSentiment || []} 
+                    bottomSentiment={filteredData?.bottomSentiment || []}
                     title="Highest Sentiment Posts"
                   />
                 </motion.div>
@@ -444,8 +511,8 @@ function App() {
               <Grid item xs={12} md={6}>
                 <motion.div variants={itemVariants}>
                   <SentimentTable 
-                    topSentiment={data?.topSentiment || []} 
-                    bottomSentiment={data?.bottomSentiment || []}
+                    topSentiment={filteredData?.topSentiment || []} 
+                    bottomSentiment={filteredData?.bottomSentiment || []}
                     title="Lowest Sentiment Posts"
                   />
                 </motion.div>
