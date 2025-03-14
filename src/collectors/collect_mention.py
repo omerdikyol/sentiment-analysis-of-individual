@@ -66,7 +66,30 @@ def collect_mention_data(output_file=None):
         time.sleep(5)  # Wait for feed to load
         print("Clicked Feed button. Current URL:", driver.current_url)
 
-        # Step 4: Click Export button (using aria-label)
+        # Step 4: Click "View all mentions" button
+        print("Locating 'View all mentions' button...")
+        try:
+            view_all_button = wait.until(EC.element_to_be_clickable(
+                (By.XPATH, "//button[.//div[contains(text(), 'View all mentions')]]")
+            ))
+            view_all_button.click()
+            print("Clicked 'View all mentions' button.")
+            time.sleep(5)  # Wait for mentions to load
+        except Exception as e:
+            print(f"Failed to find 'View all mentions' button with text: {e}")
+            # Try alternative selectors
+            try:
+                view_all_button = wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "button[data-userflowid='feed:alert-overview.header.go-to-feed.button']")
+                ))
+                view_all_button.click()
+                print("Clicked 'View all mentions' button using data-userflowid.")
+                time.sleep(5)
+            except Exception as e2:
+                print(f"Failed to find 'View all mentions' button with data-userflowid: {e2}")
+                raise
+
+        # Step 5: Click Export button (using aria-label)
         print("Locating Export button...")
         try:
             export_button = wait.until(EC.element_to_be_clickable(
@@ -83,7 +106,7 @@ def collect_mention_data(output_file=None):
             print("Clicked Export button using fallback (icon class).")
         time.sleep(2)  # Wait for dropdown to appear
 
-        # Step 5: Select "Export mentions (CSV)" from the dropdown
+        # Step 6: Select "Export mentions (CSV)" from the dropdown
         print("Selecting CSV export option...")
         csv_option = wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//li[contains(., 'Export mentions (CSV)')]")
@@ -92,7 +115,7 @@ def collect_mention_data(output_file=None):
         print("Selected CSV export option.")
         time.sleep(2)  # Wait for confirmation dialog
 
-        # Step 6: Click "Export Page" link
+        # Step 7: Click "Export Page" link
         print("Locating Export Page link...")
         export_page_link = wait.until(EC.element_to_be_clickable(
             (By.XPATH, "//a[contains(., 'Export Page')]")
@@ -101,12 +124,12 @@ def collect_mention_data(output_file=None):
         print("Clicked Export Page link. Current URL:", driver.current_url)
         time.sleep(10)  # Wait for export to process
 
-        # Step 7: Refresh the page
+        # Step 8: Refresh the page
         print("Refreshing export page...")
         driver.refresh()
         time.sleep(5)  # Wait for table to load
 
-        # Step 8: Find and download the latest CSV
+        # Step 9: Find and download the latest CSV
         print("Locating latest export row...")
         export_rows = wait.until(EC.presence_of_all_elements_located(
             (By.XPATH, "//table[@class='imbat-table']/tbody/tr")
@@ -130,7 +153,7 @@ def collect_mention_data(output_file=None):
         else:
             raise Exception(f"Failed to download CSV. Status code: {response.status_code}")
 
-        # Step 9: Move the temporary file to the output location
+        # Step 10: Move the temporary file to the output location
         shutil.move(temp_file, output_file)
         print(f"Moved downloaded CSV to '{output_file}'.")
 

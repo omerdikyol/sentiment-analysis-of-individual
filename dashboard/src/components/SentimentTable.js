@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -11,11 +11,64 @@ import {
   TableRow,
   Paper,
   Box,
-  Chip
+  Chip,
+  Avatar,
+  Stack,
+  Tooltip,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Link,
+  Divider,
+  Grid
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Public as PublicIcon,
+  Twitter as TwitterIcon,
+  Forum as ForumIcon,
+  Newspaper as NewsIcon,
+  Person as PersonIcon,
+  ContentCopy as ContentCopyIcon,
+  Launch as LaunchIcon,
+  CalendarToday as CalendarIcon,
+  Language as LanguageIcon,
+  LocationOn as LocationIcon
+} from '@mui/icons-material';
 
 const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  const handleRowClick = (item) => {
+    setSelectedItem(item);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedItem(null);
+  };
+
+  const getSourceIcon = (source) => {
+    const sourceLower = (source || '').toLowerCase();
+    if (sourceLower.includes('x') || sourceLower.includes('twitter')) return <TwitterIcon />;
+    if (sourceLower.includes('news')) return <NewsIcon />;
+    if (sourceLower.includes('social')) return <ForumIcon />;
+    return <PublicIcon />;
+  };
+
+  const getSourceColor = (source) => {
+    const sourceLower = (source || '').toLowerCase();
+    if (sourceLower.includes('x') || sourceLower.includes('twitter')) return '#1DA1F2';
+    if (sourceLower.includes('news')) return '#2196F3';
+    if (sourceLower.includes('social')) return '#9C27B0';
+    return '#757575';
+  };
+
   const renderSentiment = (sentiment) => {
     let color = 'primary';
     if (sentiment === 'positive') color = 'success';
@@ -26,10 +79,239 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
         label={sentiment.charAt(0).toUpperCase() + sentiment.slice(1)} 
         color={color} 
         size="small"
-        sx={{ fontWeight: 'bold' }}
+        sx={{ 
+          fontWeight: 'bold',
+          minWidth: '90px'
+        }}
       />
     );
   };
+
+  const handleCopyText = (text) => {
+    navigator.clipboard.writeText(text);
+  };
+
+  const renderSourceInfo = (item) => {
+    const sourceLower = (item.source || '').toLowerCase();
+    const isUserContent = sourceLower.includes('x') || sourceLower.includes('twitter') || sourceLower.includes('social');
+    
+    return (
+      <Stack direction="column" spacing={1}>
+        <Chip 
+          icon={getSourceIcon(item.source)}
+          label={item.source || 'Unknown'} 
+          variant="filled" 
+          size="small"
+          sx={{
+            backgroundColor: getSourceColor(item.source),
+            color: 'white',
+            '& .MuiChip-icon': {
+              color: 'white'
+            },
+            fontWeight: 'medium'
+          }}
+        />
+        {isUserContent && item.username && (
+          <Chip
+            icon={<PersonIcon sx={{ fontSize: '16px' }} />}
+            label={item.username}
+            variant="outlined"
+            size="small"
+            sx={{
+              borderColor: getSourceColor(item.source),
+              color: getSourceColor(item.source),
+              '& .MuiChip-icon': {
+                color: getSourceColor(item.source)
+              },
+              fontSize: '0.75rem'
+            }}
+          />
+        )}
+      </Stack>
+    );
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const DetailRow = ({ icon, label, value, isLink }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+      {icon}
+      <Box>
+        <Typography variant="caption" color="text.secondary">
+          {label}
+        </Typography>
+        {isLink ? (
+          <Link 
+            href={value} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 0.5,
+              color: 'primary.main',
+              textDecoration: 'none',
+              '&:hover': { textDecoration: 'underline' }
+            }}
+          >
+            {value}
+            <LaunchIcon sx={{ fontSize: 14 }} />
+          </Link>
+        ) : (
+          <Typography variant="body2">
+            {value}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+
+  const renderDetailDialog = () => (
+    <Dialog 
+      open={openDialog} 
+      onClose={handleCloseDialog}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow: 3
+        }
+      }}
+    >
+      {selectedItem && (
+        <>
+          <DialogTitle 
+            sx={{ 
+              pb: 1,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start'
+            }}
+          >
+            <Box>
+              <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Mention Details
+              </Typography>
+              {renderSentiment(selectedItem.sentiment_label)}
+            </Box>
+            <Box 
+              sx={{ 
+                backgroundColor: selectedItem.sentiment_label === 'positive' ? 'rgba(76, 175, 80, 0.1)' : 
+                                selectedItem.sentiment_label === 'negative' ? 'rgba(244, 67, 54, 0.1)' : 
+                                'rgba(33, 150, 243, 0.1)',
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              <Typography variant="subtitle2" color="text.secondary">
+                Sentiment Score
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                {(parseFloat(selectedItem.sentiment_score) * 100).toFixed(1)}
+              </Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                Content
+              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                {selectedItem.text}
+              </Typography>
+            </Box>
+            
+            <Divider sx={{ my: 2 }} />
+            
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <DetailRow 
+                  icon={getSourceIcon(selectedItem.source)} 
+                  label="Source"
+                  value={selectedItem.source || 'Unknown'}
+                />
+                {selectedItem.username && (
+                  <DetailRow 
+                    icon={<PersonIcon color="primary" />} 
+                    label="Username"
+                    value={selectedItem.username}
+                  />
+                )}
+                <DetailRow 
+                  icon={<CalendarIcon color="primary" />} 
+                  label="Date"
+                  value={formatDate(selectedItem.date)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                {selectedItem.url && (
+                  <DetailRow 
+                    icon={<LanguageIcon color="primary" />} 
+                    label="URL"
+                    value={selectedItem.url}
+                    isLink
+                  />
+                )}
+                {selectedItem.location && (
+                  <DetailRow 
+                    icon={<LocationIcon color="primary" />} 
+                    label="Location"
+                    value={selectedItem.location}
+                  />
+                )}
+                {selectedItem.country && (
+                  <DetailRow 
+                    icon={<PublicIcon color="primary" />} 
+                    label="Country"
+                    value={selectedItem.country}
+                  />
+                )}
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button 
+              onClick={() => handleCopyText(selectedItem.text)}
+              startIcon={<ContentCopyIcon />}
+            >
+              Copy Text
+            </Button>
+            {selectedItem.url && (
+              <Button
+                href={selectedItem.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                startIcon={<LaunchIcon />}
+              >
+                Open Source
+              </Button>
+            )}
+            <Button 
+              onClick={handleCloseDialog}
+              variant="contained"
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </>
+      )}
+    </Dialog>
+  );
 
   const renderTableData = (data) => {
     if (!data || data.length === 0) {
@@ -47,16 +329,23 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: index * 0.1 }}
-        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-        whileHover={{ 
-          backgroundColor: 'rgba(0, 0, 0, 0.04)',
-          transition: { duration: 0.2 }
+        onClick={() => handleRowClick(item)}
+        sx={{ 
+          '&:last-child td, &:last-child th': { border: 0 },
+          '&:nth-of-type(odd)': {
+            backgroundColor: 'rgba(0, 0, 0, 0.02)',
+          },
+          '&:hover': {
+            backgroundColor: 'rgba(0, 0, 0, 0.04) !important',
+            transition: 'all 0.2s ease-in-out',
+            cursor: 'pointer'
+          }
         }}
       >
-        <TableCell>
+        <TableCell sx={{ width: '120px' }}>
           {renderSentiment(item.sentiment_label)}
         </TableCell>
-        <TableCell>
+        <TableCell sx={{ width: '100px' }}>
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -78,23 +367,37 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
           </motion.div>
         </TableCell>
         <TableCell>
-          <Typography 
-            noWrap 
-            sx={{ 
-              maxWidth: 300,
-              textOverflow: 'ellipsis',
-              overflow: 'hidden'
-            }}
-          >
-            {item.text ? item.text.substring(0, 100) + (item.text.length > 100 ? '...' : '') : 'N/A'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography 
+              sx={{ 
+                maxWidth: '100%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                lineHeight: '1.4em',
+                minHeight: '2.8em'
+              }}
+            >
+              {item.text || 'N/A'}
+            </Typography>
+            <Tooltip title="Copy text">
+              <IconButton 
+                size="small" 
+                onClick={() => handleCopyText(item.text)}
+                sx={{ 
+                  opacity: 0.6,
+                  '&:hover': { opacity: 1 }
+                }}
+              >
+                <ContentCopyIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </TableCell>
-        <TableCell>
-          <Chip 
-            label={item.source || 'Unknown'} 
-            variant="outlined" 
-            size="small"
-          />
+        <TableCell sx={{ width: '180px' }}>
+          {renderSourceInfo(item)}
         </TableCell>
       </motion.tr>
     ));
@@ -123,7 +426,8 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
             sx={{ 
               mb: 2,
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
+              fontWeight: 'bold'
             }}
           >
             {title}
@@ -141,16 +445,62 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
               maxHeight: 400, 
               overflow: 'auto', 
               boxShadow: 1,
-              borderRadius: 2 
+              borderRadius: 2,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+                '&:hover': {
+                  background: '#666',
+                },
+              },
             }}
           >
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell>Sentiment</TableCell>
-                  <TableCell>Score</TableCell>
-                  <TableCell>Text</TableCell>
-                  <TableCell>Source</TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      width: '120px'
+                    }}
+                  >
+                    Sentiment
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      width: '100px'
+                    }}
+                  >
+                    Score
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                    }}
+                  >
+                    Content
+                  </TableCell>
+                  <TableCell 
+                    sx={{ 
+                      fontWeight: 'bold', 
+                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      width: '180px'
+                    }}
+                  >
+                    Source
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -162,6 +512,7 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
           </TableContainer>
         </CardContent>
       </Card>
+      {renderDetailDialog()}
     </motion.div>
   );
 };

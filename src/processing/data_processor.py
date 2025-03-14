@@ -100,7 +100,7 @@ class DataProcessor:
     def detect_country(self, row):
         """
         Detect country information based on available data.
-        Supported countries: US, UK, Qatar
+        Supported countries: US, UK, Qatar, UAE
         Uses a scoring system to determine the most likely country.
         """
         # If country already exists and is valid, don't overwrite it
@@ -116,7 +116,7 @@ class DataProcessor:
         user_handle = str(row.get('user_handle', '')).lower() if not pd.isna(row.get('user_handle')) else ''
         
         # Initialize country scores
-        country_scores = {'US': 0, 'UK': 0, 'Qatar': 0}
+        country_scores = {'US': 0, 'UK': 0, 'Qatar': 0, 'UAE': 0}
         
         # Helper function to detect language patterns
         def detect_language_patterns(text):
@@ -159,11 +159,14 @@ class DataProcessor:
                     country_scores['UK'] += 3
                 elif any(loc in user_location for loc in ['qatar', 'doha']):
                     country_scores['Qatar'] += 3
+                elif any(loc in user_location for loc in ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah']):
+                    country_scores['UAE'] += 3
                 
                 # Check for cities/states
                 us_locations = ['new york', 'california', 'texas', 'florida', 'chicago', 'los angeles', 'boston', 'washington', 'seattle', 'atlanta']
                 uk_locations = ['london', 'manchester', 'liverpool', 'birmingham', 'leeds', 'glasgow', 'edinburgh', 'bristol', 'cardiff', 'belfast']
                 qatar_locations = ['doha', 'al wakrah', 'al rayyan', 'lusail', 'al khor', 'dukhan', 'mesaieed', 'al shamal']
+                uae_locations = ['dubai', 'abu dhabi', 'sharjah', 'ajman', 'ras al khaimah', 'fujairah', 'umm al quwain', 'al ain']
                 
                 for loc in us_locations:
                     if loc in user_location:
@@ -174,6 +177,9 @@ class DataProcessor:
                 for loc in qatar_locations:
                     if loc in user_location:
                         country_scores['Qatar'] += 2
+                for loc in uae_locations:
+                    if loc in user_location:
+                        country_scores['UAE'] += 2
             
             # Check username and handle
             for name in [user_name, user_handle]:
@@ -185,6 +191,8 @@ class DataProcessor:
                         country_scores['UK'] += 2
                     elif re.search(r'\b(qa|qatar)\b', name) or name.endswith('_qa') or name.endswith('_qatar'):
                         country_scores['Qatar'] += 2
+                    elif re.search(r'\b(ae|uae)\b', name) or name.endswith('_ae') or name.endswith('_uae'):
+                        country_scores['UAE'] += 2
                     
                     # Check for city/state names
                     if any(city in name for city in ['nyc', 'newyork', 'chicago', 'la', 'losangeles', 'boston', 'texas', 'florida', 'cali', 'california']):
@@ -193,6 +201,8 @@ class DataProcessor:
                         country_scores['UK'] += 1
                     elif any(city in name for city in ['doha', 'alwakrah', 'rayyan', 'lusail']):
                         country_scores['Qatar'] += 1
+                    elif any(city in name for city in ['dubai', 'abu dhabi', 'sharjah', 'ajman', 'ras al khaimah', 'fujairah', 'umm al quwain', 'al ain']):
+                        country_scores['UAE'] += 1
                     
                     # Check for common name patterns
                     if name.startswith('american') or 'american' in name:
@@ -201,6 +211,8 @@ class DataProcessor:
                         country_scores['UK'] += 1
                     elif name.startswith('qatari') or 'qatari' in name:
                         country_scores['Qatar'] += 1
+                    elif name.startswith('uae') or 'uae' in name:
+                        country_scores['UAE'] += 1
                     
                     # Check for Arabic names (common in Qatar)
                     if any(pattern in name for pattern in ['al-', 'bin-', 'ibn-', 'abdul', 'sheikh']):
@@ -214,6 +226,7 @@ class DataProcessor:
             us_terms = ['america', 'american', 'washington', 'new york', 'california', 'texas', 'usa', 'united states', 'white house', 'congress', 'nfl', 'nba']
             uk_terms = ['britain', 'british', 'london', 'manchester', 'liverpool', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'bbc', 'nhs', 'parliament']
             qatar_terms = ['qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian', 'sharia', 'islamic']
+            uae_terms = ['uae', 'dubai', 'abu dhabi', 'sharjah', 'ajman', 'ras al khaimah', 'fujairah', 'umm al quwain', 'al ain']
             
             for term in us_terms:
                 if term in text:
@@ -224,6 +237,9 @@ class DataProcessor:
             for term in qatar_terms:
                 if term in text:
                     country_scores['Qatar'] += 1
+            for term in uae_terms:
+                if term in text:
+                    country_scores['UAE'] += 1
             
             # Check for language patterns
             language_scores = detect_language_patterns(text)

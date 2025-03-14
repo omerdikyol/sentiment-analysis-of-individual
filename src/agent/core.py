@@ -205,8 +205,6 @@ class SentimentAnalysisAgent:
         total_count = 0
         print("Collection Scripts:", self.collection_scripts)
         for source, script_path in self.collection_scripts.items():
-            print("Bunu da:", source)
-            print("Bu ne ben de bilmiyorum:", self.config['sources'].get(source, False))
             if self.config['sources'].get(source, False):
                 total_count += 1
                 try:

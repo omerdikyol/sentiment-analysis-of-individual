@@ -127,7 +127,10 @@ def collect_social_searcher(output_file=None):
                 url = text_elem.find_element(By.CLASS_NAME, "rezults-item-text__url").get_attribute("href") or "unknown"
 
                 # Determine country (basic heuristic)
-                country = "us" if ".com" in platform.lower() or "cnn" in platform.lower() else "uk" if ".co.uk" in platform.lower() or "bbc" in platform.lower() else "unknown"
+                country = "us" if ".com" in platform.lower() or "cnn" in platform.lower() else \
+                         "uk" if ".co.uk" in platform.lower() or "bbc" in platform.lower() else \
+                         "uae" if ".ae" in platform.lower() or any(source in platform.lower() for source in ["gulfnews", "khaleejtimes", "thenational"]) else \
+                         "unknown"
 
                 if text != "unknown":
                     all_data.append({
