@@ -338,15 +338,16 @@ class DataService {
   }
 
   getAvailableCountries(data) {
-    // For this specific dataset, we know these are the three countries mentioned
-    return ['US', 'UK', 'Qatar'];
+    // For this specific dataset, we know these are the four countries mentioned
+    return ['US', 'UK', 'Qatar', 'UAE'];
   }
   
   getMentionsByCountry(data) {
     const countries = {
       'US': { total: 0, positive: 0, neutral: 0, negative: 0 },
       'UK': { total: 0, positive: 0, neutral: 0, negative: 0 },
-      'Qatar': { total: 0, positive: 0, neutral: 0, negative: 0 }
+      'Qatar': { total: 0, positive: 0, neutral: 0, negative: 0 },
+      'UAE': { total: 0, positive: 0, neutral: 0, negative: 0 }
     };
     
     data.forEach(item => {

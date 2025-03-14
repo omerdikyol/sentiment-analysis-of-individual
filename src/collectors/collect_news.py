@@ -21,7 +21,7 @@ def collect_news_data(output_file=None):
     
     newsapi = NewsApiClient(api_key=api_key)
 
-    # UK and US news sources (including TV broadcasters)
+    # UK, US, UAE news sources (including TV broadcasters)
     uk_sources = [
         "bbc.co.uk", "theguardian.com", "telegraph.co.uk", "independent.co.uk", "dailymail.co.uk",
         "thetimes.co.uk", "ft.com", "standard.co.uk", "mirror.co.uk", "express.co.uk",
@@ -40,7 +40,12 @@ def collect_news_data(output_file=None):
         "vox.com", "slate.com", "theatlantic.com", "politico.com", "buzzfeednews.com",
         "huffpost.com", "axios.com", "thedailybeast.com"
     ]
-    all_sources = ",".join(uk_sources + us_sources)
+    uae_sources = [
+        "gulfnews.com", "khaleejtimes.com", "thenationalnews.com", "arabianbusiness.com",
+        "emirateswoman.com", "dubaiweek.ae", "whatson.ae", "timeoutdubai.com",
+        "emiratesnews247.com", "dubaieye.ae", "zawya.com", "thenational.ae"
+    ]
+    all_sources = ",".join(uk_sources + us_sources + uae_sources)
 
     # TV-specific domains
     tv_domains = [
@@ -57,7 +62,7 @@ def collect_news_data(output_file=None):
 
     for query in query_variations:
         try:
-            print(f"\nFetching articles for query: '{query}' from {len(uk_sources)} UK and {len(us_sources)} US sources...")
+            print(f"\nFetching articles for query: '{query}'")
             print(f"Date range: from {from_date} to {today.strftime('%Y-%m-%d')}")
             response = newsapi.get_everything(
                 q=query,
@@ -81,7 +86,9 @@ def collect_news_data(output_file=None):
             
             for article in articles:
                 domain = article["url"].split("/")[2].lower()
-                country = "uk" if any(uk in domain for uk in uk_sources) else "us"
+                country = "uk" if any(uk in domain for uk in uk_sources) else \
+                         "us" if any(us in domain for us in us_sources) else \
+                         "uae" if any(uae in domain for uae in uae_sources) else "unknown"
                 source_type = "Television" if domain in tv_domains else "News"
                 all_article_data.append({
                     "source": source_type,
@@ -114,7 +121,7 @@ def collect_news_data(output_file=None):
         # Count TV vs News articles
         tv_count = len(df[df["source"] == "Television"])
         news_count = len(df[df["source"] == "News"])
-        print(f"\nCollected {len(all_article_data)} total articles from UK/US sources across all queries.")
+        print(f"\nCollected {len(all_article_data)} total articles from UK/US/UAE sources across all queries.")
         print(f" - Television articles: {tv_count}")
         print(f" - Newspaper articles: {news_count}")
         print(f"Saved to '{output_file}'.")

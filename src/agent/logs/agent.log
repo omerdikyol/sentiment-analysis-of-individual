@@ -1,0 +1,28 @@
+2025-03-14 16:01:19,195 - AgentCore - INFO - Discovered collection scripts: ['x', 'mention', 'social_searcher', 'news']
+2025-03-14 16:01:19,195 - AgentCore - INFO - Agent started successfully
+2025-03-14 16:01:19,195 - AgentCore - INFO - Starting data collection for source: x
+2025-03-14 16:02:22,597 - AgentCore - INFO - Collection completed for x: Cache and cookies cleared.
+Attempting login...
+No verification step detected, proceeding...
+Fatal error in X scraping: Message: 
+Stacktrace:
+0   chromedriver                        0x00000001033d42d4 cxxbridge1$str$ptr + 2739836
+1   chromedriver                        0x00000001033cc934 cxxbridge1$str$ptr + 2708700
+2   chromedriver                        0x0000000102f2df90 cxxbridge1$string$len + 93360
+3   chromedriver                        0x0000000102f74de4 cxxbridge1$string$len + 383748
+4   chromedriver                        0x0000000102fb5e80 cxxbridge1$string$len + 650144
+5   chromedriver                        0x0000000102f69060 cxxbridge1$string$len + 335232
+6   chromedriver                        0x000000010339cc38 cxxbridge1$str$ptr + 2512864
+7   chromedriver                        0x000000010339ff58 cxxbridge1$str$ptr + 2525952
+8   chromedriver                        0x0000000103382578 cxxbridge1$str$ptr + 2404640
+9   chromedriver                        0x00000001033a0818 cxxbridge1$str$ptr + 2528192
+10  chromedriver                        0x0000000103372f2c cxxbridge1$str$ptr + 2341588
+11  chromedriver                        0x00000001033bca60 cxxbridge1$str$ptr + 2643464
+12  chromedriver                        0x00000001033bcbe8 cxxbridge1$str$ptr + 2643856
+13  chromedriver                        0x00000001033cc5a8 cxxbridge1$str$ptr + 2707792
+14  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+15  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected 0 X posts with comments. Saved to '/Users/omerdikyol/coding/freelance/sentiment-analysis-of-individual/data/raw/x_data_20250314.csv'.
+2025-03-14 16:02:22,598 - AgentCore - INFO - Starting data collection for source: mention
+2025-03-14 16:02:22,694 - AgentCore - INFO - Shutdown signal received. Cleaning up...
