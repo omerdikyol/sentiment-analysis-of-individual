@@ -39,7 +39,7 @@ import {
   LocationOn as LocationIcon
 } from '@mui/icons-material';
 
-const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
+const SentimentTable = ({ data, title = "Sentiment Analysis" }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -518,7 +518,7 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
               </TableHead>
               <TableBody>
                 <AnimatePresence>
-                  {renderTableData(title.includes('Highest') ? topSentiment : bottomSentiment)}
+                  {renderTableData(title.includes('Highest') ? data.topSentiment : data.bottomSentiment)}
                 </AnimatePresence>
               </TableBody>
             </Table>

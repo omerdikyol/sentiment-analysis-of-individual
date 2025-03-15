@@ -1,12 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import ChartModal from './ChartModal';
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  cursor: 'pointer',
+  transition: 'transform 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'scale(1.02)',
+  },
+}));
+
+// Colors for bars
+const COLORS = [
+  '#8884d8', // Purple
+  '#82ca9d', // Green
+  '#ffc658', // Yellow
+  '#ff7300', // Orange
+  '#0088fe', // Blue
+  '#00C49F', // Teal
+  '#FFBB28', // Gold
+  '#FF8042', // Coral
+  '#a4de6c', // Light Green
+  '#d0ed57'  // Lime
+];
 
 const PlatformBarChart = ({ mentionsByPlatform }) => {
   const [animatedData, setAnimatedData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   useEffect(() => {
     if (mentionsByPlatform && mentionsByPlatform.length > 0) {
@@ -26,30 +51,24 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
     }
   }, [mentionsByPlatform]);
 
+  const handleCardClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
   if (!mentionsByPlatform || mentionsByPlatform.length === 0) {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">Mentions by Platform</Typography>
+          <Typography variant="h6">Platform Distribution</Typography>
           <Typography variant="body2">No data available</Typography>
         </CardContent>
       </Card>
     );
   }
-
-  // Colors for bars
-  const COLORS = [
-    'rgba(255, 99, 132, 0.8)',
-    'rgba(54, 162, 235, 0.8)',
-    'rgba(255, 206, 86, 0.8)',
-    'rgba(75, 192, 192, 0.8)',
-    'rgba(153, 102, 255, 0.8)',
-    'rgba(255, 159, 64, 0.8)',
-    'rgba(199, 199, 199, 0.8)',
-    'rgba(83, 102, 255, 0.8)',
-    'rgba(40, 159, 64, 0.8)',
-    'rgba(210, 199, 199, 0.8)'
-  ];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -58,9 +77,9 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
           sx={{
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
             p: 2,
-            border: '1px solid #ccc',
-            borderRadius: 1,
-            boxShadow: 3
+            border: 'none',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           }}
         >
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
@@ -75,66 +94,59 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
     return null;
   };
 
+  const renderChart = (containerHeight = '100%') => (
+    <ResponsiveContainer width="100%" height={containerHeight}>
+      <BarChart
+        data={animatedData}
+        margin={{ top: 10, right: 30, left: 0, bottom: 60 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+        <XAxis
+          dataKey="platform"
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          interval={0}
+          tick={{ fontSize: 12 }}
+        />
+        <YAxis tick={{ fontSize: 12 }} />
+        <Tooltip content={CustomTooltip} />
+        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+          {animatedData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
-    >
-      <Card sx={{ 
-        height: '100%', 
-        boxShadow: 3, 
-        borderRadius: 2,
-        background: 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)',
-        transition: 'all 0.3s ease'
-      }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>Mentions by Platform</Typography>
-          <div style={{ height: '400px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={animatedData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
-                layout="vertical"
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                <XAxis 
-                  type="number"
-                  tickFormatter={(value) => value.toLocaleString()}
-                />
-                <YAxis 
-                  dataKey="platform" 
-                  type="category"
-                  tickFormatter={(value) => value === 'unknown' ? 'Unknown' : value}
-                  width={100}
-                  tick={{
-                    fontSize: 12,
-                    textAnchor: 'end',
-                    width: 100
-                  }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend />
-                <Bar 
-                  dataKey="count" 
-                  name="Mentions"
-                  animationDuration={1000}
-                  animationEasing="ease-in-out"
-                  radius={[0, 4, 4, 0]}
-                >
-                  {animatedData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={COLORS[index % COLORS.length]} 
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <StyledCard onClick={handleCardClick}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Platform Distribution
+            </Typography>
+            <Box sx={{ height: 300, mt: 2 }}>
+              {renderChart('100%')}
+            </Box>
+          </CardContent>
+        </StyledCard>
+      </motion.div>
+
+      <ChartModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        title="Platform Distribution - Detailed View"
+      >
+        {renderChart('100%')}
+      </ChartModal>
+    </>
   );
 };
 
