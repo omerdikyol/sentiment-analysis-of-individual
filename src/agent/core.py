@@ -13,6 +13,9 @@ import sys
 import glob
 import threading
 import queue
+import asyncio
+from .brain import AgentBrain
+from .autogen_agents import AutogenAgentSystem
 
 # Configure logging
 logging.basicConfig(
@@ -29,6 +32,8 @@ class SentimentAnalysisAgent:
     def __init__(self):
         self.base_path = Path(__file__).parent.parent.parent
         self.config = self.load_config()
+        self.brain = AgentBrain(self.base_path / 'config')
+        self.autogen_system = AutogenAgentSystem(self.base_path / 'config')
         self.data_history: Dict[str, List[Any]] = {
             'sentiment_trends': [],
             'data_quality_metrics': [],
@@ -43,8 +48,11 @@ class SentimentAnalysisAgent:
             'is_busy': False,
             'current_task': None,
             'last_run': {},
-            'next_run': {}
+            'next_run': {},
+            'suggestions': []
         }
+        self.event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.event_loop)
         
     def load_config(self) -> dict:
         """Load configuration from config.json or create default"""
@@ -70,7 +78,9 @@ class SentimentAnalysisAgent:
                 'social_searcher': True,
                 'instagram': False,  # Not implemented yet
                 'linkedin': False    # Not implemented yet
-            }
+            },
+            'adaptive_scheduling': True,
+            'auto_optimization': True
         }
         
         with open(config_path, 'w') as f:
@@ -78,18 +88,27 @@ class SentimentAnalysisAgent:
         return default_config
 
     def get_status(self) -> dict:
-        """Get current agent status"""
+        """Get current agent status with brain insights"""
         next_collection = schedule.next_run()
+        
+        # Get brain suggestions
+        metrics = {
+            'data_quality': self.data_history['data_quality_metrics'][-1] if self.data_history['data_quality_metrics'] else {},
+            'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
+        }
+        suggestions = self.brain.suggest_improvements(metrics)
         
         return {
             **self.task_status,
             'config': self.config,
             'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else None,
-            'next_scheduled_run': str(next_collection) if next_collection else None
+            'next_scheduled_run': str(next_collection) if next_collection else None,
+            'suggestions': suggestions,
+            'performance_metrics': self.brain.performance_metrics
         }
 
     def execute_command(self, command: str, params: dict = None) -> dict:
-        """Execute a command and return the result"""
+        """Execute a command and return the result with brain evaluation"""
         if self.task_status['is_busy']:
             return {
                 'success': False,
@@ -97,25 +116,28 @@ class SentimentAnalysisAgent:
             }
 
         try:
+            start_time = time.time()
+            result = {'success': False, 'message': ''}
+
             if command == 'collect':
                 thread = threading.Thread(target=self._run_task, args=(self.collect_data, 'collect'))
                 thread.start()
-                return {'success': True, 'message': 'Data collection started'}
+                result = {'success': True, 'message': 'Data collection started'}
             
             elif command == 'process':
                 thread = threading.Thread(target=self._run_task, args=(self.process_data, 'process'))
                 thread.start()
-                return {'success': True, 'message': 'Data processing started'}
+                result = {'success': True, 'message': 'Data processing started'}
             
             elif command == 'collect_and_process':
                 thread = threading.Thread(target=self._run_collect_and_process)
                 thread.start()
-                return {'success': True, 'message': 'Collection and processing started'}
+                result = {'success': True, 'message': 'Collection and processing started'}
             
             elif command == 'cleanup':
                 thread = threading.Thread(target=self._run_task, args=(self.cleanup_old_data, 'cleanup'))
                 thread.start()
-                return {'success': True, 'message': 'Cleanup started'}
+                result = {'success': True, 'message': 'Cleanup started'}
             
             elif command == 'update_config':
                 if not params:
@@ -123,39 +145,90 @@ class SentimentAnalysisAgent:
                 self.config.update(params)
                 with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
                     json.dump(self.config, f, indent=4)
-                return {'success': True, 'message': 'Configuration updated'}
+                result = {'success': True, 'message': 'Configuration updated'}
+            
+            elif command == 'optimize':
+                if self.config.get('auto_optimization', True):
+                    new_config = self.brain.optimize_schedule(self.config)
+                    self.config.update(new_config)
+                    with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
+                        json.dump(self.config, f, indent=4)
+                    result = {'success': True, 'message': 'Configuration optimized'}
+                else:
+                    result = {'success': False, 'message': 'Auto-optimization is disabled'}
             
             else:
-                return {'success': False, 'message': f'Unknown command: {command}'}
+                result = {'success': False, 'message': f'Unknown command: {command}'}
+
+            # Add execution time and let brain evaluate the action
+            result['duration'] = time.time() - start_time
+            score = self.brain.evaluate_action(command, result)
+            result['brain_score'] = score
+
+            return result
             
         except Exception as e:
             logger.error(f"Error executing command {command}: {str(e)}")
-            return {'success': False, 'message': str(e)}
+            error_result = {'success': False, 'message': str(e), 'duration': time.time() - start_time}
+            self.brain.evaluate_action(command, error_result)
+            return error_result
 
     def _run_task(self, task_func, task_name):
-        """Run a task and update status"""
+        """Run a task and update status with brain monitoring"""
         self.task_status['is_busy'] = True
         self.task_status['current_task'] = task_name
         start_time = datetime.now()
         
         try:
             result = task_func()
+            duration = (datetime.now() - start_time).total_seconds()
+            
             self.task_status['last_run'][task_name] = {
                 'time': start_time.isoformat(),
                 'success': result,
-                'duration': (datetime.now() - start_time).total_seconds()
+                'duration': duration
             }
+
+            # Update brain's memory
+            self.brain.update_memory({
+                'type': task_name,
+                'success': result,
+                'duration': duration,
+                'timestamp': start_time.isoformat()
+            })
+
         except Exception as e:
             logger.error(f"Error in task {task_name}: {str(e)}")
+            duration = (datetime.now() - start_time).total_seconds()
+            
             self.task_status['last_run'][task_name] = {
                 'time': start_time.isoformat(),
                 'success': False,
                 'error': str(e),
-                'duration': (datetime.now() - start_time).total_seconds()
+                'duration': duration
             }
+
+            # Update brain's memory with failure
+            self.brain.update_memory({
+                'type': task_name,
+                'success': False,
+                'error': str(e),
+                'duration': duration,
+                'timestamp': start_time.isoformat()
+            })
+
         finally:
             self.task_status['is_busy'] = False
             self.task_status['current_task'] = None
+
+            # Check if schedule optimization is needed
+            if self.config.get('adaptive_scheduling', True):
+                new_config = self.brain.optimize_schedule(self.config)
+                if new_config != self.config:
+                    logger.info("Updating schedule based on performance metrics")
+                    self.config = new_config
+                    with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
+                        json.dump(self.config, f, indent=4)
 
     def _run_collect_and_process(self):
         """Run collection and processing in sequence"""
@@ -200,10 +273,11 @@ class SentimentAnalysisAgent:
             (self.base_path / directory).mkdir(parents=True, exist_ok=True)
 
     def collect_data(self):
-        """Execute all enabled data collection processes"""
+        """Execute all enabled data collection processes with brain monitoring"""
         success_count = 0
         total_count = 0
-        print("Collection Scripts:", self.collection_scripts)
+        collected_data = []
+
         for source, script_path in self.collection_scripts.items():
             if self.config['sources'].get(source, False):
                 total_count += 1
@@ -218,6 +292,22 @@ class SentimentAnalysisAgent:
                     )
                     logger.info(f"Collection completed for {source}: {result.stdout.strip()}")
                     success_count += 1
+
+                    # Load and analyze collected data
+                    today = datetime.now().strftime("%Y%m%d")
+                    data_file = self.base_path / "data" / "raw" / f"{source}_data_{today}.csv"
+                    if data_file.exists():
+                        df = pd.read_csv(data_file)
+                        collected_data.append(df)
+                        
+                        # Analyze data quality
+                        quality_metrics = self.brain.analyze_data_quality(df)
+                        self.data_history['data_quality_metrics'].append({
+                            'timestamp': datetime.now().isoformat(),
+                            'source': source,
+                            'metrics': quality_metrics
+                        })
+
                 except subprocess.CalledProcessError as e:
                     logger.error(f"Data collection failed for {source}: {str(e)}")
                     logger.error(f"Error output: {e.stderr}")
@@ -225,34 +315,65 @@ class SentimentAnalysisAgent:
                     logger.error(f"Unexpected error in {source} collection: {str(e)}")
 
         # Update system health metrics
-        self.data_history['system_health'].append({
+        health_metrics = {
             'timestamp': datetime.now().isoformat(),
             'collection_success_rate': success_count / total_count if total_count > 0 else 0,
             'active_sources': success_count,
-            'total_sources': total_count
-        })
+            'total_sources': total_count,
+            'memory_usage': self._get_memory_usage()
+        }
+        self.data_history['system_health'].append(health_metrics)
 
-        return True  # Always return True to ensure processing continues
+        return success_count > 0
+
+    def _get_memory_usage(self) -> float:
+        """Get current memory usage of the process"""
+        try:
+            import psutil
+            process = psutil.Process()
+            return process.memory_percent()
+        except:
+            return 0.0
 
     def process_data(self):
-        """Execute data processing and analysis"""
+        """Execute data processing and analysis with Autogen assistance"""
         try:
             logger.info("Starting data processing...")
             processor_path = self.base_path / 'src' / 'processing' / 'data_processor.py'
             subprocess.run(['python', str(processor_path)], check=True, cwd=str(self.base_path))
-            self.update_metrics()
-            logger.info("Data processing completed successfully")
+            
+            # Load processed data for Autogen analysis
+            latest_data = pd.read_csv(self.base_path / 'data' / 'processed' / 'latest.csv')
+            data_dict = latest_data.to_dict(orient='records')
+            
+            # Run Autogen analysis
+            analysis_result = self.event_loop.run_until_complete(
+                self.autogen_system.analyze_data({
+                    'data': data_dict,
+                    'metadata': {
+                        'timestamp': datetime.now().isoformat(),
+                        'source_count': len(latest_data['source'].unique()),
+                        'total_records': len(latest_data)
+                    }
+                })
+            )
+            
+            # Update metrics with Autogen insights
+            self.update_metrics(latest_data, analysis_result)
+            
+            logger.info("Data processing and analysis completed successfully")
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"Data processing failed: {str(e)}")
             return False
+        except Exception as e:
+            logger.error(f"Unexpected error in data processing: {str(e)}")
+            return False
 
-    def update_metrics(self):
-        """Update system metrics and performance indicators"""
+    def update_metrics(self, latest_data: pd.DataFrame, analysis_result: Dict[str, Any]):
+        """Update system metrics and performance indicators with Autogen insights"""
         try:
-            latest_data = pd.read_csv(self.base_path / 'data' / 'processed' / 'latest.csv')
-            
-            # Calculate metrics
+            # Calculate basic metrics
             metrics = {
                 'timestamp': datetime.now().isoformat(),
                 'total_records': len(latest_data),
@@ -260,6 +381,14 @@ class SentimentAnalysisAgent:
                 'average_sentiment_score': latest_data['sentiment_score'].mean(),
                 'data_sources': latest_data['source'].value_counts().to_dict()
             }
+            
+            # Add Autogen insights
+            if 'insights' in analysis_result:
+                metrics.update({
+                    'autogen_insights': analysis_result['insights'],
+                    'data_quality': analysis_result['insights'].get('data_quality', {}),
+                    'analysis_recommendations': analysis_result['insights'].get('recommendations', [])
+                })
             
             # Update history
             self.data_history['sentiment_trends'].append(metrics)
@@ -273,10 +402,60 @@ class SentimentAnalysisAgent:
             metrics_file = self.base_path / 'data' / 'metrics' / 'history.json'
             with open(metrics_file, 'w') as f:
                 json.dump(self.data_history, f, indent=4)
-                
-            logger.info("Metrics updated successfully")
+            
+            # Update task status with Autogen suggestions
+            if 'recommendations' in analysis_result.get('insights', {}):
+                self.task_status['suggestions'] = analysis_result['insights']['recommendations']
+            
+            logger.info("Metrics updated successfully with Autogen insights")
         except Exception as e:
             logger.error(f"Failed to update metrics: {str(e)}")
+
+    def optimize_system(self):
+        """Use Autogen to optimize system performance"""
+        try:
+            # Prepare performance metrics
+            performance_data = {
+                'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {},
+                'data_quality': self.data_history['data_quality_metrics'][-1] if self.data_history['data_quality_metrics'] else {},
+                'collection_stats': {
+                    source: self.task_status['last_run'].get(f'collect_{source}', {})
+                    for source in self.config['sources']
+                    if self.config['sources'][source]
+                }
+            }
+            
+            # Get optimization suggestions from Autogen
+            optimization_result = self.event_loop.run_until_complete(
+                self.autogen_system.optimize_collection(performance_data)
+            )
+            
+            if 'optimizations' in optimization_result:
+                # Update collection frequency if suggested
+                if optimization_result['optimizations']['collection_frequency']:
+                    new_frequency = optimization_result['optimizations']['collection_frequency']
+                    if 15 <= new_frequency <= 120:  # Ensure reasonable bounds
+                        self.config['collection_interval_minutes'] = new_frequency
+                        logger.info(f"Updated collection frequency to {new_frequency} minutes")
+                
+                # Update configuration with other optimizations
+                if optimization_result['optimizations']['suggested_changes']:
+                    for change in optimization_result['optimizations']['suggested_changes']:
+                        if isinstance(change, dict):
+                            self.config.update(change)
+                
+                # Save updated config
+                with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
+                    json.dump(self.config, f, indent=4)
+                
+                logger.info("System optimization completed successfully")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error in system optimization: {str(e)}")
+            return False
 
     def cleanup_old_data(self):
         """Clean up old data files based on retention policy"""
@@ -317,10 +496,12 @@ class SentimentAnalysisAgent:
             logger.error(f"Failed to clean up old data: {str(e)}")
 
     def run(self):
-        """Main execution loop"""
+        """Main execution loop with enhanced Autogen-powered optimization"""
         def signal_handler(signum, frame):
             logger.info("Shutdown signal received. Cleaning up...")
             self.is_running = False
+            self.brain.save_brain_state()
+            self.event_loop.close()
             sys.exit(0)
 
         signal.signal(signal.SIGINT, signal_handler)
@@ -333,15 +514,36 @@ class SentimentAnalysisAgent:
             lambda: self._run_task(self.process_data, 'process'))
         schedule.every().day.at("00:00").do(
             lambda: self._run_task(self.cleanup_old_data, 'cleanup'))
+        
+        # Add system optimization schedule
+        if self.config.get('auto_optimization', True):
+            schedule.every(6).hours.do(
+                lambda: self._run_task(self.optimize_system, 'optimize'))
 
-        logger.info("Agent started successfully")
+        logger.info("Agent started successfully with Autogen enhancement")
         
         # Initial run
         self._run_collect_and_process()
 
-        # Main loop
+        # Main loop with enhanced monitoring
         while self.is_running:
             schedule.run_pending()
+            
+            # Let both brain and Autogen suggest improvements
+            if self.config.get('auto_optimization', True):
+                metrics = {
+                    'data_quality': self.data_history['data_quality_metrics'][-1] if self.data_history['data_quality_metrics'] else {},
+                    'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
+                }
+                
+                # Combine suggestions from both systems
+                brain_suggestions = self.brain.suggest_improvements(metrics)
+                self.task_status['suggestions'] = brain_suggestions
+                
+                # Periodically run system optimization
+                if not self.task_status['is_busy'] and time.time() % 3600 < 1:  # Check every hour
+                    self._run_task(self.optimize_system, 'optimize')
+            
             time.sleep(1)
 
 if __name__ == "__main__":
