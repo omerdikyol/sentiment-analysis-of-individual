@@ -256,7 +256,12 @@ class DataProcessor:
             if platform:
                 us_sources = ['cnn', 'fox', 'nbc', 'abc', 'cbs', 'usa today', 'new york times', 'washington post', 'huffpost', 'newsweek', 'politico', 'bloomberg', 'cnbc']
                 uk_sources = ['bbc', 'guardian', 'telegraph', 'independent', 'daily mail', 'mirror', 'sun', 'times', 'economist', 'financial times', 'sky news']
-                qatar_sources = ['al jazeera', 'gulf times', 'peninsula', 'qatar tribune', 'diwan.gov.qa', 'gco.gov.qa', 'qatar news agency', 'qatar day', 'gulf news']
+                qatar_sources = [
+                    'al jazeera', 'gulf times', 'peninsula', 'qatar tribune', 'diwan.gov.qa', 'gco.gov.qa',
+                    'qatar news agency', 'qatar day', 'doha news', 'lusail news', 'al-sharq', 'raya',
+                    'al-watan', 'qatar living', 'iloveqatar', 'marhaba', 'qatar observer', 'qatar gazette',
+                    'qatar chronicle', 'qna', 'thepeninsulaqatar'
+                ]
                 
                 for src in us_sources:
                     if src in platform.lower():
@@ -270,10 +275,14 @@ class DataProcessor:
             
             # Check user_location (domain) for news sources
             if user_location:
-                if '.com' in user_location or '.org' in user_location:
+                if '.com' in user_location or '.org' in user_location or '.net' in user_location or '.qa' in user_location:
                     us_domains = ['cnn', 'foxnews', 'nbc', 'abc', 'cbs', 'usatoday', 'nytimes', 'washingtonpost', 'wsj', 'latimes']
                     uk_domains = ['bbc', 'guardian', 'telegraph', 'independent', 'dailymail', 'ft.com', 'economist', 'reuters']
-                    qatar_domains = ['aljazeera', 'gulf-times', 'thepeninsulaqatar', 'qatar', 'qna.org.qa', 'dohanews']
+                    qatar_domains = [
+                        'aljazeera', 'gulf-times', 'thepeninsulaqatar', 'qatar', 'qna.org.qa', 'dohanews',
+                        'qatarliving', 'iloveqatar', 'marhaba.qa', 'qatarday', 'lusailnews', 'alarab.qa',
+                        'al-sharq', 'raya', 'al-watan', 'qatargazette', 'qatarchronicle', 'qatarobserver'
+                    ]
                     
                     for domain in us_domains:
                         if domain in user_location:
@@ -288,7 +297,11 @@ class DataProcessor:
             # Check text content for country mentions
             us_terms = ['america', 'american', 'washington', 'new york', 'california', 'texas', 'usa', 'united states', 'white house', 'congress']
             uk_terms = ['britain', 'british', 'london', 'manchester', 'liverpool', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'parliament']
-            qatar_terms = ['qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian']
+            qatar_terms = [
+                'qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian',
+                'lusail', 'al wakrah', 'al khor', 'education city', 'katara', 'the pearl', 'west bay',
+                'aspire', 'hamad', 'khalifa', 'corniche', 'souq waqif', 'msheireb', 'al sadd'
+            ]
             
             for term in us_terms:
                 if term in text:
