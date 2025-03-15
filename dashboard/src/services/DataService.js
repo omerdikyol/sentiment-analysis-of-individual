@@ -127,56 +127,65 @@ class DataService {
     // Keywords that indicate a country
     const usKeywords = ['us', 'usa', 'united states', 'america', 'american', 'washington', 'new york', 'california', 'trump'];
     const ukKeywords = ['uk', 'united kingdom', 'britain', 'british', 'london', 'england', 'scotland', 'wales'];
-    const qatarKeywords = ['qatar', 'doha', 'qatari', 'al thani', 'sheikh tamim', 'emir', 'al-thani'];
     
     data.forEach(item => {
       // Use text content to determine country if available
       const text = (item.text || '').toLowerCase();
-      
-      if (!item.country) {
-        // Check for Qatari content first as it's most relevant to this dataset
-        if (qatarKeywords.some(keyword => text.includes(keyword))) {
-          item.country = 'Qatar';
-        }
-        // Check for UK content
-        else if (ukKeywords.some(keyword => text.includes(keyword))) {
-          item.country = 'UK';
-        } 
-        // Check for US content
-        else if (usKeywords.some(keyword => text.includes(keyword))) {
+      const source = (item.source || '').toLowerCase();
+      const platform = (item.platform || '').toLowerCase();
+
+      // Qatar-specific keywords
+      const qatarKeywords = [
+        'qatar', 'doha', 'qatari', 'al thani', 'emir', 'lusail', 'al wakrah', 'al khor',
+        'education city', 'katara', 'the pearl', 'west bay', 'aspire', 'hamad', 'khalifa',
+        'corniche', 'souq waqif', 'msheireb', 'al sadd', 'gulf', 'middle east', 'arabian'
+      ];
+
+      // Check for Qatar content first (since this is Qatar-focused)
+      if (qatarKeywords.some(keyword => text.includes(keyword))) {
+        item.country = 'Qatar';
+      }
+      // Check for UK content
+      else if (ukKeywords.some(keyword => text.includes(keyword))) {
+        item.country = 'UK';
+      } 
+      // Check for US content
+      else if (usKeywords.some(keyword => text.includes(keyword))) {
+        item.country = 'US';
+      }
+      // Default if no match
+      else {
+        // Use source to guess if possible
+        if (['cnn', 'fox', 'nbc', 'cbs', 'usa today', 'new york times', 'washington post', 'newsweek', 'huffpost'].some(s => source.includes(s) || platform.includes(s))) {
           item.country = 'US';
         }
-        // Default if no match
+        else if (['bbc', 'guardian', 'telegraph', 'independent', 'daily mail'].some(s => source.includes(s) || platform.includes(s))) {
+          item.country = 'UK';
+        }
+        else if ([
+          'al jazeera', 'gulf times', 'peninsula', 'qatar tribune', 'qna',
+          'doha news', 'lusail news', 'al-sharq', 'raya', 'al-watan',
+          'qatar living', 'iloveqatar', 'marhaba', 'qatar observer',
+          'qatar gazette', 'qatar chronicle'
+        ].some(s => source.includes(s) || platform.includes(s))) {
+          item.country = 'Qatar';
+        }
         else {
-          // Use source to guess if possible
-          const source = (item.source || '').toLowerCase();
-          const platform = (item.platform || '').toLowerCase();
-          
-          if (['cnn', 'fox', 'nbc', 'cbs', 'usa today', 'new york times', 'washington post', 'newsweek', 'huffpost'].some(s => source.includes(s) || platform.includes(s))) {
-            item.country = 'US';
-          }
-          else if (['bbc', 'guardian', 'telegraph', 'independent', 'daily mail'].some(s => source.includes(s) || platform.includes(s))) {
+          // If still no match, make an educated guess based on domain if URL exists
+          const url = item.url || '';
+          if (url.includes('.uk') || url.includes('.co.uk')) {
             item.country = 'UK';
           }
-          else if (['al jazeera', 'gulf times', 'peninsula', 'qatar tribune', 'qna'].some(s => source.includes(s) || platform.includes(s))) {
+          else if (url.includes('.us') || url.includes('.gov') || url.includes('.edu')) {
+            item.country = 'US';
+          }
+          else if (url.includes('.qa') || url.includes('qatar') || url.includes('doha') || 
+                   url.includes('gulf-times') || url.includes('aljazeera')) {
             item.country = 'Qatar';
           }
           else {
-            // If still no match, make an educated guess based on domain if URL exists
-            const url = item.url || '';
-            if (url.includes('.uk') || url.includes('.co.uk')) {
-              item.country = 'UK';
-            }
-            else if (url.includes('.us') || url.includes('.gov') || url.includes('.edu')) {
-              item.country = 'US';
-            }
-            else if (url.includes('.qa') || url.includes('qatarliving') || url.includes('doha')) {
-              item.country = 'Qatar';
-            }
-            else {
-              // Default to Qatar since this is a Qatar-focused dataset
-              item.country = 'Qatar';
-            }
+            // Default to Qatar since this is a Qatar-focused dataset
+            item.country = 'Qatar';
           }
         }
       }
