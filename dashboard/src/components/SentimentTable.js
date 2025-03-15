@@ -97,35 +97,39 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
     
     return (
       <Stack direction="column" spacing={1}>
-        <Chip 
+        <Chip
           icon={getSourceIcon(item.source)}
-          label={item.source || 'Unknown'} 
-          variant="filled" 
-          size="small"
+          label={
+            <Stack direction="column" spacing={0} sx={{ alignItems: 'flex-start' }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                {item.source || 'Unknown Source'}
+              </Typography>
+              {item.author && (
+                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
+                  by {item.author}
+                </Typography>
+              )}
+            </Stack>
+          }
           sx={{
-            backgroundColor: getSourceColor(item.source),
-            color: 'white',
+            backgroundColor: `${getSourceColor(item.source)}15`,
+            color: getSourceColor(item.source),
             '& .MuiChip-icon': {
-              color: 'white'
+              color: getSourceColor(item.source)
             },
-            fontWeight: 'medium'
+            height: 'auto',
+            '& .MuiChip-label': {
+              display: 'block',
+              whiteSpace: 'normal',
+              py: 0.5
+            }
           }}
         />
-        {isUserContent && item.username && (
-          <Chip
-            icon={<PersonIcon sx={{ fontSize: '16px' }} />}
-            label={item.username}
-            variant="outlined"
-            size="small"
-            sx={{
-              borderColor: getSourceColor(item.source),
-              color: getSourceColor(item.source),
-              '& .MuiChip-icon': {
-                color: getSourceColor(item.source)
-              },
-              fontSize: '0.75rem'
-            }}
-          />
+        {item.date && (
+          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+            <CalendarIcon fontSize="small" />
+            {formatDate(item.date)}
+          </Typography>
         )}
       </Stack>
     );
@@ -368,24 +372,33 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
         </TableCell>
         <TableCell>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography 
-              sx={{ 
-                maxWidth: '100%',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                lineHeight: '1.4em',
-                minHeight: '2.8em'
-              }}
-            >
-              {item.text || 'N/A'}
-            </Typography>
+            <Stack spacing={1} sx={{ flex: 1 }}>
+              <Typography 
+                sx={{ 
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  lineHeight: '1.4em',
+                  minHeight: '2.8em'
+                }}
+              >
+                {item.text || 'N/A'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <PersonIcon fontSize="small" />
+                {item.author || 'Unknown Author'}
+              </Typography>
+            </Stack>
             <Tooltip title="Copy text">
               <IconButton 
                 size="small" 
-                onClick={() => handleCopyText(item.text)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopyText(item.text);
+                }}
                 sx={{ 
                   opacity: 0.6,
                   '&:hover': { opacity: 1 }
@@ -396,7 +409,7 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
             </Tooltip>
           </Box>
         </TableCell>
-        <TableCell sx={{ width: '180px' }}>
+        <TableCell sx={{ width: '200px' }}>
           {renderSourceInfo(item)}
         </TableCell>
       </motion.tr>
@@ -496,7 +509,7 @@ const SentimentTable = ({ topSentiment, bottomSentiment, title }) => {
                     sx={{ 
                       fontWeight: 'bold', 
                       backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      width: '180px'
+                      width: '200px'
                     }}
                   >
                     Source
