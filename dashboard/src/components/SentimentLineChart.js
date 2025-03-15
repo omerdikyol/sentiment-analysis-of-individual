@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
+import ChartModal from './ChartModal';
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  cursor: 'pointer',
+  transition: 'transform 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'scale(1.02)',
+  },
+}));
 
 const SentimentLineChart = ({ sentimentByDate }) => {
   const [animatedData, setAnimatedData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   useEffect(() => {
     if (sentimentByDate && sentimentByDate.length > 0) {
@@ -21,6 +32,14 @@ const SentimentLineChart = ({ sentimentByDate }) => {
       });
     }
   }, [sentimentByDate]);
+
+  const handleCardClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
 
   if (!sentimentByDate || sentimentByDate.length === 0) {
     return (
@@ -79,99 +98,85 @@ const SentimentLineChart = ({ sentimentByDate }) => {
     avgScorePercent: (item.avgScore * 100).toFixed(1)
   }));
 
+  const renderChart = (containerHeight = '100%') => (
+    <ResponsiveContainer width="100%" height={containerHeight}>
+      <LineChart
+        data={animatedData}
+        margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+        <XAxis
+          dataKey="date"
+          angle={-45}
+          textAnchor="end"
+          height={60}
+          tick={{ fontSize: 12 }}
+        />
+        <YAxis tick={{ fontSize: 12 }} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        />
+        <Legend />
+        <Line
+          type="monotone"
+          dataKey="positive"
+          stroke="#4caf50"
+          strokeWidth={2}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="negative"
+          stroke="#f44336"
+          strokeWidth={2}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+        />
+        <Line
+          type="monotone"
+          dataKey="neutral"
+          stroke="#9e9e9e"
+          strokeWidth={2}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-    >
-      <Card sx={{ 
-        height: '100%', 
-        boxShadow: 3, 
-        borderRadius: 2,
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%)',
-        transition: 'all 0.3s ease'
-      }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>Sentiment Analysis Over Time</Typography>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient id="avgScoreGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="rgba(54, 162, 235, 0.8)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="rgba(54, 162, 235, 0.2)" stopOpacity={0.2} />
-                  </linearGradient>
-                  <linearGradient id="positiveGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="rgba(75, 192, 192, 0.8)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="rgba(75, 192, 192, 0.2)" stopOpacity={0.2} />
-                  </linearGradient>
-                  <linearGradient id="negativeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="rgba(255, 99, 132, 0.8)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="rgba(255, 99, 132, 0.2)" stopOpacity={0.2} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis 
-                  dataKey="date"
-                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  tickFormatter={(value) => `${value}${typeof value === 'number' ? '%' : ''}`}
-                  tick={{ fontSize: 12 }}
-                  domain={[0, 100]}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ paddingTop: '10px' }} />
-                
-                <Area 
-                  type="monotone" 
-                  dataKey="avgScorePercent"
-                  stroke="rgba(54, 162, 235, 1)"
-                  strokeWidth={3}
-                  fill="url(#avgScoreGradient)"
-                  activeDot={{ 
-                    r: 6, 
-                    stroke: '#fff',
-                    strokeWidth: 2,
-                    fill: 'rgba(54, 162, 235, 1)'
-                  }}
-                  name="Average Sentiment Score (%)" 
-                />
-                
-                <Line 
-                  type="monotone" 
-                  dataKey="positive"
-                  stroke="rgba(75, 192, 192, 1)"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                  name="Positive Mentions" 
-                  connectNulls={true}
-                  hide={true}
-                />
-                
-                <Line 
-                  type="monotone" 
-                  dataKey="negative"
-                  stroke="rgba(255, 99, 132, 1)"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                  name="Negative Mentions" 
-                  connectNulls={true}
-                  hide={true}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <StyledCard onClick={handleCardClick}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Sentiment Trends
+            </Typography>
+            <Box sx={{ height: 300, mt: 2 }}>
+              {renderChart('100%')}
+            </Box>
+          </CardContent>
+        </StyledCard>
+      </motion.div>
+
+      <ChartModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        title="Sentiment Trends - Detailed View"
+      >
+        {renderChart('100%')}
+      </ChartModal>
+    </>
   );
 };
 

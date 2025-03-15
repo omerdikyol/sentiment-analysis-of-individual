@@ -29,6 +29,7 @@ import {
 import { motion } from 'framer-motion';
 
 // Import components
+import Layout from './components/layout/Layout';
 import MetricCard from './components/MetricCard';
 import MentionLineChart from './components/MentionLineChart';
 import SentimentLineChart from './components/SentimentLineChart';
@@ -45,17 +46,18 @@ import DataService from './services/DataService';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#3f51b5',
+      main: '#1a2035',
     },
     secondary: {
       main: '#f50057',
     },
     background: {
-      default: '#f5f7fa',
+      default: '#f8f9fa',
+      paper: '#ffffff',
     },
   },
   typography: {
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+    fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
     h4: {
       fontWeight: 700,
     },
@@ -71,6 +73,16 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 2px 12px 0 rgba(0,0,0,0.05)',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: '12px',
+          boxShadow: '0 2px 12px 0 rgba(0,0,0,0.05)',
         },
       },
     },
@@ -118,29 +130,11 @@ const SectionHeader = ({ title }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.5, delay: 0.1 }}
   >
-    <Paper 
-      elevation={0} 
-      sx={{ 
-        p: 2, 
-        mb: 3, 
-        backgroundColor: 'transparent',
-        borderRadius: '8px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}
-    >
-      <Box sx={{ 
-        position: 'absolute', 
-        left: 0, 
-        top: 0, 
-        bottom: 0, 
-        width: '4px', 
-        bgcolor: 'primary.main' 
-      }} />
+    <Box sx={{ mb: 3 }}>
       <Typography variant="h5" gutterBottom>
         {title}
       </Typography>
-    </Paper>
+    </Box>
   </motion.div>
 );
 
@@ -175,6 +169,7 @@ function App() {
       try {
         setLoading(true);
         const result = await DataService.loadData();
+        console.log('Data loaded:', result);
         setData(result);
         setFilteredData(result);
         
@@ -196,6 +191,8 @@ function App() {
   useEffect(() => {
     if (!data) return;
     
+    console.log('Filtering data for country:', selectedCountry);
+    
     if (selectedCountry === 'All Countries') {
       setFilteredData(data);
       return;
@@ -203,6 +200,7 @@ function App() {
     
     // Filter raw data by country
     const filteredRawData = DataService.filterDataByCountry(data.rawData, selectedCountry);
+    console.log('Filtered raw data:', filteredRawData);
     
     // Recalculate metrics and charts with filtered data
     const metrics = DataService.calculateMetrics(filteredRawData);
@@ -211,6 +209,14 @@ function App() {
     const topSentiment = DataService.getTopSentiment(filteredRawData, 5);
     const bottomSentiment = DataService.getBottomSentiment(filteredRawData, 5);
     const mentionsByPlatform = DataService.getMentionsByPlatform(filteredRawData);
+    const mentionsByCountry = DataService.getMentionsByCountry(filteredRawData);
+    
+    console.log('Updated metrics:', {
+      mentionsByDate,
+      sentimentByDate,
+      mentionsByPlatform,
+      mentionsByCountry
+    });
     
     setFilteredData({
       ...data,
@@ -220,7 +226,8 @@ function App() {
       sentimentByDate,
       topSentiment,
       bottomSentiment,
-      mentionsByPlatform
+      mentionsByPlatform,
+      mentionsByCountry
     });
   }, [selectedCountry, data]);
   
@@ -239,7 +246,7 @@ function App() {
             justifyContent: 'center', 
             alignItems: 'center', 
             height: '100vh',
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%)'
+            background: theme.palette.background.default
           }}
         >
           <LoadingAnimation />
@@ -248,8 +255,8 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <Typography variant="h5" sx={{ mt: 3, fontWeight: 'medium' }}>
-              Loading Sentiment Analysis...
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Loading dashboard...
             </Typography>
           </motion.div>
         </Box>
@@ -264,282 +271,158 @@ function App() {
         <Box 
           sx={{ 
             display: 'flex', 
+            flexDirection: 'column',
             justifyContent: 'center', 
             alignItems: 'center', 
             height: '100vh',
-            flexDirection: 'column',
-            background: 'linear-gradient(135deg, #f5f7fa 0%, #ffe0e0 100%)'
+            background: theme.palette.background.default
           }}
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Typography variant="h4" color="error" gutterBottom>Error</Typography>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Typography variant="body1">{error}</Typography>
-          </motion.div>
+          <Typography color="error" variant="h6">
+            {error}
+          </Typography>
         </Box>
       </ThemeProvider>
     );
   }
 
-  // Animation variants for staggered animations
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-  
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.5 }
-    }
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ flexGrow: 1, background: 'linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%)' }}>
-        <AppBar 
-          position="fixed" 
-          color="primary" 
-          elevation={2}
-          sx={{
-            background: 'linear-gradient(90deg, #3f51b5 0%, #5c6bc0 100%)'
-          }}
-        >
-          <Toolbar>
-            <motion.div
-              initial={{ rotate: -10, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <DashboardIcon sx={{ mr: 2, fontSize: 30 }} />
-            </motion.div>
-            <Typography 
-              variant="h6" 
-              component="div" 
-              sx={{ 
-                flexGrow: 1,
-                fontWeight: 'bold',
-                letterSpacing: '0.5px'
-              }}
-            >
-              Sentiment Analysis Dashboard
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        <Toolbar id="back-to-top-anchor" />
-        
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4, pt: 4 }}>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Country Filter - aligned to the left */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 3 }}>
-              <motion.div variants={itemVariants}>
-                <CountryFilter 
-                  countries={data?.availableCountries || []} 
-                  selectedCountry={selectedCountry}
-                  onCountryChange={handleCountryChange}
-                />
-              </motion.div>
-            </Box>
-            
-            {/* Metrics Overview */}
-            <motion.div variants={itemVariants}>
-              <SectionHeader title="Overview" />
-            </motion.div>
-            
-            <Grid container spacing={3}>
-              {/* Key Metrics */}
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Total Mentions" 
-                    value={filteredData?.metrics?.totalMentions || 0} 
-                    icon={<MessageIcon />} 
-                    color="#3f51b5"
+      <Layout>
+        <Box sx={{ pb: 6 }} id="back-to-top-anchor">
+          <Grid container spacing={3}>
+            {/* Header with Country Filter */}
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 3,
+                  mt: 1
+                }}
+              >
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    color: theme.palette.text.primary
+                  }}
+                >
+                  Dashboard Overview
+                </Typography>
+                <Box sx={{ width: '300px' }}>
+                  <CountryFilter
+                    selectedCountry={selectedCountry}
+                    onCountryChange={handleCountryChange}
+                    data={data}
                   />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Positive Mentions" 
-                    value={filteredData?.metrics?.positiveMentions || 0} 
-                    icon={<FavoriteIcon />} 
-                    color="#4caf50"
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Negative Mentions" 
-                    value={filteredData?.metrics?.negativeMentions || 0} 
-                    icon={<ThumbDownIcon />} 
-                    color="#f44336"
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Presence Score" 
-                    value={`${filteredData?.metrics?.presenceScore || 0}%`} 
-                    icon={<StackedLineChartIcon />} 
-                    color="#ff9800"
-                  />
-                </motion.div>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Positive Sentiment" 
-                    value={`${filteredData?.metrics?.positivePercentage || 0}%`} 
-                    color="#4caf50"
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Neutral Sentiment" 
-                    value={`${filteredData?.metrics?.neutralPercentage || 0}%`} 
-                    color="#2196f3"
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Negative Sentiment" 
-                    value={`${filteredData?.metrics?.negativePercentage || 0}%`} 
-                    color="#f44336"
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <motion.div variants={itemVariants}>
-                  <MetricCard 
-                    title="Social Media Mentions" 
-                    value={filteredData?.metrics?.socialMediaMentions || 0} 
-                    color="#9c27b0"
-                  />
-                </motion.div>
-              </Grid>
-              
-              {/* Geographic Analysis */}
-              <Grid item xs={12}>
-                <motion.div variants={itemVariants}>
-                  <SectionHeader title="Geographic Analysis" />
-                </motion.div>
-              </Grid>
-              
-              {/* Country Bar Chart */}
-              <Grid item xs={12}>
-                <motion.div variants={itemVariants}>
-                  <CountryBarChart mentionsByCountry={data?.mentionsByCountry || []} />
-                </motion.div>
-              </Grid>
-              
-              {/* Charts Section */}
-              <Grid item xs={12}>
-                <motion.div variants={itemVariants}>
-                  <SectionHeader title="Trend Analysis" />
-                </motion.div>
-              </Grid>
-              
-              {/* Mentions Line Chart */}
-              <Grid item xs={12} md={6}>
-                <motion.div variants={itemVariants}>
-                  <MentionLineChart mentionsByDate={filteredData?.mentionsByDate || []} />
-                </motion.div>
-              </Grid>
-              
-              {/* Sentiment Line Chart */}
-              <Grid item xs={12} md={6}>
-                <motion.div variants={itemVariants}>
-                  <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate || []} />
-                </motion.div>
-              </Grid>
-              
-              {/* Platform Bar Chart */}
-              <Grid item xs={12}>
-                <motion.div variants={itemVariants}>
-                  <PlatformBarChart mentionsByPlatform={filteredData?.mentionsByPlatform || []} />
-                </motion.div>
-              </Grid>
-              
-              {/* Top and Bottom Sentiment */}
-              <Grid item xs={12}>
-                <motion.div variants={itemVariants}>
-                  <SectionHeader title="Sentiment Highlights" />
-                </motion.div>
-              </Grid>
-              
-              {/* Top 5 Sentiment */}
-              <Grid item xs={12} md={6}>
-                <motion.div variants={itemVariants}>
-                  <SentimentTable 
-                    topSentiment={filteredData?.topSentiment || []} 
-                    bottomSentiment={filteredData?.bottomSentiment || []}
-                    title="Highest Sentiment Posts"
-                  />
-                </motion.div>
-              </Grid>
-              
-              {/* Bottom 5 Sentiment */}
-              <Grid item xs={12} md={6}>
-                <motion.div variants={itemVariants}>
-                  <SentimentTable 
-                    topSentiment={filteredData?.topSentiment || []} 
-                    bottomSentiment={filteredData?.bottomSentiment || []}
-                    title="Lowest Sentiment Posts"
-                  />
-                </motion.div>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Metrics */}
+            <Grid item xs={12}>
+              <SectionHeader title="Key Metrics" />
+              <Grid container spacing={3}>
+                {filteredData?.metrics && (
+                  <>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <MetricCard
+                        title="Total Mentions"
+                        value={filteredData.metrics.totalMentions}
+                        icon={<MessageIcon />}
+                        color="#3f51b5"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <MetricCard
+                        title="Positive Sentiment"
+                        value={`${filteredData.metrics.positivePercentage}%`}
+                        icon={<FavoriteIcon />}
+                        color="#4caf50"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <MetricCard
+                        title="Negative Sentiment"
+                        value={`${filteredData.metrics.negativePercentage}%`}
+                        icon={<ThumbDownIcon />}
+                        color="#f44336"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                      <MetricCard
+                        title="Engagement Rate"
+                        value={`${filteredData.metrics.presenceScore}%`}
+                        icon={<TrendingUpIcon />}
+                        color="#ff9800"
+                      />
+                    </Grid>
+                  </>
+                )}
               </Grid>
             </Grid>
-            
-            {/* Footer */}
-            <motion.div 
-              variants={itemVariants}
-              style={{ marginTop: '32px' }}
-            >
-              <Box sx={{ pt: 4, pb: 2 }}>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  Sentiment Analysis Dashboard © {new Date().getFullYear()}
-                </Typography>
-              </Box>
-            </motion.div>
-          </motion.div>
-        </Container>
-      </Box>
-      
-      {/* Scroll to top button */}
-      <ScrollToTop>
-        <Fab color="primary" size="small" aria-label="scroll back to top">
-          <KeyboardArrowUpIcon />
-        </Fab>
-      </ScrollToTop>
+
+            {/* Charts */}
+            <Grid item xs={12}>
+              <SectionHeader title="Trends & Analysis" />
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3, height: '100%' }}>
+                    <MentionLineChart mentionsByDate={filteredData?.mentionsByDate} />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3, height: '100%' }}>
+                    <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate} />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3, height: '100%' }}>
+                    <PlatformBarChart mentionsByPlatform={filteredData?.mentionsByPlatform} />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3, height: '100%' }}>
+                    <CountryBarChart mentionsByCountry={filteredData?.mentionsByCountry} />
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Sentiment Tables */}
+            <Grid item xs={12}>
+              <SectionHeader title="Detailed Sentiment Analysis" />
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3 }}>
+                    <SentimentTable 
+                      data={filteredData}
+                      title="Highest Sentiment Posts"
+                    />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3 }}>
+                    <SentimentTable 
+                      data={filteredData}
+                      title="Lowest Sentiment Posts"
+                    />
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+        </Box>
+
+        <ScrollToTop>
+          <Fab color="primary" size="small" aria-label="scroll back to top">
+            <KeyboardArrowUpIcon />
+          </Fab>
+        </ScrollToTop>
+      </Layout>
     </ThemeProvider>
   );
 }

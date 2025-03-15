@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
+import ChartModal from './ChartModal';
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  cursor: 'pointer',
+  transition: 'transform 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'scale(1.02)',
+  },
+}));
 
 const MentionLineChart = ({ mentionsByDate }) => {
   const [animatedData, setAnimatedData] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   useEffect(() => {
     if (mentionsByDate && mentionsByDate.length > 0) {
@@ -22,6 +33,51 @@ const MentionLineChart = ({ mentionsByDate }) => {
     }
   }, [mentionsByDate]);
 
+  const handleCardClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+  };
+
+  const renderChart = (containerHeight = '100%') => (
+    <ResponsiveContainer width="100%" height={containerHeight}>
+      <AreaChart
+        data={animatedData}
+        margin={{
+          top: 10,
+          right: 30,
+          left: 0,
+          bottom: 0,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis 
+          dataKey="date"
+          tickFormatter={(date) => new Date(date).toLocaleDateString()}
+        />
+        <YAxis />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          }}
+        />
+        <Area
+          type="monotone"
+          dataKey="count"
+          stroke="#8884d8"
+          fill="#8884d8"
+          fillOpacity={0.3}
+          strokeWidth={2}
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+
   if (!mentionsByDate || mentionsByDate.length === 0) {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
@@ -33,89 +89,33 @@ const MentionLineChart = ({ mentionsByDate }) => {
     );
   }
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            p: 2,
-            border: '1px solid #ccc',
-            borderRadius: 1,
-            boxShadow: 3
-          }}
-        >
-          <Typography variant="subtitle2" color="textSecondary">
-            {label}
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0].color }}>
-            {`Mentions: ${payload[0].value}`}
-          </Typography>
-        </Box>
-      );
-    }
-    return null;
-  };
-
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card sx={{ 
-        height: '100%', 
-        boxShadow: 3, 
-        borderRadius: 2,
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
-        transition: 'all 0.3s ease'
-      }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>Mentions Over Time</Typography>
-          <div style={{ height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={animatedData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient id="mentionColorGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="rgba(75, 192, 192, 0.8)" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="rgba(75, 192, 192, 0.2)" stopOpacity={0.2} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis 
-                  dataKey="date"
-                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  tickFormatter={(value) => value.toLocaleString()}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ paddingTop: '10px' }} />
-                <Area 
-                  type="monotone" 
-                  dataKey="count"
-                  stroke="rgba(75, 192, 192, 1)"
-                  strokeWidth={3}
-                  fill="url(#mentionColorGradient)"
-                  activeDot={{ 
-                    r: 6, 
-                    stroke: '#fff',
-                    strokeWidth: 2,
-                    fill: 'rgba(75, 192, 192, 1)'
-                  }}
-                  name="Mentions" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <StyledCard onClick={handleCardClick}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Mentions Over Time
+            </Typography>
+            <Box sx={{ height: 300, mt: 2 }}>
+              {renderChart('100%')}
+            </Box>
+          </CardContent>
+        </StyledCard>
+      </motion.div>
+
+      <ChartModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        title="Mentions Over Time - Detailed View"
+      >
+        {renderChart('100%')}
+      </ChartModal>
+    </>
   );
 };
 

@@ -40,7 +40,7 @@ class SentimentAnalysisAgent:
             'system_health': []
         }
         self.initialize_directories()
-        self.collection_scripts = self.discover_collection_scripts()
+        self.collection_scripts = self.discover_colflection_scripts()
         self.command_queue = queue.Queue()
         self.is_running = True
         self.current_task = None
