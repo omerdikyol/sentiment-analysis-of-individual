@@ -12,6 +12,12 @@ import socket
 from urllib.error import URLError, HTTPError
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 import threading
+import ssl
+import requests
+import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
+import html
+import chardet
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,85 +31,74 @@ class RSSFeedCollector:
         self.qatar_emir_keywords = query_variations
         
         # Timeout settings
-        self.feed_timeout = 10  # seconds for feed fetch timeout
-        self.max_retries = 2    # maximum number of retries for each feed
+        self.feed_timeout = 15  # Increased timeout for slower servers
+        self.max_retries = 3    # Increased retries
+        
+        # SSL Context for certificate verification issues
+        self.ssl_context = ssl._create_unverified_context()
+        
+        # Headers for requests to avoid blocking
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, application/atom+xml, text/xml, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Connection': 'keep-alive'
+        }
         
         # Track failed sources
         self.failed_sources = set()
         self.source_failures = {}  # Track number of failures per source
         
-        # List of RSS feeds to check
+        # Updated RSS feeds with corrected URLs and alternative endpoints
         self.rss_feeds = [
             # Qatar News
-            "https://www.gulf-times.com/rss",
-            "https://www.qatar-tribune.com/rss",
-            "https://thepeninsulaqatar.com/rss",
-            "https://dohanews.co/feed/",
-            "https://www.qna.org.qa/en/rss",  # Qatar News Agency
-            "https://www.lusailnews.net/rss",  # Lusail News
-            "https://alarab.qa/rss",  # Al Arab Qatar
-            "https://www.al-watan.com/rss",  # Al-Watan Qatar
+            "https://www.gulf-times.com/rss/feed",
+            "https://www.thepeninsulaqatar.com/rss/feed",
+            "https://dohanews.co/feed",
+            "https://www.qna.org.qa/en/rss",
+            "https://www.lusailnews.net/rss",
+            "https://alarab.qa/rss",
+            "https://al-watan.com/feed",
             
             # Major Middle East News
             "https://www.aljazeera.com/xml/rss/all.xml",
-            "https://english.alarabiya.net/rss",  # Al Arabiya English
-            "https://www.arabnews.com/rss.xml",
-            "https://gulfnews.com/rss",
-            "https://www.khaleejtimes.com/rss",
-            "https://www.thenationalnews.com/rss",
-            "https://english.aawsat.com/rss",  # Asharq Al-Awsat
-            "https://www.middleeastmonitor.com/feed/",  # MEMO
-            "https://english.alaraby.co.uk/rss",  # The New Arab
-            
-            # UAE News (relevant for regional coverage)
-            "https://www.emirates247.com/rss",
-            "https://www.zawya.com/rss",  # ZAWYA (Business)
-            "https://www.albayan.ae/rss",  # Al Bayan
+            "https://english.alarabiya.net/feed/rss",
+            "https://arab.news/rss",
+            "https://gulfnews.com/rss/latest",
+            "https://www.khaleejtimes.com/rss-feed",
+            "https://www.thenationalnews.com/world/rss",
+            "https://english.aawsat.com/feed",
+            "https://www.middleeastmonitor.com/feed",
+            "https://english.alaraby.co.uk/rss.xml",
             
             # UK News
-            "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",  # BBC Middle East
-            "https://feeds.bbci.co.uk/news/rss.xml",  # BBC Main
-            "https://www.theguardian.com/world/middleeast/rss",  # Guardian Middle East
-            "https://www.theguardian.com/world/rss",  # Guardian World
+            "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
+            "https://www.theguardian.com/world/middleeast/rss",
             "https://www.independent.co.uk/news/world/middle-east/rss",
             "https://www.telegraph.co.uk/rss.xml",
-            "https://www.thetimes.co.uk/rss",
-            "https://www.dailymail.co.uk/news/worldnews/index.rss",  # Daily Mail World News
+            "https://www.dailymail.co.uk/news/worldnews/index.rss",
             
             # US News
-            "http://rss.cnn.com/rss/edition_meast.rss",  # CNN Middle East
-            "http://rss.cnn.com/rss/cnn_topstories.rss",  # CNN Top Stories
-            "https://www.reuters.com/rss/world/middle-east",  # Reuters Middle East
-            "https://www.reuters.com/rss/topNews",  # Reuters Top News
-            "https://feeds.npr.org/1001/rss.xml",  # NPR News
-            "https://www.wsj.com/xml/rss/3_7481.xml",  # WSJ World News
-            "https://www.latimes.com/world/middleeast/rss2.0.xml",  # LA Times Middle East
-            "https://nypost.com/news/feed/",
-            "https://www.washingtontimes.com/rss/headlines/news/world/",
-            "https://www.voanews.com/api/zq$omekvi",  # Voice of America
-            "https://www.usnews.com/rss/news",  # US News & World Report
+            "http://rss.cnn.com/rss/edition_meast.rss",
+            "http://rss.cnn.com/rss/cnn_topstories.rss",
+            "https://feeds.npr.org/1001/rss.xml",
+            "https://www.latimes.com/world/middleeast/rss2.0.xml",
+            "https://www.washingtontimes.com/rss/headlines/news/world",
             
             # Business and Politics
             "https://feeds.bloomberg.com/markets/news.rss",
-            "https://www.forbes.com/middle-east/feed/",
-            "https://www.ft.com/world/mideast?format=rss",  # Financial Times Middle East
+            "https://www.ft.com/world/mideast/rss",
             "https://www.economist.com/middle-east-and-africa/rss.xml",
-            "https://www.cnbc.com/id/100727362/device/rss/rss.html",  # CNBC Middle East
-            "https://www.marketwatch.com/rss/topstories",  # MarketWatch
-            "https://www.thestreet.com/rss",  # TheStreet
-
-            # Diplomatic and Policy News
-            "https://www.brookings.edu/rss",  # Brookings Institution
-            "https://www.chathamhouse.org/rss",  # Chatham House
-            "https://www.cfr.org/rss.xml",  # Council on Foreign Relations
-            "https://www.atlanticcouncil.org/feed/",  # Atlantic Council
-            "https://www.csis.org/rss.xml",  # Center for Strategic and International Studies
+            "https://www.cnbc.com/id/100727362/device/rss/rss.html",
+            "https://www.marketwatch.com/rss/topstories",
             
-            # Energy News (relevant for Qatar)
-            "https://www.rigzone.com/news/rss/rigzone_latest.aspx",  # Rigzone
-            "https://oilprice.com/rss/main",  # OilPrice.com
-            "https://www.spglobal.com/platts/en/rss-feed",  # S&P Global Platts
-            "https://www.naturalgasworld.com/rss/natural-gas-news-rss"  # Natural Gas World
+            # Think Tanks and Policy
+            "https://www.atlanticcouncil.org/feed",
+            "https://www.csis.org/feed/reports",
+            
+            # Energy News
+            "https://www.rigzone.com/news/rss",
+            "https://oilprice.com/rss/main"
         ]
 
     def _clean_text(self, text: str) -> str:
@@ -134,14 +129,96 @@ class RSSFeedCollector:
             
         return False
 
+    def _clean_xml(self, xml_content: str) -> str:
+        """Clean problematic XML content"""
+        if not xml_content:
+            return None
+            
+        try:
+            # Detect encoding if not UTF-8
+            detected = chardet.detect(xml_content.encode())
+            if detected['encoding'] and detected['encoding'].lower() != 'utf-8':
+                xml_content = xml_content.encode(detected['encoding']).decode('utf-8', errors='ignore')
+            
+            # Remove invalid XML characters
+            xml_content = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', xml_content)
+            
+            # Fix common HTML entities
+            xml_content = html.unescape(xml_content)
+            
+            # Fix unclosed CDATA sections
+            xml_content = re.sub(r'<!\[CDATA\[([^\]]*)(?!\]\])>', r'<![CDATA[\1]]>', xml_content)
+            
+            # Fix malformed tags
+            soup = BeautifulSoup(xml_content, 'xml')
+            xml_content = str(soup)
+            
+            return xml_content
+        except Exception as e:
+            logger.warning(f"Error cleaning XML: {str(e)}")
+            return None
+
+    def _fetch_feed_with_requests(self, feed_url: str) -> str:
+        """Fetch feed content using requests with better error handling"""
+        try:
+            # Try different variations of the URL if initial one fails
+            urls_to_try = [
+                feed_url,
+                feed_url.rstrip('/') + '/feed',
+                feed_url.rstrip('/') + '/rss',
+                feed_url.replace('feed', 'rss')
+            ]
+            
+            for url in urls_to_try:
+                try:
+                    response = requests.get(
+                        url,
+                        headers=self.headers,
+                        timeout=self.feed_timeout,
+                        verify=False  # Disable SSL verification
+                    )
+                    
+                    if response.status_code == 200:
+                        content_type = response.headers.get('content-type', '').lower()
+                        if any(t in content_type for t in ['xml', 'rss', 'atom']):
+                            return response.text
+                        
+                        # If content type is HTML, try to find RSS link
+                        if 'html' in content_type:
+                            soup = BeautifulSoup(response.text, 'html.parser')
+                            rss_link = soup.find('link', type='application/rss+xml')
+                            if rss_link and rss_link.get('href'):
+                                return self._fetch_feed_with_requests(rss_link['href'])
+                                
+                except requests.RequestException:
+                    continue
+                    
+            return None
+        except Exception as e:
+            logger.warning(f"Request failed for {feed_url}: {str(e)}")
+            return None
+
     def _parse_feed_with_timeout(self, feed_url: str) -> Any:
-        """Parse feed with timeout handling"""
+        """Parse feed with timeout handling and multiple parsing attempts"""
         # Set socket timeout for the request
         original_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(self.feed_timeout)
         
         try:
-            return feedparser.parse(feed_url)
+            # First try: Direct feedparser approach with SSL context
+            feed = feedparser.parse(feed_url, handlers=[], request_headers=self.headers)
+            
+            # If failed or empty, try with requests
+            if feed.get('bozo', 0) == 1 or not feed.get('entries', []):
+                xml_content = self._fetch_feed_with_requests(feed_url)
+                if xml_content:
+                    # Clean the XML content
+                    cleaned_content = self._clean_xml(xml_content)
+                    if cleaned_content:
+                        # Try parsing the cleaned content
+                        feed = feedparser.parse(cleaned_content)
+            
+            return feed
         finally:
             # Restore original timeout
             socket.setdefaulttimeout(original_timeout)
@@ -172,15 +249,21 @@ class RSSFeedCollector:
             return []
             
         try:
-            # Try to parse the feed with timeout
+            # Try to parse the feed with timeout and better error handling
             feed = self._parse_feed_with_timeout(feed_url)
+            
+            # Additional validation for feed structure
+            if not feed or not hasattr(feed, 'entries'):
+                raise ValueError("Invalid feed structure")
             
             # Check if feed parsing was successful
             if hasattr(feed, 'status') and feed.status >= 400:
                 raise HTTPError(feed_url, feed.status, f"HTTP Error: {feed.status}", {}, None)
                 
             if feed.get('bozo', 0) == 1 and hasattr(feed, 'bozo_exception'):
-                raise feed.bozo_exception
+                # Only raise if it's a serious error
+                if not isinstance(feed.bozo_exception, (feedparser.CharacterEncodingOverride)):
+                    raise feed.bozo_exception
             
             articles = []
             entries = feed.get('entries', [])
