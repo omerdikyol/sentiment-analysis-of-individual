@@ -131,12 +131,22 @@ const InfluencerAnalysis = ({ data }) => {
     .sort((a, b) => b.engagement - a.engagement)
     .slice(0, 5);
 
+  // Helper function to get sentiment info
+  const getSentimentInfo = (sentiment) => {
+    if (sentiment >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark, icon: '😄' };
+    if (sentiment >= 0.3) return { text: 'Positive', color: theme.palette.success.main, icon: '🙂' };
+    if (sentiment > -0.3) return { text: 'Neutral', color: theme.palette.grey[600], icon: '😐' };
+    if (sentiment > -0.7) return { text: 'Negative', color: theme.palette.error.main, icon: '🙁' };
+    return { text: 'Very Negative', color: theme.palette.error.dark, icon: '😞' };
+  };
+
   // Format top influencers
   const topInfluencers = Object.values(influencerData)
     .map(inf => ({
       ...inf,
       averageSentiment: inf.sentiment / inf.posts,
-      engagementRate: (inf.engagement / inf.posts / inf.followers * 100).toFixed(2)
+      engagementRate: (inf.engagement / inf.posts / inf.followers * 100).toFixed(2),
+      sentimentInfo: getSentimentInfo(inf.sentiment / inf.posts)
     }))
     .sort((a, b) => b.engagement - a.engagement)
     .slice(0, 5);
@@ -224,17 +234,51 @@ const InfluencerAnalysis = ({ data }) => {
                       </Box>
                     }
                     secondary={
-                      <Box>
-                        <Chip
-                          label={influencer.type}
-                          size="small"
-                          sx={{ mr: 1 }}
-                        />
-                        <Chip
-                          label={`${influencer.engagementRate}% Engagement`}
-                          size="small"
-                          color="primary"
-                        />
+                      <Box sx={{ mt: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Chip
+                            label={influencer.type}
+                            size="small"
+                            sx={{ mr: 1 }}
+                          />
+                          <Chip
+                            icon={<TrendingUpIcon />}
+                            label={`${influencer.engagementRate}% Engagement`}
+                            size="small"
+                            color="primary"
+                          />
+                        </Box>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 0.5,
+                          color: influencer.sentimentInfo.color,
+                          mt: 0.5
+                        }}>
+                          <Typography 
+                            variant="body2" 
+                            component="span"
+                            sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 0.5,
+                              fontWeight: 'medium'
+                            }}
+                          >
+                            {influencer.sentimentInfo.icon}
+                            {influencer.sentimentInfo.text}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            component="span"
+                            sx={{ 
+                              color: 'text.secondary',
+                              ml: 0.5
+                            }}
+                          >
+                            ({(influencer.averageSentiment * 100).toFixed(1)}%)
+                          </Typography>
+                        </Box>
                       </Box>
                     }
                   />
