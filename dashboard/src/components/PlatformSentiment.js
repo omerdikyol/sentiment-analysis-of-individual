@@ -18,20 +18,17 @@ const PlatformSentiment = ({ data }) => {
   // Sample data for demonstration
   const sampleData = {
     socialMedia: [
-      { platform: 'Twitter', positive: 35, neutral: 40, negative: 25, total: 100, engagement: 1200 },
-      { platform: 'Facebook', positive: 30, neutral: 45, negative: 25, total: 100, engagement: 980 },
-      { platform: 'LinkedIn', positive: 40, neutral: 35, negative: 25, total: 100, engagement: 750 },
-      { platform: 'Instagram', positive: 25, neutral: 50, negative: 25, total: 100, engagement: 1500 }
+      { platform: 'X', positive: 35, neutral: 40, negative: 25, total: 121, engagement: 1200 },
     ],
     news: [
-      { platform: 'CNN', positive: 20, neutral: 45, negative: 35, total: 100, engagement: 800 },
-      { platform: 'BBC', positive: 25, neutral: 40, negative: 35, total: 100, engagement: 950 },
-      { platform: 'Al Jazeera', positive: 30, neutral: 35, negative: 35, total: 100, engagement: 700 }
+      { platform: 'CNN', positive: 20, neutral: 45, negative: 35, total: 42, engagement: 800 },
+      { platform: 'BBC', positive: 25, neutral: 40, negative: 35, total: 16, engagement: 950 },
+      { platform: 'Al Jazeera', positive: 30, neutral: 35, negative: 35, total: 55, engagement: 700 }
     ],
     tv: [
-      { platform: 'CNN TV', positive: 25, neutral: 40, negative: 35, total: 100, engagement: 600 },
-      { platform: 'BBC TV', positive: 30, neutral: 35, negative: 35, total: 100, engagement: 550 },
-      { platform: 'Al Jazeera TV', positive: 35, neutral: 30, negative: 35, total: 100, engagement: 500 }
+      { platform: 'CNN TV', positive: 25, neutral: 40, negative: 35, total: 42, engagement: 800 },
+      { platform: 'BBC TV', positive: 30, neutral: 35, negative: 35, total: 16, engagement: 950 },
+      { platform: 'Al Jazeera TV', positive: 35, neutral: 30, negative: 35, total: 55, engagement: 700 }
     ]
   };
 
