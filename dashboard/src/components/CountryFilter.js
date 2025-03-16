@@ -6,17 +6,14 @@ import {
   InputLabel,
   Box,
 } from '@mui/material';
+import DataService from '../services/DataService';
 
 const CountryFilter = ({ selectedCountry, onCountryChange, data }) => {
   const countries = useMemo(() => {
-    if (!data?.rawData) return [];
-    
-    // Get unique countries from the data
-    const uniqueCountries = [...new Set(data.rawData.map(item => item.country || 'Qatar'))];
-    
-    // Sort countries alphabetically
-    return ['all', ...uniqueCountries.sort()];
-  }, [data]);
+    // Get available countries from DataService
+    const availableCountries = DataService.getAvailableCountries();
+    return ['all', ...availableCountries];
+  }, []);
 
   return (
     <Box sx={{ minWidth: 200 }}>

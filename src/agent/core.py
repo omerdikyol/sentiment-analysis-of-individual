@@ -14,8 +14,8 @@ import glob
 import threading
 import queue
 import asyncio
-from .brain import AgentBrain
-from .autogen_agents import AutogenAgentSystem
+from brain import AgentBrain
+from autogen_agents import AutogenAgentSystem
 
 # Configure logging
 logging.basicConfig(
@@ -40,7 +40,7 @@ class SentimentAnalysisAgent:
             'system_health': []
         }
         self.initialize_directories()
-        self.collection_scripts = self.discover_colflection_scripts()
+        self.collection_scripts = self.discover_collection_scripts()
         self.command_queue = queue.Queue()
         self.is_running = True
         self.current_task = None
@@ -245,7 +245,8 @@ class SentimentAnalysisAgent:
         # Map collector script names to config source names
         name_mapping = {
             'x': 'x',
-            'news': 'news',
+            'news_from_api': 'news_from_api',
+            'rss': 'rss',
             'mention': 'mention',
             'social_searcher': 'social_searcher'
         }
