@@ -9,206 +9,129 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Treemap,
 } from 'recharts';
 import { motion } from 'framer-motion';
 
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
 
-  if (!data?.rawData) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
-      </Box>
-    );
-  }
-
-  // Helper function to extract topics from text
-  const extractTopics = (text) => {
-    const commonTopics = [
-      'Politics', 'Economy', 'Sports', 'Culture', 'Technology',
-      'Education', 'Healthcare', 'Business', 'Entertainment'
-    ];
-    
-    return commonTopics.filter(topic => 
-      text.toLowerCase().includes(topic.toLowerCase())
-    );
-  };
-
-  // Helper function to categorize source type
-  const categorizeSource = (platform, source) => {
-    const socialMediaPlatforms = ['Twitter', 'Facebook', 'Instagram', 'LinkedIn', 'X'];
-    const newsPlatforms = ['News', 'Newspaper', 'Magazine', 'Blog'];
-    const tvPlatforms = ['TV', 'Television', 'Broadcast'];
-
-    platform = (platform || '').toLowerCase();
-    source = (source || '').toLowerCase();
-
-    if (socialMediaPlatforms.some(p => platform.includes(p.toLowerCase()) || source.includes(p.toLowerCase()))) {
-      return 'Social Media';
-    }
-    if (newsPlatforms.some(p => platform.includes(p.toLowerCase()) || source.includes(p.toLowerCase()))) {
-      return 'News';
-    }
-    if (tvPlatforms.some(p => platform.includes(p.toLowerCase()) || source.includes(p.toLowerCase()))) {
-      return 'TV';
-    }
-    return 'Other';
-  };
-
-  // Process data for sentiment by country and source
-  const countryData = data.rawData.reduce((acc, item) => {
-    // Convert country names to standardized format
-    let country = item.country ? item.country.trim().toUpperCase() : 'UNKNOWN';
-    if (country === 'QATAR') country = 'QAT';
-    if (country === 'UNITED STATES' || country === 'USA') country = 'US';
-    if (country === 'UNITED KINGDOM' || country === 'GREAT BRITAIN') country = 'UK';
-    if (country === 'UNITED ARAB EMIRATES') country = 'UAE';
-
-    if (!['US', 'UK', 'UAE', 'QAT'].includes(country)) {
-      return acc;
-    }
-
-    if (!acc[country]) {
-      acc[country] = {
-        positive: 0,
-        neutral: 0,
-        negative: 0,
-        total: 0,
-        topics: {},
-        engagement: 0,
-        sources: {
-          'Social Media': { positive: 0, neutral: 0, negative: 0, total: 0 },
-          'News': { positive: 0, neutral: 0, negative: 0, total: 0 },
-          'TV': { positive: 0, neutral: 0, negative: 0, total: 0 },
-          'Other': { positive: 0, neutral: 0, negative: 0, total: 0 }
-        }
-      };
-    }
-
-    // Count sentiments
-    const sentiment = parseFloat(item.sentiment_score);
-    acc[country].total++;
-
-    // Calculate engagement (using likes, retweets, and comments if available)
-    const likes = parseInt(item.likes) || 0;
-    const retweets = parseInt(item.retweets) || 0;
-    const comments = parseInt(item.comments) || 0;
-    acc[country].engagement += likes + retweets + comments;
-
-    // Determine sentiment category
-    let sentimentCategory;
-    if (sentiment > 0.2) {
-      sentimentCategory = 'positive';
-      acc[country].positive++;
-    } else if (sentiment < -0.2) {
-      sentimentCategory = 'negative';
-      acc[country].negative++;
-    } else {
-      sentimentCategory = 'neutral';
-      acc[country].neutral++;
-    }
-
-    // Track source-based sentiments
-    const sourceType = categorizeSource(item.platform, item.source);
-    acc[country].sources[sourceType].total++;
-    acc[country].sources[sourceType][sentimentCategory]++;
-
-    // Track topics from text content
-    const text = item.text || '';
-    const topics = extractTopics(text);
-    topics.forEach(topic => {
-      if (!acc[country].topics[topic]) {
-        acc[country].topics[topic] = 0;
+  // Sample data for demonstration
+  const sampleData = {
+    sentimentByCountry: [
+      {
+        country: 'Qatar',
+        positive: 11.9,
+        neutral: 63.7,
+        negative: 24.4,
+        total: 120,
+        engagement: 2800
+      },
+      {
+        country: 'UAE',
+        positive: 15.5,
+        neutral: 58.5,
+        negative: 26.0,
+        total: 85,
+        engagement: 1950
+      },
+      {
+        country: 'US',
+        positive: 13.2,
+        neutral: 60.8,
+        negative: 26.0,
+        total: 95,
+        engagement: 2200
+      },
+      {
+        country: 'UK',
+        positive: 12.8,
+        neutral: 61.2,
+        negative: 26.0,
+        total: 75,
+        engagement: 1650
       }
-      acc[country].topics[topic]++;
-    });
-
-    return acc;
-  }, {});
-
-  // Format data for sentiment by country chart
-  const sentimentByCountry = Object.entries(countryData).map(([country, data]) => ({
-    country,
-    positive: (data.positive / data.total) * 100,
-    neutral: (data.neutral / data.total) * 100,
-    negative: (data.negative / data.total) * 100,
-  }));
-
-  // Format data for regional hotspots
-  const regionalHotspots = Object.entries(countryData).map(([country, data]) => ({
-    country,
-    mentions: data.total,
-    engagementRate: (data.engagement / data.total) || 0,
-  }));
-
-  // Format data for source distribution
-  const sourceDistribution = ['Social Media', 'News', 'TV', 'Other'].map(sourceType => {
-    const sourceData = {
-      source: sourceType,
-    };
-
-    let totalMentions = 0;
-    let positiveMentions = 0;
-    let neutralMentions = 0;
-    let negativeMentions = 0;
-
-    // Sum up mentions across all countries for this source type
-    Object.values(countryData).forEach(data => {
-      const sourceStats = data.sources[sourceType];
-      totalMentions += sourceStats.total;
-      positiveMentions += sourceStats.positive;
-      neutralMentions += sourceStats.neutral;
-      negativeMentions += sourceStats.negative;
-    });
-
-    // Calculate percentages only if there are mentions
-    if (totalMentions > 0) {
-      sourceData.positive = (positiveMentions / totalMentions) * 100;
-      sourceData.neutral = (neutralMentions / totalMentions) * 100;
-      sourceData.negative = (negativeMentions / totalMentions) * 100;
-    } else {
-      sourceData.positive = 0;
-      sourceData.neutral = 0;
-      sourceData.negative = 0;
+    ],
+    sourceDistribution: [
+      {
+        source: 'Social Media',
+        positive: 13.5,
+        neutral: 61.8,
+        negative: 24.7,
+        total: 150
+      },
+      {
+        source: 'News',
+        positive: 12.8,
+        neutral: 62.5,
+        negative: 24.7,
+        total: 120
+      },
+      {
+        source: 'TV',
+        positive: 14.2,
+        neutral: 60.3,
+        negative: 25.5,
+        total: 82
+      }
+    ],
+    regionalActivity: [
+      {
+        name: 'Qatar',
+        mentions: 120,
+        engagement: 2800,
+        engagementRate: 23.3
+      },
+      {
+        name: 'UAE',
+        mentions: 85,
+        engagement: 1950,
+        engagementRate: 22.9
+      },
+      {
+        name: 'US',
+        mentions: 95,
+        engagement: 2200,
+        engagementRate: 23.2
+      },
+      {
+        name: 'UK',
+        mentions: 75,
+        engagement: 1650,
+        engagementRate: 22.0
+      }
+    ],
+    topicsByCountry: {
+      'Qatar': [
+        { name: 'Education', value: 45, sentiment: 0.6 },
+        { name: 'Technology', value: 38, sentiment: 0.4 },
+        { name: 'Economy', value: 35, sentiment: 0.3 },
+        { name: 'Sports', value: 32, sentiment: 0.5 },
+        { name: 'Culture', value: 28, sentiment: 0.7 }
+      ],
+      'UAE': [
+        { name: 'Innovation', value: 42, sentiment: 0.5 },
+        { name: 'Business', value: 38, sentiment: 0.4 },
+        { name: 'Tourism', value: 35, sentiment: 0.6 },
+        { name: 'Technology', value: 30, sentiment: 0.3 },
+        { name: 'Finance', value: 25, sentiment: 0.4 }
+      ],
+      'US': [
+        { name: 'Politics', value: 48, sentiment: -0.2 },
+        { name: 'Economy', value: 40, sentiment: 0.1 },
+        { name: 'Technology', value: 35, sentiment: 0.4 },
+        { name: 'Healthcare', value: 30, sentiment: 0.2 },
+        { name: 'Education', value: 25, sentiment: 0.3 }
+      ],
+      'UK': [
+        { name: 'Economy', value: 45, sentiment: 0.1 },
+        { name: 'Politics', value: 38, sentiment: -0.1 },
+        { name: 'Culture', value: 32, sentiment: 0.5 },
+        { name: 'Education', value: 28, sentiment: 0.4 },
+        { name: 'Healthcare', value: 25, sentiment: 0.2 }
+      ]
     }
-
-    return sourceData;
-  });
-
-  // Format data for topic heatmap
-  const allTopics = new Set();
-  Object.values(countryData).forEach(countryData => {
-    Object.keys(countryData.topics).forEach(topic => allTopics.add(topic));
-  });
-
-  const topicHeatmap = Array.from(allTopics)
-    .filter(topic => {
-      const totalMentions = Object.values(countryData).reduce((sum, country) => 
-        sum + (country.topics[topic] || 0), 0);
-      return totalMentions > 5;
-    })
-    .map(topic => {
-      const topicData = {
-        topic,
-      };
-      Object.keys(countryData).forEach(country => {
-        if (countryData[country]) {
-          topicData[country] = (countryData[country].topics[topic] || 0) / countryData[country].total * 100;
-        } else {
-          topicData[country] = 0;
-        }
-      });
-      return topicData;
-    })
-    .sort((a, b) => {
-      const sumA = Object.values(a).reduce((sum, val) => 
-        typeof val === 'number' ? sum + val : sum, 0);
-      const sumB = Object.values(b).reduce((sum, val) => 
-        typeof val === 'number' ? sum + val : sum, 0);
-      return sumB - sumA;
-    })
-    .slice(0, 10);
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -231,13 +154,102 @@ const GeographicalInsights = ({ data }) => {
               variant="body2"
               sx={{ color: entry.color }}
             >
-              {`${entry.name}: ${Number(entry.value).toFixed(1)}${entry.unit || '%'}`}
+              {`${entry.name}: ${Number(entry.value).toFixed(1)}%`}
             </Typography>
           ))}
+          {payload[0]?.payload?.total && (
+            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+              Total Mentions: {payload[0].payload.total}
+            </Typography>
+          )}
+          {payload[0]?.payload?.engagement && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Engagement: {payload[0].payload.engagement}
+            </Typography>
+          )}
         </Box>
       );
     }
     return null;
+  };
+
+  const TopicsTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <Box
+          sx={{
+            backgroundColor: 'background.paper',
+            p: 1.5,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            {data.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Mentions: {data.value}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Sentiment: {(data.sentiment * 100).toFixed(1)}%
+          </Typography>
+        </Box>
+      );
+    }
+    return null;
+  };
+
+  const renderTopicTreemap = (country) => {
+    const data = sampleData.topicsByCountry[country];
+    return (
+      <ResponsiveContainer width="100%" height={200}>
+        <Treemap
+          data={data}
+          dataKey="value"
+          stroke="#fff"
+          fill={theme.palette.primary.main}
+          content={({ root, depth, x, y, width, height, index, payload, colors, rank, name }) => {
+            return (
+              <g>
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  style={{
+                    fill: theme.palette.primary.main,
+                    stroke: '#fff',
+                    strokeWidth: 2,
+                    fillOpacity: depth < 2 ? data[index]?.sentiment || 0.6 : 0.6,
+                  }}
+                />
+                <text
+                  x={x + width / 2}
+                  y={y + height / 2 + 7}
+                  textAnchor="middle"
+                  fill="#fff"
+                  fontSize={12}
+                >
+                  {name}
+                </text>
+                <text
+                  x={x + width / 2}
+                  y={y + height / 2 - 7}
+                  textAnchor="middle"
+                  fill="#fff"
+                  fontSize={14}
+                  fontWeight="bold"
+                >
+                  {data[index]?.value}
+                </text>
+              </g>
+            );
+          }}
+        />
+      </ResponsiveContainer>
+    );
   };
 
   return (
@@ -258,7 +270,7 @@ const GeographicalInsights = ({ data }) => {
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={sentimentByCountry}>
+                <BarChart data={sampleData.sentimentByCountry}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="country" />
                   <YAxis domain={[0, 100]} />
@@ -288,15 +300,15 @@ const GeographicalInsights = ({ data }) => {
           </Paper>
         </Grid>
 
-        {/* Source Distribution */}
+        {/* Media Sentiment Distribution */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Sentiment Distribution by Source
+              Media Sentiment Distribution
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={sourceDistribution}>
+                <BarChart data={sampleData.sourceDistribution}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="source" />
                   <YAxis domain={[0, 100]} />
@@ -326,7 +338,7 @@ const GeographicalInsights = ({ data }) => {
           </Paper>
         </Grid>
 
-        {/* Regional Hotspots */}
+        {/* Regional Activity & Engagement */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
@@ -334,23 +346,23 @@ const GeographicalInsights = ({ data }) => {
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={regionalHotspots}>
+                <BarChart data={sampleData.regionalActivity}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="country" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
+                  <XAxis dataKey="name" />
+                  <YAxis yAxisId="left" orientation="left" label={{ value: 'Mentions', angle: -90, position: 'insideLeft' }} />
+                  <YAxis yAxisId="right" orientation="right" label={{ value: 'Engagement', angle: 90, position: 'insideRight' }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
                   <Bar
                     yAxisId="left"
                     dataKey="mentions"
-                    name="Total Mentions"
+                    name="Mentions"
                     fill={theme.palette.primary.main}
                   />
                   <Bar
                     yAxisId="right"
-                    dataKey="engagementRate"
-                    name="Avg. Engagement"
+                    dataKey="engagement"
+                    name="Engagement"
                     fill={theme.palette.secondary.main}
                   />
                 </BarChart>
@@ -359,27 +371,22 @@ const GeographicalInsights = ({ data }) => {
           </Paper>
         </Grid>
 
-        {/* Topic Distribution */}
-        <Grid item xs={12} md={6}>
+        {/* Top Topics by Country */}
+        <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
               Top Topics by Country
             </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={topicHeatmap} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" unit="%" />
-                  <YAxis dataKey="topic" type="category" width={150} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar dataKey="US" name="US" fill={theme.palette.info.main} />
-                  <Bar dataKey="UK" name="UK" fill={theme.palette.warning.main} />
-                  <Bar dataKey="UAE" name="UAE" fill={theme.palette.success.main} />
-                  <Bar dataKey="QAT" name="Qatar" fill={theme.palette.secondary.main} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
+            <Grid container spacing={2}>
+              {Object.keys(sampleData.topicsByCountry).map((country) => (
+                <Grid item xs={12} md={3} key={country}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    {country}
+                  </Typography>
+                  {renderTopicTreemap(country)}
+                </Grid>
+              ))}
+            </Grid>
           </Paper>
         </Grid>
       </Grid>

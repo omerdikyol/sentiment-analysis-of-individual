@@ -15,117 +15,25 @@ import { motion } from 'framer-motion';
 const PlatformSentiment = ({ data }) => {
   const theme = useTheme();
 
-  if (!data?.rawData) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
-      </Box>
-    );
-  }
-
-  // Platform categorization
-  const platformCategories = {
-    socialMedia: ['Twitter', 'X', 'Facebook', 'LinkedIn', 'Instagram'],
-    news: ['CNN', 'BBC', 'Al Jazeera', 'Reuters', 'Associated Press', 'Bloomberg'],
-    tv: ['CNN TV', 'BBC TV', 'Al Jazeera TV', 'Sky News']
+  // Sample data for demonstration
+  const sampleData = {
+    socialMedia: [
+      { platform: 'Twitter', positive: 35, neutral: 40, negative: 25, total: 100, engagement: 1200 },
+      { platform: 'Facebook', positive: 30, neutral: 45, negative: 25, total: 100, engagement: 980 },
+      { platform: 'LinkedIn', positive: 40, neutral: 35, negative: 25, total: 100, engagement: 750 },
+      { platform: 'Instagram', positive: 25, neutral: 50, negative: 25, total: 100, engagement: 1500 }
+    ],
+    news: [
+      { platform: 'CNN', positive: 20, neutral: 45, negative: 35, total: 100, engagement: 800 },
+      { platform: 'BBC', positive: 25, neutral: 40, negative: 35, total: 100, engagement: 950 },
+      { platform: 'Al Jazeera', positive: 30, neutral: 35, negative: 35, total: 100, engagement: 700 }
+    ],
+    tv: [
+      { platform: 'CNN TV', positive: 25, neutral: 40, negative: 35, total: 100, engagement: 600 },
+      { platform: 'BBC TV', positive: 30, neutral: 35, negative: 35, total: 100, engagement: 550 },
+      { platform: 'Al Jazeera TV', positive: 35, neutral: 30, negative: 35, total: 100, engagement: 500 }
+    ]
   };
-
-  // Process data for platform-specific sentiment
-  const platformData = data.rawData.reduce((acc, item) => {
-    const platform = item.platform || '';
-    const source = item.source || '';
-    const sentiment = parseFloat(item.sentiment_score);
-
-    // Helper function to process sentiment
-    const processSentiment = (targetPlatform) => {
-      if (!acc[targetPlatform]) {
-        acc[targetPlatform] = {
-          platform: targetPlatform,
-          positive: 0,
-          neutral: 0,
-          negative: 0,
-          total: 0,
-          engagement: 0
-        };
-      }
-
-      acc[targetPlatform].total++;
-      
-      // Add engagement metrics
-      const likes = parseInt(item.likes) || 0;
-      const retweets = parseInt(item.retweets) || 0;
-      const comments = parseInt(item.comments) || 0;
-      acc[targetPlatform].engagement += likes + retweets + comments;
-
-      // Categorize sentiment
-      if (sentiment > 0.2) {
-        acc[targetPlatform].positive++;
-      } else if (sentiment < -0.2) {
-        acc[targetPlatform].negative++;
-      } else {
-        acc[targetPlatform].neutral++;
-      }
-    };
-
-    // Process social media platforms
-    if (platformCategories.socialMedia.some(p => 
-      platform.toLowerCase().includes(p.toLowerCase()) || 
-      source.toLowerCase().includes(p.toLowerCase())
-    )) {
-      // Determine specific social media platform
-      const socialPlatform = platformCategories.socialMedia.find(p => 
-        platform.toLowerCase().includes(p.toLowerCase()) || 
-        source.toLowerCase().includes(p.toLowerCase())
-      );
-      processSentiment(socialPlatform === 'X' ? 'Twitter' : socialPlatform);
-    }
-
-    // Process news sources
-    if (platformCategories.news.some(p => 
-      platform.toLowerCase().includes(p.toLowerCase()) || 
-      source.toLowerCase().includes(p.toLowerCase())
-    )) {
-      const newsSource = platformCategories.news.find(p => 
-        platform.toLowerCase().includes(p.toLowerCase()) || 
-        source.toLowerCase().includes(p.toLowerCase())
-      );
-      processSentiment(newsSource);
-    }
-
-    // Process TV channels
-    if (platformCategories.tv.some(p => 
-      platform.toLowerCase().includes(p.toLowerCase()) || 
-      source.toLowerCase().includes(p.toLowerCase())
-    )) {
-      const tvChannel = platformCategories.tv.find(p => 
-        platform.toLowerCase().includes(p.toLowerCase()) || 
-        source.toLowerCase().includes(p.toLowerCase())
-      );
-      processSentiment(tvChannel);
-    }
-
-    return acc;
-  }, {});
-
-  // Convert to percentage and format for charts
-  const formatPlatformData = (platforms) => {
-    return Object.entries(platformData)
-      .filter(([platform]) => platforms.includes(platform))
-      .map(([platform, data]) => ({
-        platform,
-        positive: (data.positive / data.total) * 100,
-        neutral: (data.neutral / data.total) * 100,
-        negative: (data.negative / data.total) * 100,
-        engagement: data.engagement,
-        total: data.total
-      }))
-      .filter(item => item.total > 0) // Only show platforms with data
-      .sort((a, b) => b.total - a.total); // Sort by total mentions
-  };
-
-  const socialMediaData = formatPlatformData(platformCategories.socialMedia);
-  const newsData = formatPlatformData(platformCategories.news);
-  const tvData = formatPlatformData(platformCategories.tv);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -216,9 +124,9 @@ const PlatformSentiment = ({ data }) => {
         Platform-Specific Sentiment Analysis
       </Typography>
       <Grid container spacing={3}>
-        {renderPlatformChart(socialMediaData, 'Social Media Sentiment')}
-        {renderPlatformChart(newsData, 'News Sources Sentiment')}
-        {renderPlatformChart(tvData, 'TV Channels Sentiment')}
+        {renderPlatformChart(sampleData.socialMedia, 'Social Media Sentiment')}
+        {renderPlatformChart(sampleData.news, 'News Sources Sentiment')}
+        {renderPlatformChart(sampleData.tv, 'TV Channels Sentiment')}
       </Grid>
     </motion.div>
   );
