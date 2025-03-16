@@ -51,6 +51,9 @@ import SentimentTable from './components/SentimentTable';
 import SentimentData from './components/SentimentData';
 import CountryFilter from './components/CountryFilter';
 import CountryBarChart from './components/CountryBarChart';
+import SentimentOverview from './components/SentimentOverview';
+import SentimentBySource from './components/SentimentBySource';
+import GeographicalInsights from './components/GeographicalInsights';
 
 // Import services
 import DataService from './services/DataService';
@@ -552,6 +555,21 @@ function App() {
                     trend={+3.7}
                     color="info"
                   />
+                </Grid>
+                <Grid item xs={12}>
+                  <Paper elevation={0} sx={{ p: 2 }}>
+                    <GeographicalInsights data={filteredData} />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                    <SentimentOverview data={filteredData} />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                    <SentimentBySource data={filteredData} />
+                  </Paper>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
