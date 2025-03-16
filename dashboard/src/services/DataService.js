@@ -4,7 +4,7 @@ class DataService {
   async loadData() {
     try {
       console.log('Attempting to load data from processed_data.csv');
-      const response = await fetch('/processed_data.csv');
+      const response = await fetch('./processed_data.csv');
       
       if (!response.ok) {
         throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);

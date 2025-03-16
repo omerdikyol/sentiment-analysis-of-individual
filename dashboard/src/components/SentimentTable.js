@@ -44,8 +44,46 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
   padding: theme.spacing(2),
   '&.MuiTableCell-head': {
-    backgroundColor: theme.palette.background.default,
+    backgroundColor: theme.palette.background.paper,
     fontWeight: 600,
+    position: 'sticky',
+    top: 0,
+    zIndex: 1,
+  },
+  '& .source-info': {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    maxWidth: '200px',
+    '& .MuiChip-root': {
+      maxWidth: '100%',
+      '& .MuiChip-label': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        display: 'block'
+      }
+    }
+  }
+}));
+
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  maxHeight: 400,
+  overflow: 'auto',
+  '&::-webkit-scrollbar': {
+    width: '8px',
+    height: '8px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: theme.palette.background.default,
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.grey[300],
+    borderRadius: '4px',
+    '&:hover': {
+      background: theme.palette.grey[400],
+    },
   },
 }));
 
@@ -127,20 +165,29 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
     const isUserContent = sourceLower.includes('x') || sourceLower.includes('twitter') || sourceLower.includes('social');
     
     return (
-      <Stack direction="column" spacing={1}>
+      <Stack direction="column" spacing={1} className="source-info">
         <Chip
           icon={getSourceIcon(item.source)}
           label={
-            <Stack direction="column" spacing={0} sx={{ alignItems: 'flex-start' }}>
-              <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              maxWidth: '100%',
+              '& > *': { minWidth: 0 }
+            }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  fontWeight: 'bold',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
                 {item.source || 'Unknown Source'}
+                {item.author && ` • ${item.author}`}
               </Typography>
-              {item.author && (
-                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                  by {item.author}
-                </Typography>
-              )}
-            </Stack>
+            </Box>
           }
           sx={{
             backgroundColor: `${getSourceColor(item.source)}15`,
@@ -151,13 +198,23 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
             height: 'auto',
             '& .MuiChip-label': {
               display: 'block',
-              whiteSpace: 'normal',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
               py: 0.5
             }
           }}
         />
         {item.date && (
-          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 0.5, 
+              color: 'text.secondary'
+            }}
+          >
             <CalendarIcon fontSize="small" />
             {formatDate(item.date)}
           </Typography>
@@ -404,20 +461,43 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
         <TableCell>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Stack spacing={1} sx={{ flex: 1 }}>
-              <Typography 
-                sx={{ 
-                  maxWidth: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  lineHeight: '1.4em',
-                  minHeight: '2.8em'
+              <Tooltip 
+                title={item.text || 'N/A'} 
+                placement="top-start"
+                sx={{ maxWidth: 'none' }}
+                componentsProps={{
+                  tooltip: {
+                    sx: {
+                      bgcolor: 'background.paper',
+                      color: 'text.primary',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      p: 1.5,
+                      maxWidth: '500px',
+                      '& .MuiTooltip-arrow': {
+                        color: 'background.paper',
+                      },
+                    },
+                  },
                 }}
               >
-                {item.text || 'N/A'}
-              </Typography>
+                <Typography 
+                  sx={{ 
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    lineHeight: '1.4em',
+                    minHeight: '2.8em',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {item.text || 'N/A'}
+                </Typography>
+              </Tooltip>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <PersonIcon fontSize="small" />
                 {item.author || 'Unknown Author'}
@@ -485,68 +565,14 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               {title.includes('Highest') ? '🔝' : '🔻'}
             </motion.div>
           </Typography>
-          <TableContainer 
-            component={Paper} 
-            sx={{ 
-              maxHeight: 400, 
-              overflow: 'auto', 
-              boxShadow: 1,
-              borderRadius: 2,
-              '&::-webkit-scrollbar': {
-                width: '8px',
-                height: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: '#f1f1f1',
-                borderRadius: '4px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: '#888',
-                borderRadius: '4px',
-                '&:hover': {
-                  background: '#666',
-                },
-              },
-            }}
-          >
-            <Table size="small" stickyHeader>
+          <StyledTableContainer>
+            <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <TableCell 
-                    sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      width: '120px'
-                    }}
-                  >
-                    Sentiment
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      width: '100px'
-                    }}
-                  >
-                    Score
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                    }}
-                  >
-                    Content
-                  </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      fontWeight: 'bold', 
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                      width: '200px'
-                    }}
-                  >
-                    Source
-                  </TableCell>
+                  <StyledTableCell sx={{ width: '120px' }}>Sentiment</StyledTableCell>
+                  <StyledTableCell sx={{ width: '100px' }}>Score</StyledTableCell>
+                  <StyledTableCell>Content</StyledTableCell>
+                  <StyledTableCell sx={{ width: '200px' }}>Source</StyledTableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -555,7 +581,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                 </AnimatePresence>
               </TableBody>
             </Table>
-          </TableContainer>
+          </StyledTableContainer>
         </CardContent>
       </Card>
       {renderDetailDialog()}

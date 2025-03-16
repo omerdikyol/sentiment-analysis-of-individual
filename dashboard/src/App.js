@@ -314,8 +314,8 @@ function App() {
   const [data, setData] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [filteredData, setFilteredData] = useState(null);
-  const [timeRange, setTimeRange] = useState('30');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [timeRange, setTimeRange] = useState('all');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -387,7 +387,7 @@ function App() {
   };
 
   const handleDrawerToggle = () => {
-    setSidebarOpen(!sidebarOpen);
+    setDrawerOpen(!drawerOpen);
   };
   
   if (loading) {
@@ -445,9 +445,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex' }}>
-        <Sidebar variant="permanent" open={sidebarOpen}>
+        <Sidebar variant="permanent" open={drawerOpen}>
           <DrawerHeader>
-            {sidebarOpen ? (
+            {drawerOpen ? (
               <>
                 <Typography variant="h6" noWrap component="div" sx={{ ml: 2 }}>
                   Sentiment Analysis
@@ -486,26 +486,27 @@ function App() {
                     minHeight: 48,
                     textDecoration: 'none',
                     color: 'inherit',
+                    justifyContent: drawerOpen ? 'flex-start' : 'center',
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.08)',
                     },
                   }}
                 >
                   <Box sx={{ 
-                    minWidth: '40px', 
                     display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: sidebarOpen ? 'flex-start' : 'center' 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: 40
                   }}>
                     {item.icon}
                   </Box>
-                  {sidebarOpen && <Typography>{item.text}</Typography>}
+                  {drawerOpen && <Typography>{item.text}</Typography>}
                 </Box>
               </Box>
             ))}
           </SidebarContent>
         </Sidebar>
-        <MainContent open={sidebarOpen}>
+        <MainContent open={drawerOpen}>
           <Box>
             <FilterContainer>
               <CountryFilter
