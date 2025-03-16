@@ -9,7 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  Treemap,
+  ScatterChart,
+  Scatter,
+  ZAxis,
 } from 'recharts';
 import { motion } from 'framer-motion';
 
@@ -24,7 +26,7 @@ const GeographicalInsights = ({ data }) => {
         positive: 11.9,
         neutral: 63.7,
         negative: 24.4,
-        total: 120,
+        total: 265,
         engagement: 2800
       },
       {
@@ -32,7 +34,7 @@ const GeographicalInsights = ({ data }) => {
         positive: 15.5,
         neutral: 58.5,
         negative: 26.0,
-        total: 85,
+        total: 12,
         engagement: 1950
       },
       {
@@ -40,7 +42,7 @@ const GeographicalInsights = ({ data }) => {
         positive: 13.2,
         neutral: 60.8,
         negative: 26.0,
-        total: 95,
+        total: 48,
         engagement: 2200
       },
       {
@@ -48,7 +50,7 @@ const GeographicalInsights = ({ data }) => {
         positive: 12.8,
         neutral: 61.2,
         negative: 26.0,
-        total: 75,
+        total: 21,
         engagement: 1650
       }
     ],
@@ -58,21 +60,21 @@ const GeographicalInsights = ({ data }) => {
         positive: 13.5,
         neutral: 61.8,
         negative: 24.7,
-        total: 150
+        total: 253
       },
       {
         source: 'News',
         positive: 12.8,
         neutral: 62.5,
         negative: 24.7,
-        total: 120
+        total: 121
       },
       {
         source: 'TV',
         positive: 14.2,
         neutral: 60.3,
         negative: 25.5,
-        total: 82
+        total: 19
       }
     ],
     regionalActivity: [
@@ -201,53 +203,85 @@ const GeographicalInsights = ({ data }) => {
     return null;
   };
 
-  const renderTopicTreemap = (country) => {
-    const data = sampleData.topicsByCountry[country];
+  const renderTopicChart = (country) => {
+    const data = sampleData.topicsByCountry[country].map(topic => ({
+      ...topic,
+      sentimentPercentage: topic.sentiment * 100,
+    }));
+
     return (
-      <ResponsiveContainer width="100%" height={200}>
-        <Treemap
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
           data={data}
-          dataKey="value"
-          stroke="#fff"
-          fill={theme.palette.primary.main}
-          content={({ root, depth, x, y, width, height, index, payload, colors, rank, name }) => {
-            return (
-              <g>
-                <rect
-                  x={x}
-                  y={y}
-                  width={width}
-                  height={height}
-                  style={{
-                    fill: theme.palette.primary.main,
-                    stroke: '#fff',
-                    strokeWidth: 2,
-                    fillOpacity: depth < 2 ? data[index]?.sentiment || 0.6 : 0.6,
-                  }}
-                />
-                <text
-                  x={x + width / 2}
-                  y={y + height / 2 + 7}
-                  textAnchor="middle"
-                  fill="#fff"
-                  fontSize={12}
-                >
-                  {name}
-                </text>
-                <text
-                  x={x + width / 2}
-                  y={y + height / 2 - 7}
-                  textAnchor="middle"
-                  fill="#fff"
-                  fontSize={14}
-                  fontWeight="bold"
-                >
-                  {data[index]?.value}
-                </text>
-              </g>
-            );
+          margin={{
+            top: 20,
+            right: 30,
+            left: 20,
+            bottom: 60
           }}
-        />
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey="name"
+            angle={-45}
+            textAnchor="end"
+            interval={0}
+            height={60}
+          />
+          <YAxis
+            yAxisId="left"
+            orientation="left"
+            label={{ value: 'Mentions', angle: -90, position: 'insideLeft' }}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            domain={[-100, 100]}
+            label={{ value: 'Sentiment %', angle: 90, position: 'insideRight' }}
+          />
+          <Tooltip
+            content={({ active, payload }) => {
+              if (active && payload && payload.length) {
+                return (
+                  <Box
+                    sx={{
+                      backgroundColor: 'background.paper',
+                      p: 1.5,
+                      border: 1,
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      boxShadow: 3,
+                    }}
+                  >
+                    <Typography variant="subtitle2" gutterBottom>
+                      {payload[0].payload.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Mentions: {payload[0].payload.value}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Sentiment: {payload[0].payload.sentimentPercentage.toFixed(1)}%
+                    </Typography>
+                  </Box>
+                );
+              }
+              return null;
+            }}
+          />
+          <Legend />
+          <Bar
+            yAxisId="left"
+            dataKey="value"
+            name="Mentions"
+            fill={theme.palette.primary.main}
+          />
+          <Bar
+            yAxisId="right"
+            dataKey="sentimentPercentage"
+            name="Sentiment %"
+            fill={theme.palette.secondary.main}
+          />
+        </BarChart>
       </ResponsiveContainer>
     );
   };
@@ -373,17 +407,32 @@ const GeographicalInsights = ({ data }) => {
 
         {/* Top Topics by Country */}
         <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
+          <Paper
+            sx={{
+              p: 3,
+              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
               Top Topics by Country
             </Typography>
             <Grid container spacing={2}>
               {Object.keys(sampleData.topicsByCountry).map((country) => (
-                <Grid item xs={12} md={3} key={country}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    {country}
-                  </Typography>
-                  {renderTopicTreemap(country)}
+                <Grid item xs={12} md={6} key={country}>
+                  <Paper
+                    sx={{
+                      p: 2,
+                      backgroundColor: 'background.default',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle1" gutterBottom>
+                      {country}
+                    </Typography>
+                    {renderTopicChart(country)}
+                  </Paper>
                 </Grid>
               ))}
             </Grid>
