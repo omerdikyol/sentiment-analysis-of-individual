@@ -96,7 +96,7 @@ const Sidebar = ({ isOpen, onToggle, selectedPath = '/' }) => {
       <Logo open={isOpen}>
         {isOpen ? (
           <>
-            <Typography variant="h6" component="div" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
               Sentiment Analysis
             </Typography>
             <IconButton 
@@ -140,6 +140,9 @@ const Sidebar = ({ isOpen, onToggle, selectedPath = '/' }) => {
                 sx={{
                   justifyContent: 'center',
                   minHeight: 48,
+                  '& .MuiListItemText-primary': {
+                    fontSize: '0.875rem',
+                  },
                 }}
               >
                 <ListItemIcon sx={{ 

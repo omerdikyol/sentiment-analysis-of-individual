@@ -48,6 +48,12 @@ const GeographicalInsights = ({ data }) => {
         'Infrastructure': 20,
         'Education': 15
       },
+      sources: {
+        'Social Media': { total: 100 },
+        'News': { total: 50 },
+        'TV': { total: 40 },
+        'Other': { total: 20 }
+      },
       positive: 45.2,
       neutral: 35.5,
       negative: 19.3,
@@ -62,6 +68,12 @@ const GeographicalInsights = ({ data }) => {
         'Innovation': 20,
         'Trade': 10
       },
+      sources: {
+        'Social Media': { total: 80 },
+        'News': { total: 45 },
+        'TV': { total: 35 },
+        'Other': { total: 12 }
+      },
       positive: 42.8,
       neutral: 38.5,
       negative: 18.7,
@@ -74,6 +86,12 @@ const GeographicalInsights = ({ data }) => {
         'Technology': 2,
         'Business': 1,
         'Economy': 1
+      },
+      sources: {
+        'Social Media': { total: 3 },
+        'News': { total: 2 },
+        'TV': { total: 1 },
+        'Other': { total: 1 }
       },
       positive: 43.5,
       neutral: 42.2,
@@ -89,6 +107,7 @@ const GeographicalInsights = ({ data }) => {
     if (!acc[country]) {
       acc[country] = {
         topics: item.topics || {},
+        sources: item.sources || {},
         positive: item.positive,
         neutral: item.neutral,
         negative: item.negative,
@@ -109,13 +128,22 @@ const GeographicalInsights = ({ data }) => {
   }));
 
   // Format data for source distribution
-  const sourceDistribution = Object.entries(countryData).map(([country, data]) => ({
-    country,
-    'Social Media': Math.round((data.sources['Social Media'].total / data.total) * 100),
-    'News': Math.round((data.sources['News'].total / data.total) * 100),
-    'TV': Math.round((data.sources['TV'].total / data.total) * 100),
-    'Other': Math.round((data.sources['Other'].total / data.total) * 100),
-  }));
+  const sourceDistribution = Object.entries(countryData).map(([country, data]) => {
+    const sources = data.sources || {
+      'Social Media': { total: 0 },
+      'News': { total: 0 },
+      'TV': { total: 0 },
+      'Other': { total: 0 }
+    };
+    
+    return {
+      country,
+      'Social Media': Math.round((sources['Social Media']?.total || 0) / (data.total || 1) * 100),
+      'News': Math.round((sources['News']?.total || 0) / (data.total || 1) * 100),
+      'TV': Math.round((sources['TV']?.total || 0) / (data.total || 1) * 100),
+      'Other': Math.round((sources['Other']?.total || 0) / (data.total || 1) * 100),
+    };
+  });
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
