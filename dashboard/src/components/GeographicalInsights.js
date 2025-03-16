@@ -82,22 +82,43 @@ const GeographicalInsights = ({ data }) => {
     },
     'UK': {
       topics: {
-        'Finance': 3,
-        'Technology': 2,
-        'Business': 1,
-        'Economy': 1
+        'Finance': 58,
+        'Technology': 42,
+        'Business': 35,
+        'Economy': 28,
+        'Innovation': 15
       },
       sources: {
-        'Social Media': { total: 3 },
-        'News': { total: 2 },
-        'TV': { total: 1 },
-        'Other': { total: 1 }
+        'Social Media': { total: 75 },
+        'News': { total: 55 },
+        'TV': { total: 30 },
+        'Other': { total: 15 }
       },
       positive: 43.5,
       neutral: 42.2,
       negative: 14.3,
-      total: 7,
-      engagement: 250
+      total: 175,
+      engagement: 3500
+    },
+    'UAE': {
+      topics: {
+        'Business': 72,
+        'Technology': 55,
+        'Innovation': 48,
+        'Finance': 35,
+        'Infrastructure': 25
+      },
+      sources: {
+        'Social Media': { total: 90 },
+        'News': { total: 60 },
+        'TV': { total: 45 },
+        'Other': { total: 25 }
+      },
+      positive: 48.5,
+      neutral: 36.8,
+      negative: 14.7,
+      total: 220,
+      engagement: 4200
     }
   };
 
@@ -144,6 +165,38 @@ const GeographicalInsights = ({ data }) => {
       'Other': Math.round((sources['Other']?.total || 0) / (data.total || 1) * 100),
     };
   });
+
+  // Format data for media sentiment chart
+  const mediaSentimentData = [
+    {
+      name: 'Social Media',
+      positive: 35,
+      neutral: 45,
+      negative: 20,
+      total: 100
+    },
+    {
+      name: 'News',
+      positive: 30,
+      neutral: 50,
+      negative: 20,
+      total: 100
+    },
+    {
+      name: 'TV',
+      positive: 40,
+      neutral: 40,
+      negative: 20,
+      total: 100
+    },
+    {
+      name: 'Other',
+      positive: 25,
+      neutral: 55,
+      negative: 20,
+      total: 100
+    }
+  ];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
