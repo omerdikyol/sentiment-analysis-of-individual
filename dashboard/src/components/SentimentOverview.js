@@ -43,9 +43,33 @@ const SentimentOverview = ({ data }) => {
             border: 1,
             borderColor: 'divider',
             borderRadius: 1,
+            minWidth: 120,
+            boxShadow: 2,
+            '& .MuiTypography-root': {
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }
           }}
         >
-          <Typography variant="body2" color="text.primary">
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: payload[0].payload.color,
+              fontWeight: 'medium'
+            }}
+          >
+            <Box 
+              component="span" 
+              sx={{ 
+                width: 8, 
+                height: 8, 
+                borderRadius: '50%', 
+                backgroundColor: payload[0].payload.color,
+                display: 'inline-block'
+              }} 
+            />
             {`${payload[0].name}: ${isNaN(value) ? '0.0' : value.toFixed(1)}%`}
           </Typography>
         </Box>
@@ -71,15 +95,22 @@ const SentimentOverview = ({ data }) => {
               cx="50%"
               cy="50%"
               innerRadius={60}
-              outerRadius={80}
-              paddingAngle={5}
+              outerRadius={100}
+              paddingAngle={2}
               dataKey="value"
             >
               {sentimentData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.color}
+                  strokeWidth={1}
+                />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip 
+              content={<CustomTooltip />}
+              wrapperStyle={{ outline: 'none' }}
+            />
           </PieChart>
         </ResponsiveContainer>
         <Box

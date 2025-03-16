@@ -19,6 +19,7 @@ import {
   Timeline as TimelineIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
+  Message as MessageIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import {
@@ -36,9 +37,31 @@ import {
   Bar,
   Cell,
 } from 'recharts';
+import { alpha } from '@mui/material/styles';
 
 const EventAnalysis = ({ data }) => {
   const theme = useTheme();
+
+  // Helper function to format sentiment change
+  const formatSentimentChange = (change) => {
+    const numChange = parseFloat(change);
+    const isPositive = numChange > 0;
+    return {
+      text: `${Math.abs(numChange * 100).toFixed(1)}%`,
+      direction: isPositive ? 'Improved' : 'Declined',
+      color: isPositive ? theme.palette.success.main : theme.palette.error.main,
+      icon: isPositive ? '📈' : '📉'
+    };
+  };
+
+  // Helper function to get sentiment description and color
+  const getSentimentInfo = (value) => {
+    if (value >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark };
+    if (value >= 0.3) return { text: 'Positive', color: theme.palette.success.main };
+    if (value > -0.3) return { text: 'Neutral', color: theme.palette.grey[600] };
+    if (value > -0.7) return { text: 'Negative', color: theme.palette.error.main };
+    return { text: 'Very Negative', color: theme.palette.error.dark };
+  };
 
   // Placeholder data for key events
   const keyEvents = [
@@ -74,6 +97,19 @@ const EventAnalysis = ({ data }) => {
     }
   ];
 
+  // Calculate sentiment changes for events
+  const eventImpacts = keyEvents.map(event => {
+    const change = event.afterSentiment - event.beforeSentiment;
+    const changeInfo = formatSentimentChange(change);
+    return {
+      name: event.title,
+      before: event.beforeSentiment * 100,
+      after: event.afterSentiment * 100,
+      change: parseFloat(((event.afterSentiment - event.beforeSentiment) * 100).toFixed(1)),
+      impact: change > 0 ? 'Positive' : 'Negative'
+    };
+  });
+
   // Placeholder data for crisis response
   const crisisEvents = [
     {
@@ -82,6 +118,8 @@ const EventAnalysis = ({ data }) => {
       initialSentiment: 0.45,
       responseEffectiveness: 0.75,
       recoveryTime: '48 hours',
+      reputationImpact: -15, // percentage drop in reputation
+      recoveryRate: 85, // percentage of recovery achieved
       timeline: [
         { time: '0h', sentiment: 0.45 },
         { time: '24h', sentiment: 0.55 },
@@ -95,6 +133,8 @@ const EventAnalysis = ({ data }) => {
       initialSentiment: 0.40,
       responseEffectiveness: 0.70,
       recoveryTime: '72 hours',
+      reputationImpact: -25,
+      recoveryRate: 75,
       timeline: [
         { time: '0h', sentiment: 0.40 },
         { time: '24h', sentiment: 0.50 },
@@ -103,14 +143,6 @@ const EventAnalysis = ({ data }) => {
       ]
     }
   ];
-
-  // Calculate sentiment changes for events
-  const eventImpacts = keyEvents.map(event => ({
-    name: event.title,
-    before: event.beforeSentiment * 100,
-    after: event.afterSentiment * 100,
-    change: ((event.afterSentiment - event.beforeSentiment) * 100).toFixed(1)
-  }));
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -159,54 +191,129 @@ const EventAnalysis = ({ data }) => {
               Impact of Key Events
             </Typography>
             <Grid container spacing={2}>
-              {keyEvents.map((event, index) => (
-                <Grid item xs={12} md={4} key={index}>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <EventIcon color="primary" />
-                          <Typography variant="subtitle2">
-                            {event.title}
-                          </Typography>
-                        </Box>
-                        <Chip 
-                          label={event.type}
-                          size="small"
-                          color={
-                            event.type === 'Diplomatic' ? 'primary' :
-                            event.type === 'Sports' ? 'success' : 'info'
-                          }
-                        />
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" gutterBottom>
-                        {event.description}
-                      </Typography>
-                      <Box sx={{ mt: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2">Before</Typography>
-                          <Typography variant="body2">After</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="h6">
-                            {(event.beforeSentiment * 100).toFixed(1)}%
-                          </Typography>
-                          <TrendingUpIcon 
-                            sx={{ 
-                              color: event.impact === 'positive' ? 'success.main' : 'error.main',
-                              transform: 'rotate(45deg)',
-                              mx: 1
-                            }} 
+              {keyEvents.map((event, index) => {
+                const change = event.afterSentiment - event.beforeSentiment;
+                const impactInfo = formatSentimentChange(change);
+                const beforeInfo = getSentimentInfo(event.beforeSentiment);
+                const afterInfo = getSentimentInfo(event.afterSentiment);
+
+                return (
+                  <Grid item xs={12} md={4} key={index}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <EventIcon color="primary" />
+                            <Typography variant="subtitle2">
+                              {event.title}
+                            </Typography>
+                          </Box>
+                          <Chip 
+                            label={event.type}
+                            size="small"
+                            color={
+                              event.type === 'Diplomatic' ? 'primary' :
+                              event.type === 'Sports' ? 'success' : 'info'
+                            }
                           />
-                          <Typography variant="h6">
-                            {(event.afterSentiment * 100).toFixed(1)}%
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                          {event.description}
+                        </Typography>
+
+                        {/* Impact Visualization */}
+                        <Box sx={{ 
+                          mt: 2,
+                          p: 2,
+                          bgcolor: 'background.default',
+                          borderRadius: 1,
+                          border: 1,
+                          borderColor: 'divider'
+                        }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Sentiment Impact {impactInfo.icon}
+                          </Typography>
+                          
+                          {/* Before State */}
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Before Event:
+                            </Typography>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between',
+                              mt: 0.5,
+                              p: 1,
+                              bgcolor: 'background.paper',
+                              borderRadius: 1
+                            }}>
+                              <Typography variant="body2" sx={{ color: beforeInfo.color, fontWeight: 'medium' }}>
+                                {beforeInfo.text}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {(event.beforeSentiment * 100).toFixed(1)}%
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* After State */}
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">
+                              After Event:
+                            </Typography>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between',
+                              mt: 0.5,
+                              p: 1,
+                              bgcolor: 'background.paper',
+                              borderRadius: 1
+                            }}>
+                              <Typography variant="body2" sx={{ color: afterInfo.color, fontWeight: 'medium' }}>
+                                {afterInfo.text}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {(event.afterSentiment * 100).toFixed(1)}%
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* Impact Summary */}
+                          <Box sx={{ 
+                            mt: 2,
+                            p: 1,
+                            bgcolor: alpha(impactInfo.color, 0.1),
+                            borderRadius: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1
+                          }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                color: impactInfo.color,
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              Sentiment {impactInfo.direction} by {impactInfo.text}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <MessageIcon sx={{ fontSize: 'small', color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {event.mentions.toLocaleString()} mentions
                           </Typography>
                         </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
             </Grid>
           </Paper>
         </Grid>
@@ -222,71 +329,356 @@ const EventAnalysis = ({ data }) => {
                 <BarChart
                   data={eventImpacts}
                   layout="vertical"
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  margin={{ top: 20, right: 160, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" domain={[0, 100]} />
-                  <YAxis dataKey="name" type="category" />
-                  <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar dataKey="before" name="Before Event" fill={theme.palette.grey[400]} />
-                  <Bar dataKey="after" name="After Event" fill={theme.palette.primary.main} />
+                  <XAxis 
+                    type="number" 
+                    domain={[0, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                  />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category"
+                    width={120}
+                    tickFormatter={(value) => `${value} ${eventImpacts.find(e => e.name === value).change > 0 ? '📈' : '📉'}`}
+                  />
+                  <RechartsTooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const changeColor = data.change > 0 ? theme.palette.success.main : theme.palette.error.main;
+                        return (
+                          <Box
+                            sx={{
+                              bgcolor: 'background.paper',
+                              p: 1.5,
+                              border: 1,
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                              minWidth: 200
+                            }}
+                          >
+                            <Typography variant="subtitle2" gutterBottom>
+                              {data.name} {data.change > 0 ? '📈' : '📉'}
+                            </Typography>
+                            <Divider sx={{ my: 1 }} />
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              <Typography variant="body2" color="text.secondary">
+                                Before: {data.before.toFixed(1)}%
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                After: {data.after.toFixed(1)}%
+                              </Typography>
+                              <Box sx={{ 
+                                mt: 0.5,
+                                p: 0.5,
+                                bgcolor: alpha(changeColor, 0.1),
+                                borderRadius: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <Typography 
+                                  variant="body2" 
+                                  sx={{ 
+                                    color: changeColor,
+                                    fontWeight: 'bold'
+                                  }}
+                                >
+                                  {data.change > 0 ? 'Improved by ' : 'Declined by '}
+                                  {Math.abs(data.change)}%
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="middle"
+                    align="right"
+                    layout="vertical"
+                    wrapperStyle={{
+                      paddingLeft: 20
+                    }}
+                  />
+                  <Bar 
+                    dataKey="before" 
+                    name="Before Event" 
+                    fill={theme.palette.grey[400]}
+                    radius={[4, 0, 0, 4]}
+                  />
+                  <Bar 
+                    dataKey="after" 
+                    name="After Event" 
+                    fill={theme.palette.primary.main}
+                    radius={[0, 4, 4, 0]}
+                  >
+                    {eventImpacts.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`}
+                        fill={entry.change > 0 ? theme.palette.success.main : theme.palette.error.main}
+                      />
+                    ))}
+                    {/* Add labels showing the change percentage and direction */}
+                    {eventImpacts.map((entry, index) => (
+                      <Label
+                        key={`label-${index}`}
+                        position="right"
+                        content={({ x, y, width, height }) => {
+                          const isPositive = entry.change > 0;
+                          const color = isPositive ? theme.palette.success.main : theme.palette.error.main;
+                          return (
+                            <g>
+                              <rect
+                                x={x + width + 10}
+                                y={y + height/2 - 10}
+                                width={70}
+                                height={20}
+                                fill={alpha(color, 0.1)}
+                                rx={4}
+                              />
+                              <text
+                                x={x + width + 45}
+                                y={y + height/2}
+                                fill={color}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                                style={{
+                                  fontWeight: 'bold',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                {isPositive ? '+' : ''}{entry.change}%
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </Box>
+            {/* Legend for Impact Indicators */}
+            <Box sx={{ mt: 2, display: 'flex', gap: 3, justifyContent: 'center' }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1,
+                bgcolor: alpha(theme.palette.success.main, 0.1),
+                borderRadius: 1
+              }}>
+                <Typography variant="body2" sx={{ color: theme.palette.success.main }}>
+                  📈 Positive Impact
+                </Typography>
+              </Box>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1,
+                bgcolor: alpha(theme.palette.error.main, 0.1),
+                borderRadius: 1
+              }}>
+                <Typography variant="body2" sx={{ color: theme.palette.error.main }}>
+                  📉 Negative Impact
+                </Typography>
+              </Box>
             </Box>
           </Paper>
         </Grid>
 
         {/* Crisis Response Analysis */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Crisis Response Analysis
+            <Typography variant="subtitle1" gutterBottom sx={{ mb: 3 }}>
+              Crisis Response & Recovery Analysis
             </Typography>
             {crisisEvents.map((crisis, index) => (
               <Card variant="outlined" key={index} sx={{ mb: 2 }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WarningIcon color="error" />
-                      <Typography variant="subtitle2">
-                        {crisis.title}
-                      </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box sx={{ width: '100%' }}>
+                      {/* Event Header */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        mb: 2 
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Typography variant="subtitle2">
+                            {crisis.title}
+                          </Typography>
+                          <Chip
+                            icon={crisis.reputationImpact < 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
+                            label={`${crisis.reputationImpact < 0 ? '' : '+'}${crisis.reputationImpact}% Impact`}
+                            color={crisis.reputationImpact < 0 ? 'error' : 'success'}
+                            size="small"
+                          />
+                        </Box>
+                        <Chip
+                          icon={<CheckCircleIcon />}
+                          label={`${crisis.recoveryRate}% Recovery`}
+                          color={crisis.recoveryRate >= 80 ? 'success' : 'warning'}
+                          size="small"
+                        />
+                      </Box>
+
+                      {/* Impact Metrics */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2,
+                        p: 2,
+                        bgcolor: alpha(theme.palette.background.default, 0.6),
+                        borderRadius: 1,
+                        mb: 2
+                      }}>
+                        <Box sx={{ 
+                          flex: 1,
+                          p: 1.5,
+                          bgcolor: alpha(theme.palette.error.main, 0.1),
+                          borderRadius: 1
+                        }}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Initial Impact
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <WarningIcon sx={{ color: theme.palette.error.main, fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ color: theme.palette.error.main, fontWeight: 'medium' }}>
+                              {getSentimentInfo(crisis.initialSentiment).text}
+                              <Typography component="span" variant="caption" sx={{ ml: 1 }}>
+                                ({(crisis.initialSentiment * 100).toFixed(1)}%)
+                              </Typography>
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ 
+                          flex: 1,
+                          p: 1.5,
+                          bgcolor: alpha(theme.palette.success.main, 0.1),
+                          borderRadius: 1
+                        }}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Recovery Target
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CheckCircleIcon sx={{ color: theme.palette.success.main, fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ color: theme.palette.success.main, fontWeight: 'medium' }}>
+                              {getSentimentInfo(crisis.responseEffectiveness).text}
+                              <Typography component="span" variant="caption" sx={{ ml: 1 }}>
+                                ({(crisis.responseEffectiveness * 100).toFixed(1)}%)
+                              </Typography>
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ 
+                          flex: 1,
+                          p: 1.5,
+                          bgcolor: alpha(theme.palette.info.main, 0.1),
+                          borderRadius: 1
+                        }}>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Recovery Time
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <TimelineIcon sx={{ color: theme.palette.info.main, fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ color: theme.palette.info.main, fontWeight: 'medium' }}>
+                              {crisis.recoveryTime}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+
+                      {/* Recovery Timeline Chart */}
+                      <Box sx={{ width: '100%', height: 150 }}>
+                        <ResponsiveContainer>
+                          <LineChart data={crisis.timeline}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="time" />
+                            <YAxis 
+                              domain={[0, 1]} 
+                              tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                              label={{ 
+                                value: 'Sentiment Score', 
+                                angle: -90, 
+                                position: 'insideLeft',
+                                style: { textAnchor: 'middle' }
+                              }}
+                            />
+                            <RechartsTooltip 
+                              content={({ active, payload }) => {
+                                if (active && payload && payload.length) {
+                                  const data = payload[0].payload;
+                                  const sentimentInfo = getSentimentInfo(data.sentiment);
+                                  return (
+                                    <Box sx={{ 
+                                      bgcolor: 'background.paper', 
+                                      p: 1.5, 
+                                      border: 1,
+                                      borderColor: 'divider',
+                                      borderRadius: 1
+                                    }}>
+                                      <Typography variant="body2" gutterBottom>
+                                        Time: {data.time}
+                                      </Typography>
+                                      <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                          color: sentimentInfo.color,
+                                          fontWeight: 'medium'
+                                        }}
+                                      >
+                                        {sentimentInfo.text} ({(data.sentiment * 100).toFixed(1)}%)
+                                      </Typography>
+                                    </Box>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="sentiment"
+                              stroke={theme.palette.primary.main}
+                              strokeWidth={2}
+                              dot={{
+                                fill: theme.palette.background.paper,
+                                stroke: theme.palette.primary.main,
+                                strokeWidth: 2
+                              }}
+                            />
+                            <ReferenceLine
+                              y={crisis.initialSentiment}
+                              stroke={theme.palette.error.main}
+                              strokeDasharray="3 3"
+                              label={{ 
+                                value: 'Initial Impact', 
+                                position: 'right',
+                                fill: theme.palette.error.main
+                              }}
+                            />
+                            <ReferenceLine
+                              y={crisis.responseEffectiveness}
+                              stroke={theme.palette.success.main}
+                              strokeDasharray="3 3"
+                              label={{ 
+                                value: 'Recovery Target', 
+                                position: 'right',
+                                fill: theme.palette.success.main
+                              }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </Box>
                     </Box>
-                    <Chip 
-                      icon={<CheckCircleIcon />}
-                      label={`Recovery: ${crisis.recoveryTime}`}
-                      color="success"
-                      size="small"
-                    />
-                  </Box>
-                  <Box sx={{ width: '100%', height: 150 }}>
-                    <ResponsiveContainer>
-                      <LineChart data={crisis.timeline}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" />
-                        <YAxis domain={[0, 1]} tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} />
-                        <RechartsTooltip content={<CustomTooltip />} />
-                        <Line
-                          type="monotone"
-                          dataKey="sentiment"
-                          stroke={theme.palette.primary.main}
-                          strokeWidth={2}
-                        />
-                        <ReferenceLine
-                          y={crisis.initialSentiment}
-                          stroke={theme.palette.error.main}
-                          strokeDasharray="3 3"
-                          label={{ value: 'Initial', position: 'right' }}
-                        />
-                        <ReferenceLine
-                          y={crisis.responseEffectiveness}
-                          stroke={theme.palette.success.main}
-                          strokeDasharray="3 3"
-                          label={{ value: 'Target', position: 'right' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
                   </Box>
                 </CardContent>
               </Card>

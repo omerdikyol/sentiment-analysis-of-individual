@@ -61,6 +61,8 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
     borderRadius: '8px',
     margin: '2px 4px',
     padding: '8px 12px',
+    display: 'flex',
+    justifyContent: 'center',
     '&:hover': {
       backgroundColor: 'rgba(255, 255, 255, 0.08)',
     },
@@ -73,7 +75,10 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
   },
   '& .MuiListItemIcon-root': {
     color: '#ffffff',
-    minWidth: '36px',
+    minWidth: 40,
+    display: 'flex',
+    justifyContent: 'center',
+    marginRight: 0
   },
 }));
 
@@ -130,8 +135,18 @@ const Sidebar = ({ isOpen, onToggle, selectedPath = '/' }) => {
               placement="right"
               arrow
             >
-              <ListItemButton selected={selectedPath === item.path}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemButton 
+                selected={selectedPath === item.path}
+                sx={{
+                  justifyContent: 'center',
+                  minHeight: 48,
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  display: 'flex',
+                  justifyContent: 'center',
+                  minWidth: 40,
+                }}>{item.icon}</ListItemIcon>
                 {isOpen && <ListItemText primary={item.text} />}
               </ListItemButton>
             </Tooltip>
