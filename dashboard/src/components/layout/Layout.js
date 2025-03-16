@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, styled } from '@mui/material';
 import Sidebar from './Sidebar';
 
@@ -21,20 +21,9 @@ const Main = styled(Box, {
   },
 }));
 
-const Layout = ({ children }) => {
-  const [isOpen, setIsOpen] = useState(true);
-
-  const handleDrawerToggle = () => {
-    setIsOpen(!isOpen);
-  };
-
+const Layout = ({ isDrawerOpen, handleDrawerToggle }) => {
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6f8' }}>
-      <Sidebar isOpen={isOpen} onToggle={handleDrawerToggle} />
-      <Main open={isOpen}>
-        {children}
-      </Main>
-    </Box>
+    <Sidebar isOpen={isDrawerOpen} onToggle={handleDrawerToggle} />
   );
 };
 
