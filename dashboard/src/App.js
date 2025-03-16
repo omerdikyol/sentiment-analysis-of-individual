@@ -613,8 +613,8 @@ function App() {
 
                 {/* Sentiment Tables */}
                 <Grid item xs={12}>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                  <Grid container spacing={3} direction="column">
+                    <Grid item xs={12}>
                       <Paper elevation={0} sx={{ p: 2 }}>
                         <SentimentTable
                           data={filteredData}
@@ -623,7 +623,7 @@ function App() {
                         />
                       </Paper>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12}>
                       <Paper elevation={0} sx={{ p: 2 }}>
                         <SentimentTable
                           data={filteredData}

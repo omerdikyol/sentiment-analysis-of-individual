@@ -9,12 +9,38 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  TreeMap,
+  PieChart,
+  Pie,
+  Cell,
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
 
 const ThemeAnalysis = ({ data }) => {
   const theme = useTheme();
+
+  const COLORS = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.success.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+    theme.palette.warning.main,
+    theme.palette.primary.light,
+    theme.palette.secondary.light,
+    theme.palette.success.light,
+    theme.palette.error.light,
+    theme.palette.info.light,
+    theme.palette.warning.light,
+    theme.palette.primary.dark,
+    theme.palette.secondary.dark,
+    theme.palette.success.dark,
+    theme.palette.error.dark,
+    theme.palette.info.dark,
+    theme.palette.warning.dark,
+    alpha(theme.palette.primary.main, 0.7),
+    alpha(theme.palette.secondary.main, 0.7),
+  ];
 
   if (!data?.rawData) {
     return (
@@ -109,13 +135,19 @@ const ThemeAnalysis = ({ data }) => {
   const topTopics = Object.values(topicData)
     .map(topic => ({
       ...topic,
-      sentiment: topic.value > 0 ? topic.sentiment / topic.value : 0
+      sentiment: topic.value > 0 ? topic.sentiment / topic.value : 0,
     }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8); // Limit to top 8 topics for better readability
 
   const topHashtags = Object.values(hashtagData)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
+    .slice(0, 8) // Limit to top 8 hashtags
+    .map(tag => ({
+      name: tag.tag,
+      value: tag.count,
+      engagement: tag.engagement
+    }));
 
   const topPhrases = Object.values(phraseData)
     .map(phrase => ({
@@ -125,36 +157,6 @@ const ThemeAnalysis = ({ data }) => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 1.5,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            {label}
-          </Typography>
-          {payload.map((entry) => (
-            <Typography
-              key={entry.name}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >
-              {`${entry.name}: ${Number(entry.value).toFixed(0)}`}
-            </Typography>
-          ))}
-        </Box>
-      );
-    }
-    return null;
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -162,26 +164,54 @@ const ThemeAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Key Themes & Topics Analysis
+        Theme Analysis
       </Typography>
       <Grid container spacing={3}>
-        {/* Most Discussed Topics */}
+        {/* Topic Distribution */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Most Discussed Topics
+              Topic Distribution
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
                 <BarChart data={topTopics}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
                   <YAxis />
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <Box
+                            sx={{
+                              bgcolor: 'background.paper',
+                              p: 1.5,
+                              border: 1,
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="body2" gutterBottom>
+                              {data.name}
+                            </Typography>
+                            <Typography variant="body2">
+                              Mentions: {data.value}
+                            </Typography>
+                            <Typography variant="body2">
+                              Sentiment: {(data.sentiment * 100).toFixed(1)}%
+                            </Typography>
+                          </Box>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Legend />
-                  <Bar
-                    dataKey="value"
-                    name="Mentions"
+                  <Bar 
+                    dataKey="value" 
+                    name="Mentions" 
                     fill={theme.palette.primary.main}
                   />
                 </BarChart>
@@ -190,32 +220,62 @@ const ThemeAnalysis = ({ data }) => {
           </Paper>
         </Grid>
 
-        {/* Trending Hashtags */}
+        {/* Hashtag Analysis */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Trending Hashtags
+              Top Hashtags
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart
-                  data={topHashtags}
-                  layout="vertical"
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis
-                    dataKey="tag"
-                    type="category"
-                    width={150}
+                <PieChart>
+                  <Pie
+                    data={topHashtags}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label={(entry) => entry.name}
+                  >
+                    {topHashtags.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]} 
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <Box
+                            sx={{
+                              bgcolor: 'background.paper',
+                              p: 1.5,
+                              border: 1,
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="body2" gutterBottom>
+                              {data.name}
+                            </Typography>
+                            <Typography variant="body2">
+                              Count: {data.value}
+                            </Typography>
+                            <Typography variant="body2">
+                              Engagement: {data.engagement}
+                            </Typography>
+                          </Box>
+                        );
+                      }
+                      return null;
+                    }}
                   />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar
-                    dataKey="count"
-                    name="Mentions"
-                    fill={theme.palette.secondary.main}
-                  />
-                </BarChart>
+                  <Legend />
+                </PieChart>
               </ResponsiveContainer>
             </Box>
           </Paper>

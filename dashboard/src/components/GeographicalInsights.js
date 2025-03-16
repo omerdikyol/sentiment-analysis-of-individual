@@ -11,7 +11,12 @@ import {
   Legend,
   Cell,
   PieChart,
-  Pie
+  Pie,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
@@ -97,49 +102,20 @@ const GeographicalInsights = ({ data }) => {
   // Format data for sentiment by country chart
   const sentimentByCountry = Object.entries(countryData).map(([country, data]) => ({
     country,
-    positive: data.positive,
-    neutral: data.neutral,
-    negative: data.negative,
+    positive: (data.positive / data.total) * 100,
+    neutral: (data.neutral / data.total) * 100,
+    negative: (data.negative / data.total) * 100,
     total: data.total,
-    engagement: data.engagement
   }));
 
   // Format data for source distribution
-  const sourceDistribution = ['Social Media', 'News', 'TV', 'Other'].map(sourceType => {
-    const sourceData = {
-      source: sourceType,
-      positive: 0,
-      neutral: 0,
-      negative: 0,
-      total: 0
-    };
-
-    let totalMentions = 0;
-    let positiveMentions = 0;
-    let neutralMentions = 0;
-    let negativeMentions = 0;
-
-    // Sum up mentions across all countries for this source type
-    Object.values(countryData).forEach(countryData => {
-      if (countryData.sources?.[sourceType]) {
-        const sourceStats = countryData.sources[sourceType];
-        totalMentions += sourceStats.total || 0;
-        positiveMentions += sourceStats.positive || 0;
-        neutralMentions += sourceStats.neutral || 0;
-        negativeMentions += sourceStats.negative || 0;
-      }
-    });
-
-    // Calculate percentages only if there are mentions
-    if (totalMentions > 0) {
-      sourceData.positive = (positiveMentions / totalMentions) * 100;
-      sourceData.neutral = (neutralMentions / totalMentions) * 100;
-      sourceData.negative = (negativeMentions / totalMentions) * 100;
-      sourceData.total = totalMentions;
-    }
-
-    return sourceData;
-  });
+  const sourceDistribution = Object.entries(countryData).map(([country, data]) => ({
+    country,
+    'Social Media': Math.round((data.sources['Social Media'].total / data.total) * 100),
+    'News': Math.round((data.sources['News'].total / data.total) * 100),
+    'TV': Math.round((data.sources['TV'].total / data.total) * 100),
+    'Other': Math.round((data.sources['Other'].total / data.total) * 100),
+  }));
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -264,31 +240,26 @@ const GeographicalInsights = ({ data }) => {
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={sentimentByCountry}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="country" />
-                  <YAxis domain={[0, 100]} />
+                <PieChart>
+                  <Pie
+                    data={sentimentByCountry}
+                    dataKey="total"
+                    nameKey="country"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={(entry) => entry.country}
+                  >
+                    {sentimentByCountry.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar
-                    dataKey="positive"
-                    name="Positive"
-                    stackId="a"
-                    fill={theme.palette.success.main}
-                  />
-                  <Bar
-                    dataKey="neutral"
-                    name="Neutral"
-                    stackId="a"
-                    fill={theme.palette.grey[400]}
-                  />
-                  <Bar
-                    dataKey="negative"
-                    name="Negative"
-                    stackId="a"
-                    fill={theme.palette.error.main}
-                  />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             </Box>
           </Paper>
@@ -298,33 +269,81 @@ const GeographicalInsights = ({ data }) => {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Media Sentiment Distribution
+              Source Distribution by Country
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={sourceDistribution}>
+                <BarChart
+                  data={sourceDistribution}
+                  layout="vertical"
+                  margin={{ top: 20, right: 30, left: 30, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="source" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <XAxis type="number" domain={[0, 100]} />
+                  <YAxis 
+                    dataKey="country" 
+                    type="category" 
+                    tick={{ fontSize: 12 }}
+                    width={35}
+                  />
+                  <Tooltip
+                    formatter={(value) => `${value}%`}
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <Box
+                            sx={{
+                              bgcolor: 'background.paper',
+                              p: 1.5,
+                              border: 1,
+                              borderColor: 'divider',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="subtitle2" gutterBottom>
+                              {label}
+                            </Typography>
+                            {payload.map((entry) => (
+                              <Typography
+                                key={entry.name}
+                                variant="body2"
+                                sx={{
+                                  color: entry.color,
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  gap: 2,
+                                }}
+                              >
+                                <span>{entry.name}:</span>
+                                <span>{entry.value}%</span>
+                              </Typography>
+                            ))}
+                          </Box>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Legend />
                   <Bar
-                    dataKey="positive"
-                    name="Positive"
+                    dataKey="Social Media"
+                    stackId="a"
+                    fill={theme.palette.primary.main}
+                  />
+                  <Bar
+                    dataKey="News"
+                    stackId="a"
+                    fill={theme.palette.secondary.main}
+                  />
+                  <Bar
+                    dataKey="TV"
                     stackId="a"
                     fill={theme.palette.success.main}
                   />
                   <Bar
-                    dataKey="neutral"
-                    name="Neutral"
+                    dataKey="Other"
                     stackId="a"
                     fill={theme.palette.grey[400]}
-                  />
-                  <Bar
-                    dataKey="negative"
-                    name="Negative"
-                    stackId="a"
-                    fill={theme.palette.error.main}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -344,14 +363,15 @@ const GeographicalInsights = ({ data }) => {
             <Typography variant="h6" gutterBottom>
               Top Topics by Country
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={2} sx={{ flexWrap: 'nowrap', overflowX: 'auto', pb: 2 }}>
               {Object.keys(countryData).map((country) => (
-                <Grid item xs={12} md={6} key={country}>
+                <Grid item xs={12} sm={6} md={3} key={country} sx={{ flex: '0 0 auto' }}>
                   <Paper
                     sx={{
                       p: 2,
                       backgroundColor: 'background.default',
                       borderRadius: 1,
+                      minWidth: '250px',
                     }}
                   >
                     <Typography variant="subtitle1" gutterBottom>
