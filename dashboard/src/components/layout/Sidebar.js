@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -14,10 +15,7 @@ import {
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
-  Timeline as TimelineIcon,
-  Language as LanguageIcon,
-  Analytics as AnalyticsIcon,
-  Settings as SettingsIcon,
+  TableChart as TableChartIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
@@ -48,49 +46,34 @@ const StyledDrawer = styled(Drawer, {
 
 const Logo = styled(Box)(({ theme, open }) => ({
   padding: open ? '20px 16px' : '20px 0',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: open ? 'space-between' : 'center',
-  minHeight: '64px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
-  padding: '4px',
-  '& .MuiListItemButton-root': {
-    borderRadius: '8px',
-    margin: '2px 4px',
-    padding: '8px 12px',
-    display: 'flex',
-    justifyContent: 'center',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    },
-    '&.Mui-selected': {
-      backgroundColor: 'rgba(255, 255, 255, 0.16)',
-      '&:hover': {
-        backgroundColor: 'rgba(255, 255, 255, 0.16)',
-      },
-    },
-  },
-  '& .MuiListItemIcon-root': {
-    color: '#ffffff',
-    minWidth: 40,
-    display: 'flex',
-    justifyContent: 'center',
-    marginRight: 0
-  },
+  display: 'block',
+  padding: 0,
+  marginBottom: theme.spacing(0.5),
 }));
 
+const StyledListItemIcon = styled(ListItemIcon)(({ theme, open }) => ({
+  minWidth: 0,
+  marginRight: open ? theme.spacing(2) : 'auto',
+  justifyContent: 'center',
+  marginRight: 0
+}));
+
+// Simplified menu items - only keeping Dashboard and Sentiment Data
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-  { text: 'Sentiment Analysis', icon: <TimelineIcon />, path: '/sentiment' },
-  { text: 'Geographic Data', icon: <LanguageIcon />, path: '/geographic' },
-  { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+  { text: 'Dashboard', icon: <DashboardIcon sx={{ color: 'white' }} />, path: '/' },
+  { text: 'Sentiment Data', icon: <TableChartIcon sx={{ color: 'white' }} />, path: '/sentiment-data' },
 ];
 
-const Sidebar = ({ isOpen, onToggle, selectedPath = '/' }) => {
+const Sidebar = ({ isOpen, onToggle }) => {
+  const location = useLocation();
+  
   return (
     <StyledDrawer variant="permanent" open={isOpen}>
       <Logo open={isOpen}>
@@ -136,18 +119,44 @@ const Sidebar = ({ isOpen, onToggle, selectedPath = '/' }) => {
               arrow
             >
               <ListItemButton 
-                selected={selectedPath === item.path}
+                component={Link}
+                to={item.path}
+                selected={location.pathname === item.path}
                 sx={{
-                  justifyContent: 'center',
                   minHeight: 48,
+                  justifyContent: isOpen ? 'initial' : 'center',
+                  px: 2.5,
+                  borderRadius: '8px',
+                  mb: 0.5,
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                    }
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  }
                 }}
               >
-                <ListItemIcon sx={{ 
-                  display: 'flex',
-                  justifyContent: 'center',
-                  minWidth: 40,
-                }}>{item.icon}</ListItemIcon>
-                {isOpen && <ListItemText primary={item.text} />}
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: isOpen ? 2 : 'auto',
+                    justifyContent: 'center',
+                    color: 'white'
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                {isOpen && (
+                  <ListItemText 
+                    primary={item.text} 
+                    primaryTypographyProps={{
+                      fontSize: '0.9rem',
+                    }}
+                  />
+                )}
               </ListItemButton>
             </Tooltip>
           </StyledListItem>

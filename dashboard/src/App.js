@@ -37,8 +37,12 @@ import {
   ChevronLeft as ChevronLeftIcon,
   Menu as MenuIcon,
   Event as EventIcon,
+  TableChart as TableChartIcon,
+  Timeline as TimelineIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 
 // Import components
 import Layout from './components/layout/Layout';
@@ -48,6 +52,7 @@ import SentimentLineChart from './components/SentimentLineChart';
 import PlatformBarChart from './components/PlatformBarChart';
 import SentimentTable from './components/SentimentTable';
 import SentimentData from './components/SentimentData';
+import SentimentDataPage from './components/SentimentDataPage';
 import CountryFilter from './components/CountryFilter';
 import CountryBarChart from './components/CountryBarChart';
 import SentimentOverview from './components/SentimentOverview';
@@ -164,6 +169,7 @@ const FilterContainer = styled(Box)(({ theme }) => ({
 
 const ContentContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
+  paddingTop: theme.spacing(10),
 }));
 
 const MainContent = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
@@ -175,6 +181,7 @@ const MainContent = styled('main', { shouldForwardProp: (prop) => prop !== 'open
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
+    width: `calc(100% - ${open ? DRAWER_WIDTH : COLLAPSED_DRAWER_WIDTH}px)`,
   }),
 );
 
@@ -217,15 +224,12 @@ const DrawerHeader = styled(Box)(({ theme }) => ({
 }));
 
 const menuItems = [
-  { text: 'Dashboard', id: 'dashboard', icon: <DashboardIcon /> },
-  { text: 'Sentiment Overview', id: 'sentiment-overview', icon: <AnalyticsIcon /> },
-  { text: 'Mentions & Trends', id: 'mentions-trends', icon: <StackedLineChartIcon /> },
-  { text: 'Theme Analysis', id: 'theme-analysis', icon: <BarChartIcon /> },
-  { text: 'Emotional Analysis', id: 'emotional-analysis', icon: <FavoriteIcon /> },
-  { text: 'Event Analysis', id: 'event-analysis', icon: <EventIcon /> },
-  { text: 'Influencer Analysis', id: 'influencer-analysis', icon: <TrendingUpIcon /> },
-  { text: 'Platform Sentiment', id: 'platform-sentiment', icon: <MessageIcon /> },
-  { text: 'Geographical Insights', id: 'geographical-insights', icon: <PublicIcon /> },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+  { text: 'Sentiment Analysis', icon: <TimelineIcon />, path: '/sentiment' },
+  { text: 'Sentiment Data', icon: <TableChartIcon />, path: '/sentiment-data' },
+  { text: 'Geographic Data', icon: <LanguageIcon />, path: '/geographic' },
+  { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
 // Scroll to top button
@@ -444,243 +448,240 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex' }}>
-        <Sidebar variant="permanent" open={drawerOpen}>
-          <DrawerHeader>
-            {drawerOpen ? (
-              <>
-                <Typography variant="h6" noWrap component="div" sx={{ ml: 2 }}>
-                  Sentiment Analysis
-                </Typography>
-                <IconButton onClick={handleDrawerToggle} sx={{ color: 'white' }}>
-                  <ChevronLeftIcon />
-                </IconButton>
-              </>
-            ) : (
-              <IconButton onClick={handleDrawerToggle} sx={{ mx: 'auto', color: 'white' }}>
-                <MenuIcon />
-              </IconButton>
-            )}
-          </DrawerHeader>
-          <SidebarContent>
-            {menuItems.map((item) => (
-              <Box
-                key={item.text}
-                sx={{
-                  mb: 1,
-                  px: 1,
+      <Router>
+        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+          <Layout 
+            isDrawerOpen={drawerOpen} 
+            handleDrawerToggle={handleDrawerToggle}
+            selectedPath={window.location.pathname}
+          />
+          <MainContent open={drawerOpen}>
+            <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
+              <AppBar 
+                position="fixed" 
+                color="default" 
+                elevation={0}
+                sx={{ 
+                  backgroundColor: 'white',
+                  borderBottom: '1px solid #e0e0e0',
+                  zIndex: (theme) => theme.zIndex.drawer - 1,
+                  transition: theme.transitions.create(['width', 'margin'], {
+                    easing: theme.transitions.easing.sharp,
+                    duration: theme.transitions.duration.leavingScreen,
+                  }),
+                  ...(drawerOpen ? {
+                    marginLeft: DRAWER_WIDTH,
+                    width: `calc(100% - ${DRAWER_WIDTH}px)`,
+                  } : {
+                    marginLeft: COLLAPSED_DRAWER_WIDTH,
+                    width: `calc(100% - ${COLLAPSED_DRAWER_WIDTH}px)`,
+                  })
                 }}
               >
-                <Box
-                  component="a"
-                  href={`#${item.id}`}
-                  onClick={(e) => scrollToSection(e, item.id)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    cursor: 'pointer',
-                    p: 1,
-                    borderRadius: 1,
-                    whiteSpace: 'nowrap',
-                    minHeight: 48,
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    justifyContent: drawerOpen ? 'flex-start' : 'center',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                    },
-                  }}
-                >
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: 40
-                  }}>
-                    {item.icon}
-                  </Box>
-                  {drawerOpen && <Typography>{item.text}</Typography>}
-                </Box>
-              </Box>
-            ))}
-          </SidebarContent>
-        </Sidebar>
-        <MainContent open={drawerOpen}>
-          <Box>
-            <FilterContainer>
-              <CountryFilter
-                data={data}
-                selectedCountry={selectedCountry}
-                onCountryChange={handleCountryChange}
-              />
-              <FormControl sx={{ minWidth: 120 }}>
-                <InputLabel>Time Range</InputLabel>
-                <Select
-                  value={timeRange}
-                  label="Time Range"
-                  onChange={handleTimeRangeChange}
-                  size="small"
-                >
-                  <MenuItem value="7">Last 7 days</MenuItem>
-                  <MenuItem value="30">Last 30 days</MenuItem>
-                  <MenuItem value="90">Last 90 days</MenuItem>
-                  <MenuItem value="all">All time</MenuItem>
-                </Select>
-              </FormControl>
-            </FilterContainer>
-            <ContentContainer>
-              <Grid container spacing={3}>
-                {/* Dashboard Overview */}
-                <Grid item xs={12} id="dashboard">
-                  <Paper elevation={0} sx={{ p: 2, mb: 3 }}>
-                    <Typography variant="h5" gutterBottom>
-                      Dashboard Overview
-                    </Typography>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} md={3}>
-                        <MetricCard
-                          title="Total Mentions"
-                          value={filteredData?.metrics?.totalMentions || 0}
-                          trend={+5.2}
-                        />
+                <Toolbar>
+                  <IconButton
+                    color="inherit"
+                    aria-label="open drawer"
+                    onClick={handleDrawerToggle}
+                    edge="start"
+                    sx={{
+                      marginRight: 2,
+                      ...(drawerOpen && { display: 'none' }),
+                    }}
+                  >
+                    <MenuIcon />
+                  </IconButton>
+                  <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                    Sentiment Analysis Dashboard
+                  </Typography>
+                  <CountryFilter 
+                    selectedCountry={selectedCountry} 
+                    onCountryChange={handleCountryChange} 
+                  />
+                  <FormControl variant="outlined" size="small" sx={{ ml: 2, minWidth: 120 }}>
+                    <InputLabel id="time-range-select-label">Time Range</InputLabel>
+                    <Select
+                      labelId="time-range-select-label"
+                      id="time-range-select"
+                      value={timeRange}
+                      onChange={handleTimeRangeChange}
+                      label="Time Range"
+                    >
+                      <MenuItem value="all">All Time</MenuItem>
+                      <MenuItem value="7d">Last 7 Days</MenuItem>
+                      <MenuItem value="30d">Last 30 Days</MenuItem>
+                      <MenuItem value="90d">Last 90 Days</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Toolbar>
+              </AppBar>
+              <ContentContainer>
+                <Routes>
+                  <Route path="/" element={
+                    loading ? (
+                      <LoadingAnimation />
+                    ) : error ? (
+                      <Box sx={{ p: 3, textAlign: 'center' }}>
+                        <Typography color="error">{error}</Typography>
+                      </Box>
+                    ) : (
+                      <Grid container spacing={3}>
+                        {/* Dashboard Overview */}
+                        <Grid item xs={12} id="dashboard">
+                          <Paper elevation={0} sx={{ p: 2, mb: 3 }}>
+                            <Typography variant="h5" gutterBottom>
+                              Dashboard Overview
+                            </Typography>
+                            <Grid container spacing={3}>
+                              <Grid item xs={12} md={3}>
+                                <MetricCard
+                                  title="Total Mentions"
+                                  value={filteredData?.metrics?.totalMentions || 0}
+                                  trend={+5.2}
+                                />
+                              </Grid>
+                              <Grid item xs={12} md={3}>
+                                <MetricCard
+                                  title="Positive Sentiment"
+                                  value={`${filteredData?.metrics?.positivePercentage || 0}%`}
+                                  trend={+2.1}
+                                  color="success"
+                                />
+                              </Grid>
+                              <Grid item xs={12} md={3}>
+                                <MetricCard
+                                  title="Negative Sentiment"
+                                  value={`${filteredData?.metrics?.negativePercentage || 0}%`}
+                                  trend={-1.5}
+                                  color="error"
+                                />
+                              </Grid>
+                              <Grid item xs={12} md={3}>
+                                <MetricCard
+                                  title="Engagement Rate"
+                                  value={`${filteredData?.metrics?.presenceScore || 0}%`}
+                                  trend={+3.7}
+                                  color="info"
+                                />
+                              </Grid>
+                            </Grid>
+                          </Paper>
+                        </Grid>
+
+                        {/* Sentiment Overview */}
+                        <Grid item xs={12} md={6} id="sentiment-overview">
+                          <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                            <SentimentOverview data={filteredData} />
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                            <SentimentBySource data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Mentions & Trends */}
+                        <Grid item xs={12} id="mentions-trends">
+                          <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                              <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                                <MentionLineChart mentionsByDate={filteredData?.mentionsByDate} />
+                              </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                                <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate} />
+                              </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                                <PlatformBarChart mentionsByPlatform={filteredData?.mentionsByPlatform} />
+                              </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
+                                <CountryBarChart mentionsByCountry={filteredData?.mentionsByCountry} />
+                              </Paper>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+
+                        {/* Sentiment Tables */}
+                        <Grid item xs={12}>
+                          <Grid container spacing={3} direction="column">
+                            <Grid item xs={12}>
+                              <Paper elevation={0} sx={{ p: 2 }}>
+                                <SentimentTable
+                                  data={filteredData}
+                                  title="Highest Sentiment Posts"
+                                  type="top"
+                                />
+                              </Paper>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Paper elevation={0} sx={{ p: 2 }}>
+                                <SentimentTable
+                                  data={filteredData}
+                                  title="Lowest Sentiment Posts"
+                                  type="bottom"
+                                />
+                              </Paper>
+                            </Grid>
+                          </Grid>
+                        </Grid>
+
+                        {/* Theme Analysis */}
+                        <Grid item xs={12} id="theme-analysis">
+                          <Paper elevation={0} sx={{ p: 2 }}>
+                            <ThemeAnalysis data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Emotional Analysis */}
+                        <Grid item xs={12} id="emotional-analysis">
+                          <Paper elevation={0} sx={{ p: 2 }}>
+                            <EmotionalAnalysis data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Event Analysis */}
+                        <Grid item xs={12} id="event-analysis">
+                          <Paper elevation={0} sx={{ p: 2 }}>
+                            <EventAnalysis data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Influencer Analysis */}
+                        <Grid item xs={12} id="influencer-analysis">
+                          <Paper elevation={0} sx={{ p: 2 }}>
+                            <InfluencerAnalysis data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Platform Sentiment */}
+                        <Grid item xs={12} id="platform-sentiment">
+                          <Paper elevation={0} sx={{ p: 2 }}>
+                            <PlatformSentiment data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Geographical Insights */}
+                        <Grid item xs={12} id="geographical-insights">
+                          <Paper elevation={0} sx={{ p: 2 }}>
+                            <GeographicalInsights data={filteredData} />
+                          </Paper>
+                        </Grid>
                       </Grid>
-                      <Grid item xs={12} md={3}>
-                        <MetricCard
-                          title="Positive Sentiment"
-                          value={`${filteredData?.metrics?.positivePercentage || 0}%`}
-                          trend={+2.1}
-                          color="success"
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <MetricCard
-                          title="Negative Sentiment"
-                          value={`${filteredData?.metrics?.negativePercentage || 0}%`}
-                          trend={-1.5}
-                          color="error"
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <MetricCard
-                          title="Engagement Rate"
-                          value={`${filteredData?.metrics?.presenceScore || 0}%`}
-                          trend={+3.7}
-                          color="info"
-                        />
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                </Grid>
-
-                {/* Sentiment Overview */}
-                <Grid item xs={12} md={6} id="sentiment-overview">
-                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                    <SentimentOverview data={filteredData} />
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                    <SentimentBySource data={filteredData} />
-                  </Paper>
-                </Grid>
-
-                {/* Mentions & Trends */}
-                <Grid item xs={12} id="mentions-trends">
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                        <MentionLineChart mentionsByDate={filteredData?.mentionsByDate} />
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                        <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate} />
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                        <PlatformBarChart mentionsByPlatform={filteredData?.mentionsByPlatform} />
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                      <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                        <CountryBarChart mentionsByCountry={filteredData?.mentionsByCountry} />
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                </Grid>
-
-                {/* Sentiment Tables */}
-                <Grid item xs={12}>
-                  <Grid container spacing={3} direction="column">
-                    <Grid item xs={12}>
-                      <Paper elevation={0} sx={{ p: 2 }}>
-                        <SentimentTable
-                          data={filteredData}
-                          title="Highest Sentiment Posts"
-                          type="top"
-                        />
-                      </Paper>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Paper elevation={0} sx={{ p: 2 }}>
-                        <SentimentTable
-                          data={filteredData}
-                          title="Lowest Sentiment Posts"
-                          type="bottom"
-                        />
-                      </Paper>
-                    </Grid>
-                  </Grid>
-                </Grid>
-
-                {/* Theme Analysis */}
-                <Grid item xs={12} id="theme-analysis">
-                  <Paper elevation={0} sx={{ p: 2 }}>
-                    <ThemeAnalysis data={filteredData} />
-                  </Paper>
-                </Grid>
-
-                {/* Emotional Analysis */}
-                <Grid item xs={12} id="emotional-analysis">
-                  <Paper elevation={0} sx={{ p: 2 }}>
-                    <EmotionalAnalysis data={filteredData} />
-                  </Paper>
-                </Grid>
-
-                {/* Event Analysis */}
-                <Grid item xs={12} id="event-analysis">
-                  <Paper elevation={0} sx={{ p: 2 }}>
-                    <EventAnalysis data={filteredData} />
-                  </Paper>
-                </Grid>
-
-                {/* Influencer Analysis */}
-                <Grid item xs={12} id="influencer-analysis">
-                  <Paper elevation={0} sx={{ p: 2 }}>
-                    <InfluencerAnalysis data={filteredData} />
-                  </Paper>
-                </Grid>
-
-                {/* Platform Sentiment */}
-                <Grid item xs={12} id="platform-sentiment">
-                  <Paper elevation={0} sx={{ p: 2 }}>
-                    <PlatformSentiment data={filteredData} />
-                  </Paper>
-                </Grid>
-
-                {/* Geographical Insights */}
-                <Grid item xs={12} id="geographical-insights">
-                  <Paper elevation={0} sx={{ p: 2 }}>
-                    <GeographicalInsights data={filteredData} />
-                  </Paper>
-                </Grid>
-              </Grid>
-            </ContentContainer>
-          </Box>
-        </MainContent>
-      </Box>
+                    )
+                  } />
+                  <Route path="/sentiment-data" element={<SentimentDataPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </ContentContainer>
+            </Box>
+          </MainContent>
+        </Box>
+      </Router>
     </ThemeProvider>
   );
 }
