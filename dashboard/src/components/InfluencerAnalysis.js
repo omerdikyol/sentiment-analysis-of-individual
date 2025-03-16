@@ -38,62 +38,86 @@ import {
   Cell
 } from 'recharts';
 
-const InfluencerAnalysis = ({ data }) => {
+const InfluencerAnalysis = () => {
   const theme = useTheme();
 
-  if (!data?.rawData) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
-      </Box>
-    );
-  }
-
-  // Process influencer data
-  const influencerData = data.rawData.reduce((acc, item) => {
-    const author = item.author || '';
-    const influencerTypes = {
-      'Politician': ['minister', 'senator', 'mp', 'congressman', 'official', 'governor'],
-      'Journalist': ['journalist', 'reporter', 'editor', 'correspondent', 'news'],
-      'Thought Leader': ['professor', 'expert', 'analyst', 'researcher', 'advisor'],
-      'Media Outlet': ['news', 'times', 'post', 'herald', 'journal', 'daily']
-    };
-
-    // Skip if no author or engagement metrics
-    if (!author || (!item.likes && !item.retweets && !item.comments)) return acc;
-
-    if (!acc[author]) {
-      let type = 'Other';
-      Object.entries(influencerTypes).forEach(([category, keywords]) => {
-        if (keywords.some(keyword => 
-          item.text?.toLowerCase().includes(keyword) || 
-          author.toLowerCase().includes(keyword)
-        )) {
-          type = category;
-        }
-      });
-
-      acc[author] = {
-        name: author,
-        type: type,
-        posts: 0,
-        engagement: 0,
-        sentiment: 0,
-        verified: Math.random() > 0.7, // Simulated verified status
-        recentPost: '',
-        followers: Math.floor(Math.random() * 900000) + 100000 // Simulated follower count
-      };
+  // Sample data for top influencers
+  const topInfluencers = [
+    {
+      name: 'Ahmed Al-Mansouri',
+      handle: '@ahmedinsights',
+      platform: 'Twitter',
+      followers: 125000,
+      engagement: 3200,
+      posts: 42,
+      sentiment: {
+        positive: 45.5,
+        neutral: 35.2,
+        negative: 19.3
+      },
+      topics: ['Politics', 'Economy', 'Technology'],
+      avatar: '👤'
+    },
+    {
+      name: 'Dr. Priya Sharma',
+      handle: '@drsharma',
+      platform: 'LinkedIn',
+      followers: 98000,
+      engagement: 2800,
+      posts: 38,
+      sentiment: {
+        positive: 52.3,
+        neutral: 32.5,
+        negative: 15.2
+      },
+      topics: ['Business', 'Innovation', 'Leadership'],
+      avatar: '👤'
+    },
+    {
+      name: 'Al Jazeera Tech',
+      handle: '@ajtechnology',
+      platform: 'News',
+      followers: 185000,
+      engagement: 4500,
+      posts: 65,
+      sentiment: {
+        positive: 38.7,
+        neutral: 42.1,
+        negative: 19.2
+      },
+      topics: ['Technology', 'Innovation', 'Digital'],
+      avatar: '📰'
+    },
+    {
+      name: 'Gulf Today',
+      handle: '@gulftoday',
+      platform: 'TV',
+      followers: 250000,
+      engagement: 5800,
+      posts: 78,
+      sentiment: {
+        positive: 41.2,
+        neutral: 38.5,
+        negative: 20.3
+      },
+      topics: ['World News', 'Politics', 'Economy'],
+      avatar: '📺'
+    },
+    {
+      name: 'Khaleej Times',
+      handle: '@khaleejtimes',
+      platform: 'News',
+      followers: 165000,
+      engagement: 3900,
+      posts: 55,
+      sentiment: {
+        positive: 43.8,
+        neutral: 36.4,
+        negative: 19.8
+      },
+      topics: ['Finance', 'Markets', 'Economy'],
+      avatar: '📊'
     }
-
-    acc[author].posts++;
-    acc[author].engagement += (parseInt(item.likes) || 0) + 
-                            (parseInt(item.retweets) || 0) + 
-                            (parseInt(item.comments) || 0);
-    acc[author].sentiment += parseFloat(item.sentiment_score) || 0;
-    if (!acc[author].recentPost) {
-      acc[author].recentPost = item.text;
-    }
-
     return acc;
   }, {});
 
@@ -179,7 +203,7 @@ const InfluencerAnalysis = ({ data }) => {
               variant="body2"
               sx={{ color: entry.color }}
             >
-              {`${entry.name}: ${Number(entry.value).toFixed(0)}`}
+              {`${entry.name}: ${Number(entry.value).toFixed(1)}%`}
             </Typography>
           ))}
         </Box>
@@ -195,26 +219,24 @@ const InfluencerAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Influencer & Media Impact
+        Top Influencers
       </Typography>
       <Grid container spacing={3}>
-        {/* Top Influencers */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Top Influencers
-            </Typography>
-            <List>
-              {topInfluencers.map((influencer, index) => (
-                <ListItem
-                  key={index}
+        {topInfluencers.map((influencer, index) => (
+          <Grid item xs={12} md={6} key={index}>
+            <Paper elevation={0} sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Box
                   sx={{
-                    mb: 1,
-                    backgroundColor: 'background.default',
-                    borderRadius: 1,
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    backgroundColor: theme.palette.primary.light,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    mr: 2
                   }}
                 >
                   <ListItemAvatar>
@@ -374,10 +396,43 @@ const InfluencerAnalysis = ({ data }) => {
                     </CardContent>
                   </Card>
                 </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        </Grid>
+              </Grid>
+              <Box sx={{ width: '100%', height: 100 }}>
+                <ResponsiveContainer>
+                  <BarChart data={[influencer.sentiment]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis tick={false} />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar
+                      dataKey="positive"
+                      name="Positive"
+                      stackId="a"
+                      fill={theme.palette.success.main}
+                    />
+                    <Bar
+                      dataKey="neutral"
+                      name="Neutral"
+                      stackId="a"
+                      fill={theme.palette.grey[400]}
+                    />
+                    <Bar
+                      dataKey="negative"
+                      name="Negative"
+                      stackId="a"
+                      fill={theme.palette.error.main}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Top Topics: {influencer.topics.join(', ')}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
+        ))}
       </Grid>
     </motion.div>
   );
