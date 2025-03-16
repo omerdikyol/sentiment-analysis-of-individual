@@ -19,59 +19,99 @@ import { alpha } from '@mui/material/styles';
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
 
-  // Sample data for demonstration
-  const sampleData = {
-    sentimentByCountry: [
-      {
-        country: 'Qatar',
-        positive: 11.9,
-        neutral: 63.7,
-        negative: 24.4,
-        total: 265,
-        engagement: 2800
-      },
-      {
-        country: 'UAE',
-        positive: 15.5,
-        neutral: 58.5,
-        negative: 26.0,
-        total: 12,
-        engagement: 1950
-      },
-      {
-        country: 'US',
-        positive: 13.2,
-        neutral: 60.8,
-        negative: 26.0,
-        total: 48,
-        engagement: 2200
-      },
-      {
-        country: 'UK',
-        positive: 12.8,
-        neutral: 61.2,
-        negative: 26.0,
-        total: 21,
-        engagement: 1650
-      }
-      acc[country].topics[topic]++;
-    });
+  // Define colors for the charts
+  const COLORS = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.success.main,
+    theme.palette.info.main,
+    theme.palette.warning.main,
+    alpha(theme.palette.primary.main, 0.7),
+    alpha(theme.palette.secondary.main, 0.7),
+    alpha(theme.palette.success.main, 0.7),
+    alpha(theme.palette.info.main, 0.7),
+    alpha(theme.palette.warning.main, 0.7)
+  ];
 
+  // Sample data for countries and their topics
+  const sampleCountryData = {
+    'Qatar': {
+      topics: {
+        'Sports': 85,
+        'Business': 52,
+        'Technology': 38,
+        'Infrastructure': 20,
+        'Education': 15
+      },
+      positive: 45.2,
+      neutral: 35.5,
+      negative: 19.3,
+      total: 210,
+      engagement: 4800
+    },
+    'US': {
+      topics: {
+        'Technology': 65,
+        'Economy': 45,
+        'Politics': 32,
+        'Innovation': 20,
+        'Trade': 10
+      },
+      positive: 42.8,
+      neutral: 38.5,
+      negative: 18.7,
+      total: 172,
+      engagement: 3900
+    },
+    'UK': {
+      topics: {
+        'Finance': 3,
+        'Technology': 2,
+        'Business': 1,
+        'Economy': 1
+      },
+      positive: 43.5,
+      neutral: 42.2,
+      negative: 14.3,
+      total: 7,
+      engagement: 250
+    }
+  };
+
+  // Process the data
+  const countryData = data?.sentimentByCountry ? data.sentimentByCountry.reduce((acc, item) => {
+    const country = item.country;
+    if (!acc[country]) {
+      acc[country] = {
+        topics: item.topics || {},
+        positive: item.positive,
+        neutral: item.neutral,
+        negative: item.negative,
+        total: item.total,
+        engagement: item.engagement
+      };
+    }
     return acc;
-  }, {});
+  }, {}) : sampleCountryData;
 
   // Format data for sentiment by country chart
   const sentimentByCountry = Object.entries(countryData).map(([country, data]) => ({
     country,
-    positive: (data.positive / data.total) * 100,
-    neutral: (data.neutral / data.total) * 100,
-    negative: (data.negative / data.total) * 100,
+    positive: data.positive,
+    neutral: data.neutral,
+    negative: data.negative,
+    total: data.total,
+    engagement: data.engagement
   }));
 
   // Format data for source distribution
   const sourceDistribution = ['Social Media', 'News', 'TV', 'Other'].map(sourceType => {
     const sourceData = {
       source: sourceType,
+      positive: 0,
+      neutral: 0,
+      negative: 0,
+      total: 0
     };
 
     let totalMentions = 0;
@@ -80,12 +120,14 @@ const GeographicalInsights = ({ data }) => {
     let negativeMentions = 0;
 
     // Sum up mentions across all countries for this source type
-    Object.values(countryData).forEach(data => {
-      const sourceStats = data.sources[sourceType];
-      totalMentions += sourceStats.total;
-      positiveMentions += sourceStats.positive;
-      neutralMentions += sourceStats.neutral;
-      negativeMentions += sourceStats.negative;
+    Object.values(countryData).forEach(countryData => {
+      if (countryData.sources?.[sourceType]) {
+        const sourceStats = countryData.sources[sourceType];
+        totalMentions += sourceStats.total || 0;
+        positiveMentions += sourceStats.positive || 0;
+        neutralMentions += sourceStats.neutral || 0;
+        negativeMentions += sourceStats.negative || 0;
+      }
     });
 
     // Calculate percentages only if there are mentions
@@ -93,35 +135,11 @@ const GeographicalInsights = ({ data }) => {
       sourceData.positive = (positiveMentions / totalMentions) * 100;
       sourceData.neutral = (neutralMentions / totalMentions) * 100;
       sourceData.negative = (negativeMentions / totalMentions) * 100;
-    } else {
-      sourceData.positive = 0;
-      sourceData.neutral = 0;
-      sourceData.negative = 0;
+      sourceData.total = totalMentions;
     }
-  };
 
-  const COLORS = [
-    theme.palette.primary.main,
-    theme.palette.secondary.main,
-    theme.palette.success.main,
-    theme.palette.error.main,
-    theme.palette.info.main,
-    theme.palette.warning.main,
-    theme.palette.primary.light,
-    theme.palette.secondary.light,
-    theme.palette.success.light,
-    theme.palette.error.light,
-    theme.palette.info.light,
-    theme.palette.warning.light,
-    theme.palette.primary.dark,
-    theme.palette.secondary.dark,
-    theme.palette.success.dark,
-    theme.palette.error.dark,
-    theme.palette.info.dark,
-    theme.palette.warning.dark,
-    alpha(theme.palette.primary.main, 0.7),
-    alpha(theme.palette.secondary.main, 0.7),
-  ];
+    return sourceData;
+  });
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -164,24 +182,29 @@ const GeographicalInsights = ({ data }) => {
   };
   const renderTopicChart = (country) => {
     const data = countryData[country]?.topics || {};
+    const topTopics = Object.entries(data)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([topic, value]) => ({
+        name: topic,
+        value: value
+      }));
+
     return (
-      <Box sx={{ width: '100%', height: 200 }}>
+      <Box sx={{ width: '100%', height: 250 }}>
         <ResponsiveContainer>
           <PieChart>
             <Pie
-              data={Object.entries(data).map(([topic, value]) => ({
-                name: topic,
-                value,
-              }))}
+              data={topTopics}
               cx="50%"
               cy="50%"
-              innerRadius={40}
+              innerRadius={60}
               outerRadius={80}
               fill="#8884d8"
               paddingAngle={2}
               dataKey="value"
             >
-              {Object.entries(data).map(([topic, value], index) => (
+              {topTopics.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -199,7 +222,7 @@ const GeographicalInsights = ({ data }) => {
                       }}
                     >
                       <Typography variant="body2">
-                        {`${payload[0].name}: ${payload[0].value}%`}
+                        {`${payload[0].name}: ${payload[0].value} mentions`}
                       </Typography>
                     </Box>
                   );
@@ -211,7 +234,11 @@ const GeographicalInsights = ({ data }) => {
               layout="vertical"
               align="right"
               verticalAlign="middle"
-              wrapperStyle={{ paddingLeft: '10px' }}
+              formatter={(value, entry) => (
+                <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                  {value}
+                </Typography>
+              )}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -237,7 +264,7 @@ const GeographicalInsights = ({ data }) => {
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={sampleData.sentimentByCountry}>
+                <BarChart data={sentimentByCountry}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="country" />
                   <YAxis domain={[0, 100]} />
@@ -275,7 +302,7 @@ const GeographicalInsights = ({ data }) => {
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={sampleData.sourceDistribution}>
+                <BarChart data={sourceDistribution}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="source" />
                   <YAxis domain={[0, 100]} />
