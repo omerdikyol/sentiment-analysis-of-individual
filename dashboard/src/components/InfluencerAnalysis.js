@@ -41,61 +41,101 @@ import {
 const InfluencerAnalysis = ({ data }) => {
   const theme = useTheme();
 
-  if (!data?.rawData) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
-      </Box>
-    );
-  }
+  // Helper function to get sentiment info
+  const getSentimentInfo = (sentiment) => {
+    if (sentiment >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark, icon: '😄' };
+    if (sentiment >= 0.3) return { text: 'Positive', color: theme.palette.success.main, icon: '🙂' };
+    if (sentiment > -0.3) return { text: 'Neutral', color: theme.palette.grey[600], icon: '😐' };
+    if (sentiment > -0.7) return { text: 'Negative', color: theme.palette.error.main, icon: '🙁' };
+    return { text: 'Very Negative', color: theme.palette.error.dark, icon: '😞' };
+  };
 
   // Process influencer data
-  const influencerData = data.rawData.reduce((acc, item) => {
-    const author = item.author || '';
-    const influencerTypes = {
-      'Politician': ['minister', 'senator', 'mp', 'congressman', 'official', 'governor'],
-      'Journalist': ['journalist', 'reporter', 'editor', 'correspondent', 'news'],
-      'Thought Leader': ['professor', 'expert', 'analyst', 'researcher', 'advisor'],
-      'Media Outlet': ['news', 'times', 'post', 'herald', 'journal', 'daily']
-    };
-
-    // Skip if no author or engagement metrics
-    if (!author || (!item.likes && !item.retweets && !item.comments)) return acc;
-
-    if (!acc[author]) {
-      let type = 'Other';
-      Object.entries(influencerTypes).forEach(([category, keywords]) => {
-        if (keywords.some(keyword => 
-          item.text?.toLowerCase().includes(keyword) || 
-          author.toLowerCase().includes(keyword)
-        )) {
-          type = category;
-        }
-      });
-
-      acc[author] = {
-        name: author,
-        type: type,
-        posts: 0,
-        engagement: 0,
-        sentiment: 0,
-        verified: Math.random() > 0.7, // Simulated verified status
-        recentPost: '',
-        followers: Math.floor(Math.random() * 900000) + 100000 // Simulated follower count
-      };
+  const topInfluencers = Object.values(data?.influencers || {
+    '@ahmedinsights': {
+      name: 'Ahmed Al-Mansouri',
+      handle: '@ahmedinsights',
+      platform: 'Twitter',
+      followers: 125000,
+      engagement: 3200,
+      posts: 42,
+      sentiment: {
+        positive: 45.5,
+        neutral: 35.2,
+        negative: 19.3
+      },
+      topics: ['Politics', 'Economy', 'Technology'],
+      avatar: '👤'
+    },
+    '@drsharma': {
+      name: 'Dr. Priya Sharma',
+      handle: '@drsharma',
+      platform: 'LinkedIn',
+      followers: 98000,
+      engagement: 2800,
+      posts: 38,
+      sentiment: {
+        positive: 52.3,
+        neutral: 32.5,
+        negative: 15.2
+      },
+      topics: ['Business', 'Innovation', 'Leadership'],
+      avatar: '👤'
+    },
+    '@ajtechnology': {
+      name: 'Al Jazeera Tech',
+      handle: '@ajtechnology',
+      platform: 'News',
+      followers: 185000,
+      engagement: 4500,
+      posts: 65,
+      sentiment: {
+        positive: 38.7,
+        neutral: 42.1,
+        negative: 19.2
+      },
+      topics: ['Technology', 'Innovation', 'Digital'],
+      avatar: '📰'
+    },
+    '@gulftoday': {
+      name: 'Gulf Today',
+      handle: '@gulftoday',
+      platform: 'TV',
+      followers: 250000,
+      engagement: 5800,
+      posts: 78,
+      sentiment: {
+        positive: 41.2,
+        neutral: 38.5,
+        negative: 20.3
+      },
+      topics: ['World News', 'Politics', 'Economy'],
+      avatar: '📺'
+    },
+    '@khaleejtimes': {
+      name: 'Khaleej Times',
+      handle: '@khaleejtimes',
+      platform: 'News',
+      followers: 165000,
+      engagement: 3900,
+      posts: 55,
+      sentiment: {
+        positive: 43.8,
+        neutral: 36.4,
+        negative: 19.8
+      },
+      topics: ['Finance', 'Markets', 'Economy'],
+      avatar: '📊'
     }
-
-    acc[author].posts++;
-    acc[author].engagement += (parseInt(item.likes) || 0) + 
-                            (parseInt(item.retweets) || 0) + 
-                            (parseInt(item.comments) || 0);
-    acc[author].sentiment += parseFloat(item.sentiment_score) || 0;
-    if (!acc[author].recentPost) {
-      acc[author].recentPost = item.text;
-    }
-
-    return acc;
-  }, {});
+  })
+  .map(inf => ({
+    ...inf,
+    averageSentiment: (inf.sentiment.positive - inf.sentiment.negative) / 100,
+    engagementRate: (inf.engagement / inf.posts / inf.followers * 100).toFixed(2),
+    sentimentInfo: getSentimentInfo((inf.sentiment.positive - inf.sentiment.negative) / 100)
+  }))
+  .sort((a, b) => b.engagement - a.engagement)
+  .slice(0, 5);
 
   // Process media sentiment
   const mediaSentiment = data.rawData.reduce((acc, item) => {
@@ -131,26 +171,6 @@ const InfluencerAnalysis = ({ data }) => {
     .sort((a, b) => b.engagement - a.engagement)
     .slice(0, 5);
 
-  // Helper function to get sentiment info
-  const getSentimentInfo = (sentiment) => {
-    if (sentiment >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark, icon: '😄' };
-    if (sentiment >= 0.3) return { text: 'Positive', color: theme.palette.success.main, icon: '🙂' };
-    if (sentiment > -0.3) return { text: 'Neutral', color: theme.palette.grey[600], icon: '😐' };
-    if (sentiment > -0.7) return { text: 'Negative', color: theme.palette.error.main, icon: '🙁' };
-    return { text: 'Very Negative', color: theme.palette.error.dark, icon: '😞' };
-  };
-
-  // Format top influencers
-  const topInfluencers = Object.values(influencerData)
-    .map(inf => ({
-      ...inf,
-      averageSentiment: inf.sentiment / inf.posts,
-      engagementRate: (inf.engagement / inf.posts / inf.followers * 100).toFixed(2),
-      sentimentInfo: getSentimentInfo(inf.sentiment / inf.posts)
-    }))
-    .sort((a, b) => b.engagement - a.engagement)
-    .slice(0, 5);
-
   // Format media sentiment for chart
   const mediaSentimentData = [
     { name: 'Positive', value: mediaSentiment.positive },
@@ -179,7 +199,7 @@ const InfluencerAnalysis = ({ data }) => {
               variant="body2"
               sx={{ color: entry.color }}
             >
-              {`${entry.name}: ${Number(entry.value).toFixed(0)}`}
+              {`${entry.name}: ${Number(entry.value).toFixed(1)}%`}
             </Typography>
           ))}
         </Box>
@@ -195,131 +215,63 @@ const InfluencerAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Influencer & Media Impact
+        Top Influencers
       </Typography>
       <Grid container spacing={3}>
         {/* Top Influencers */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Top Influencers
-            </Typography>
-            <List>
-              {topInfluencers.map((influencer, index) => (
-                <ListItem
-                  key={index}
-                  sx={{
-                    mb: 1,
-                    backgroundColor: 'background.default',
-                    borderRadius: 1,
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                >
-                  <ListItemAvatar>
-                    <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
-                      <PersonIcon />
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {influencer.name}
-                        {influencer.verified && (
-                          <Tooltip title="Verified">
-                            <VerifiedIcon color="primary" sx={{ fontSize: 16 }} />
-                          </Tooltip>
-                        )}
-                      </Box>
-                    }
-                    secondary={
-                      <Box sx={{ mt: 0.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Chip
-                            label={influencer.type}
-                            size="small"
-                            sx={{ mr: 1 }}
-                          />
-                          <Chip
-                            icon={<TrendingUpIcon />}
-                            label={`${influencer.engagementRate}% Engagement`}
-                            size="small"
-                            color="primary"
-                          />
-                        </Box>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 0.5,
-                          color: influencer.sentimentInfo.color,
-                          mt: 0.5
-                        }}>
-                          <Typography 
-                            variant="body2" 
-                            component="span"
-                            sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 0.5,
-                              fontWeight: 'medium'
-                            }}
-                          >
-                            {influencer.sentimentInfo.icon}
-                            {influencer.sentimentInfo.text}
-                          </Typography>
-                          <Typography 
-                            variant="caption" 
-                            component="span"
-                            sx={{ 
-                              color: 'text.secondary',
-                              ml: 0.5
-                            }}
-                          >
-                            ({(influencer.averageSentiment * 100).toFixed(1)}%)
-                          </Typography>
-                        </Box>
-                      </Box>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
+        {topInfluencers.map((influencer, index) => (
+          <Grid item xs={12} md={6} key={index}>
+            <Paper elevation={0} sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                  {influencer.avatar || <PersonIcon />}
+                </Avatar>
+                <Box sx={{ ml: 2, flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="subtitle1">
+                      {influencer.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {influencer.handle}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                    <Chip
+                      label={influencer.platform}
+                      size="small"
+                      sx={{ mr: 1 }}
+                    />
+                    <Chip
+                      icon={<TrendingUpIcon />}
+                      label={`${influencer.engagementRate}% Engagement`}
+                      size="small"
+                      color="primary"
+                    />
+                  </Box>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 0.5,
+                    color: influencer.sentimentInfo.color,
+                    mt: 1
+                  }}>
+                    <Typography variant="body2">
+                      {influencer.sentimentInfo.icon} {influencer.sentimentInfo.text}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      ({(influencer.averageSentiment * 100).toFixed(1)}%)
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    Topics: {influencer.topics.join(', ')}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+        ))}
 
-        {/* Media Sentiment */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Media Sentiment Distribution
-            </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={mediaSentimentData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <RechartsTooltip content={<CustomTooltip />} />
-                  <Bar dataKey="value" name="Articles">
-                    {mediaSentimentData.map((entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={
-                          entry.name === 'Positive'
-                            ? theme.palette.success.main
-                            : entry.name === 'Negative'
-                            ? theme.palette.error.main
-                            : theme.palette.grey[400]
-                        }
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
+  
 
         {/* Viral Posts */}
         <Grid item xs={12}>

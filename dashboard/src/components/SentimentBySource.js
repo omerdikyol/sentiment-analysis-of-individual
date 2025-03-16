@@ -15,57 +15,27 @@ import { motion } from 'framer-motion';
 const SentimentBySource = ({ data }) => {
   const theme = useTheme();
 
-  if (!data?.rawData) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
-      </Box>
-    );
-  }
-
-  // Process data to get sentiment distribution by source
-  const sourceData = data.rawData.reduce((acc, item) => {
-    let source = 'Other';
-    
-    // Determine source based on platform or other indicators
-    if (['Twitter', 'Facebook', 'Instagram', 'LinkedIn'].includes(item.platform)) {
-      source = 'Social Media';
-    } else if (item.platform === 'News' || item.platform.includes('News')) {
-      source = 'Newspapers';
-    } else if (item.platform === 'TV' || item.platform.includes('TV')) {
-      source = 'TV';
+  // Sample data for demonstration
+  const chartData = [
+    {
+      source: 'Social Media',
+      positive: 35,
+      neutral: 40,
+      negative: 25
+    },
+    {
+      source: 'Newspapers',
+      positive: 25,
+      neutral: 45,
+      negative: 30
+    },
+    {
+      source: 'TV',
+      positive: 30,
+      neutral: 35,
+      negative: 35
     }
-
-    if (!acc[source]) {
-      acc[source] = {
-        positive: 0,
-        neutral: 0,
-        negative: 0,
-        total: 0,
-      };
-    }
-
-    const sentiment = parseFloat(item.sentiment_score);
-    acc[source].total++;
-
-    if (sentiment > 0.2) {
-      acc[source].positive++;
-    } else if (sentiment < -0.2) {
-      acc[source].negative++;
-    } else {
-      acc[source].neutral++;
-    }
-
-    return acc;
-  }, {});
-
-  // Convert to percentage and format for chart
-  const chartData = Object.entries(sourceData).map(([source, counts]) => ({
-    source,
-    positive: (counts.positive / counts.total) * 100,
-    neutral: (counts.neutral / counts.total) * 100,
-    negative: (counts.negative / counts.total) * 100,
-  }));
+  ];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -119,7 +89,7 @@ const SentimentBySource = ({ data }) => {
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="source" />
-            <YAxis />
+            <YAxis domain={[0, 100]} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Bar
