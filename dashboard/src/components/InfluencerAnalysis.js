@@ -166,7 +166,12 @@ const InfluencerAnalysis = ({ data }) => {
       sentiment: parseFloat(item.sentiment_score) || 0,
       likes: parseInt(item.likes) || 0,
       retweets: parseInt(item.retweets) || 0,
-      comments: parseInt(item.comments) || 0
+      comments: parseInt(item.comments) || 0,
+      viralityScore: (
+        (parseInt(item.likes) || 0) + 
+        (parseInt(item.retweets) || 0) * 2 + 
+        (parseInt(item.comments) || 0) * 1.5
+      ) / 10  // Normalize to a 0-10 scale
     }))
     .sort((a, b) => b.engagement - a.engagement)
     .slice(0, 5);
@@ -320,7 +325,7 @@ const InfluencerAnalysis = ({ data }) => {
                           }} 
                         />
                         <Typography variant="body2" color="text.secondary">
-                          Virality Score: {post.engagement.toLocaleString()}
+                          Virality Score: {post.viralityScore.toFixed(1)}
                         </Typography>
                       </Box>
                     </CardContent>

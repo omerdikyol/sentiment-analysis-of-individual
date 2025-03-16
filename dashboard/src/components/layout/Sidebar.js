@@ -79,7 +79,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
       <Logo open={isOpen}>
         {isOpen ? (
           <>
-            <Typography variant="h6" component="div" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
               Sentiment Analysis
             </Typography>
             <IconButton 

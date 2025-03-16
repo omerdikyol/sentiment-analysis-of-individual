@@ -122,9 +122,10 @@ class DataService {
 
     // Process mentions by source with balanced sentiment
     const mentionsBySource = {
-      'Social Media': { positive: 30, neutral: 40, negative: 30, total: 100 },
-      'News': { positive: 25, neutral: 45, negative: 30, total: 100 },
-      'TV': { positive: 35, neutral: 35, negative: 30, total: 100 }
+      'Social Media': { positive: 35, neutral: 45, negative: 20, total: 100 },
+      'News': { positive: 30, neutral: 50, negative: 20, total: 100 },
+      'TV': { positive: 40, neutral: 40, negative: 20, total: 100 },
+      'Other': { positive: 25, neutral: 55, negative: 20, total: 100 }
     };
 
     return {

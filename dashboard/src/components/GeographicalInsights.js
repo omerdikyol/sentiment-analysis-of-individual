@@ -48,6 +48,12 @@ const GeographicalInsights = ({ data }) => {
         'Infrastructure': 20,
         'Education': 15
       },
+      sources: {
+        'Social Media': { total: 100 },
+        'News': { total: 50 },
+        'TV': { total: 40 },
+        'Other': { total: 20 }
+      },
       positive: 45.2,
       neutral: 35.5,
       negative: 19.3,
@@ -62,6 +68,12 @@ const GeographicalInsights = ({ data }) => {
         'Innovation': 20,
         'Trade': 10
       },
+      sources: {
+        'Social Media': { total: 80 },
+        'News': { total: 45 },
+        'TV': { total: 35 },
+        'Other': { total: 12 }
+      },
       positive: 42.8,
       neutral: 38.5,
       negative: 18.7,
@@ -70,16 +82,43 @@ const GeographicalInsights = ({ data }) => {
     },
     'UK': {
       topics: {
-        'Finance': 3,
-        'Technology': 2,
-        'Business': 1,
-        'Economy': 1
+        'Finance': 58,
+        'Technology': 42,
+        'Business': 35,
+        'Economy': 28,
+        'Innovation': 15
+      },
+      sources: {
+        'Social Media': { total: 75 },
+        'News': { total: 55 },
+        'TV': { total: 30 },
+        'Other': { total: 15 }
       },
       positive: 43.5,
       neutral: 42.2,
       negative: 14.3,
-      total: 7,
-      engagement: 250
+      total: 175,
+      engagement: 3500
+    },
+    'UAE': {
+      topics: {
+        'Business': 72,
+        'Technology': 55,
+        'Innovation': 48,
+        'Finance': 35,
+        'Infrastructure': 25
+      },
+      sources: {
+        'Social Media': { total: 90 },
+        'News': { total: 60 },
+        'TV': { total: 45 },
+        'Other': { total: 25 }
+      },
+      positive: 48.5,
+      neutral: 36.8,
+      negative: 14.7,
+      total: 220,
+      engagement: 4200
     }
   };
 
@@ -89,6 +128,7 @@ const GeographicalInsights = ({ data }) => {
     if (!acc[country]) {
       acc[country] = {
         topics: item.topics || {},
+        sources: item.sources || {},
         positive: item.positive,
         neutral: item.neutral,
         negative: item.negative,
@@ -120,12 +160,44 @@ const GeographicalInsights = ({ data }) => {
 
     return {
       country,
-      'Social Media': Math.round((sources['Social Media'].total / data.total) * 100),
-      'News': Math.round((sources['News'].total / data.total) * 100),
-      'TV': Math.round((sources['TV'].total / data.total) * 100),
-      'Other': Math.round((sources['Other'].total / data.total) * 100),
+      'Social Media': Math.round((sources['Social Media']?.total || 0) / (data.total || 1) * 100),
+      'News': Math.round((sources['News']?.total || 0) / (data.total || 1) * 100),
+      'TV': Math.round((sources['TV']?.total || 0) / (data.total || 1) * 100),
+      'Other': Math.round((sources['Other']?.total || 0) / (data.total || 1) * 100),
     };
   });
+
+  // Format data for media sentiment chart
+  const mediaSentimentData = [
+    {
+      name: 'Social Media',
+      positive: 35,
+      neutral: 45,
+      negative: 20,
+      total: 100
+    },
+    {
+      name: 'News',
+      positive: 30,
+      neutral: 50,
+      negative: 20,
+      total: 100
+    },
+    {
+      name: 'TV',
+      positive: 40,
+      neutral: 40,
+      negative: 20,
+      total: 100
+    },
+    {
+      name: 'Other',
+      positive: 25,
+      neutral: 55,
+      negative: 20,
+      total: 100
+    }
+  ];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
