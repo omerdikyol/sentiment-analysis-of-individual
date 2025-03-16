@@ -3,6 +3,7 @@ import autogen
 from pathlib import Path
 import logging
 import json
+import os
 from datetime import datetime
 
 logger = logging.getLogger('AutogenAgents')
@@ -23,20 +24,27 @@ class AutogenAgentSystem:
         
     def _get_default_llm_config(self) -> Dict[str, Any]:
         """Get default LLM configuration"""
-        return {
+        config = {
             "timeout": 600,
             "cache_seed": 42,
             "temperature": 0.7,
             "config_list": self._load_config_list(),
-            "model": "gpt-4"
         }
+        return config
     
     def _load_config_list(self) -> List[Dict[str, str]]:
         """Load API configurations"""
         config_file = self.config_path / 'llm_config.json'
         if config_file.exists():
             with open(config_file, 'r') as f:
-                return json.load(f)
+                config = json.load(f)
+                # Resolve environment variables in config_list
+                for item in config.get('config_list', []):
+                    for key, value in item.items():
+                        if isinstance(value, str) and value.startswith('${') and value.endswith('}'):
+                            env_var = value[2:-1]  # Remove ${ and }
+                            item[key] = os.getenv(env_var, value)  # Replace with env var value
+                return config.get('config_list', [])
         return [{"model": "gpt-4", "api_key": "YOUR_API_KEY"}]  # Default config
 
     def _create_assistant(self) -> autogen.AssistantAgent:

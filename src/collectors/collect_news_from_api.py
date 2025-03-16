@@ -662,7 +662,7 @@ class NewsAPICollector:
         """Collect news from all available sources"""
         if output_file is None:
             today = datetime.now().strftime("%Y%m%d")
-            output_file = str(self.base_path / "data" / "raw" / f"qatar_news_{today}.csv")
+            output_file = str(self.base_path / "data" / "raw" / f"news_data_{today}.csv")
         
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         

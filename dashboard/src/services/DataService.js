@@ -134,6 +134,7 @@ class DataService {
     // Keywords that indicate a country
     const usKeywords = ['us', 'usa', 'united states', 'america', 'american', 'washington', 'new york', 'california', 'trump'];
     const ukKeywords = ['uk', 'united kingdom', 'britain', 'british', 'london', 'england', 'scotland', 'wales'];
+    const uaeKeywords = ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah', 'ajman', 'emirates'];
     
     data.forEach(item => {
       // Use text content to determine country if available
@@ -151,6 +152,10 @@ class DataService {
       // Check for Qatar content first (since this is Qatar-focused)
       if (qatarKeywords.some(keyword => text.includes(keyword))) {
         item.country = 'Qatar';
+      }
+      // Check for UAE content
+      else if (uaeKeywords.some(keyword => text.includes(keyword))) {
+        item.country = 'UAE';
       }
       // Check for UK content
       else if (ukKeywords.some(keyword => text.includes(keyword))) {
@@ -177,6 +182,12 @@ class DataService {
         ].some(s => source.includes(s) || platform.includes(s))) {
           item.country = 'Qatar';
         }
+        else if ([
+          'gulf news', 'khaleej times', 'the national', 'emirates news agency',
+          'dubai media', 'abu dhabi media', 'sharjah media', 'wam.ae'
+        ].some(s => source.includes(s) || platform.includes(s))) {
+          item.country = 'UAE';
+        }
         else {
           // If still no match, make an educated guess based on domain if URL exists
           const url = item.url || '';
@@ -189,6 +200,10 @@ class DataService {
           else if (url.includes('.qa') || url.includes('qatar') || url.includes('doha') || 
                    url.includes('gulf-times') || url.includes('aljazeera')) {
             item.country = 'Qatar';
+          }
+          else if (url.includes('.ae') || url.includes('emirates') || url.includes('dubai') ||
+                   url.includes('gulfnews') || url.includes('khaleejtimes')) {
+            item.country = 'UAE';
           }
           else {
             // Default to Qatar since this is a Qatar-focused dataset
@@ -354,8 +369,8 @@ class DataService {
   }
 
   getAvailableCountries(data) {
-    // For this specific dataset, we know these are the four countries mentioned
-    return ['US', 'UK', 'Qatar', 'UAE'];
+    const countries = ['Qatar', 'UAE', 'US', 'UK'];
+    return countries.sort();
   }
   
   getMentionsByCountry(data) {

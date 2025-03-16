@@ -26,3 +26,1986 @@ Stacktrace:
 Collected 0 X posts with comments. Saved to '/Users/omerdikyol/coding/freelance/sentiment-analysis-of-individual/data/raw/x_data_20250314.csv'.
 2025-03-14 16:02:22,598 - AgentCore - INFO - Starting data collection for source: mention
 2025-03-14 16:02:22,694 - AgentCore - INFO - Shutdown signal received. Cleaning up...
+2025-03-16 13:29:09,732 - AgentCore - INFO - Discovered collection scripts: ['x', 'mention', 'social_searcher']
+2025-03-16 13:29:09,732 - AgentCore - INFO - Agent started successfully with Autogen enhancement
+2025-03-16 13:29:09,733 - AgentCore - INFO - Starting data collection for source: x
+2025-03-16 13:29:20,790 - AgentCore - INFO - Shutdown signal received. Cleaning up...
+2025-03-16 13:37:48,533 - AgentCore - INFO - Discovered collection scripts: ['x', 'news_from_api', 'rss', 'mention', 'social_searcher']
+2025-03-16 13:37:48,533 - AgentCore - INFO - Agent started successfully with Autogen enhancement
+2025-03-16 13:37:48,533 - AgentCore - INFO - Starting data collection for source: x
+2025-03-16 13:38:24,855 - AgentCore - INFO - Collection completed for x: Cache and cookies cleared.
+Attempting login...
+No verification step detected, proceeding...
+Fatal error in X scraping: Message: 
+Stacktrace:
+0   chromedriver                        0x00000001031b5804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x00000001031adddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102d01ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102d491d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102d8a678 cxxbridge1$string$len + 651984
+5   chromedriver                        0x0000000102d3d35c cxxbridge1$string$len + 335796
+6   chromedriver                        0x000000010317acd4 cxxbridge1$str$ptr + 2545532
+7   chromedriver                        0x000000010317dfa0 cxxbridge1$str$ptr + 2558536
+8   chromedriver                        0x000000010315ad04 cxxbridge1$str$ptr + 2414508
+9   chromedriver                        0x000000010317e800 cxxbridge1$str$ptr + 2560680
+10  chromedriver                        0x000000010314bba0 cxxbridge1$str$ptr + 2352712
+11  chromedriver                        0x000000010319e45c cxxbridge1$str$ptr + 2690820
+12  chromedriver                        0x000000010319e5e4 cxxbridge1$str$ptr + 2691212
+13  chromedriver                        0x00000001031ada50 cxxbridge1$str$ptr + 2753784
+14  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+15  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected 0 X posts with comments. Saved to '/Users/omerdikyol/coding/freelance/sentiment-analysis-of-individual/data/raw/x_data_20250316.csv'.
+2025-03-16 13:38:24,857 - AgentCore - ERROR - Unexpected error in x collection: No columns to parse from file
+2025-03-16 13:38:24,857 - AgentCore - INFO - Starting data collection for source: mention
+2025-03-16 13:39:07,442 - AgentCore - INFO - Collection completed for mention: Opened Mention login page. Current URL: https://web.mention.com/en#login
+Attempting login to Mention...
+Login attempted. Current URL: https://web.mention.com/en/workspace/OTgxMmQ4N2ItNjdjNy00YzRhLWFlYTQtZTJjYzRiMDgwYmEwOjQwNzQ0NjY4Njg5Njc4Mw%3D%3D#dashboard_homepage
+Locating Feed button...
+Clicked Feed button. Current URL: https://web.mention.com/en/workspace/OTgxMmQ4N2ItNjdjNy00YzRhLWFlYTQtZTJjYzRiMDgwYmEwOjQwNzQ0NjY4Njg5Njc4Mw%3D%3D#alert/2671209/overview
+Locating 'View all mentions' button...
+Clicked 'View all mentions' button.
+Locating Export button...
+Clicked Export button using aria-label.
+Selecting CSV export option...
+Selected CSV export option.
+Locating Export Page link...
+Clicked Export Page link. Current URL: https://web.mention.com/en/workspace/OTgxMmQ4N2ItNjdjNy00YzRhLWFlYTQtZTJjYzRiMDgwYmEwOjQwNzQ0NjY4Njg5Njc4Mw%3D%3D#settings/exports
+Refreshing export page...
+Locating latest export row...
+Found latest export. Download URL: https://mention-exports.s3.amazonaws.com/export_alert_2671209_2025-03-16_10-38-50_e4fd0182f402554f13af86b6117ca02097d55b68.csv
+Downloaded CSV to temporary file: temp_mention_export.csv
+Moved downloaded CSV to '/Users/omerdikyol/coding/freelance/sentiment-analysis-of-individual/data/raw/mention_data_20250316.csv'.
+2025-03-16 13:39:07,454 - AgentBrain - ERROR - Error checking data consistency: Input X contains NaN.
+PCA does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2025-03-16 13:39:07,455 - AgentCore - INFO - Starting data collection for source: social_searcher
+2025-03-16 13:39:37,240 - AgentCore - INFO - Collection completed for social_searcher: Opened main page. Current URL: https://www.social-searcher.com/
+Clicked login button. Waiting for popup...
+Attempting login to Social Searcher...
+Login attempted. Current URL: https://www.social-searcher.com/
+Locating 'Saved Searches' section...
+Found 'Saved Searches' label.
+Clicked saved search 'Tamim ibn Hamad Al Thani'. Current URL: https://www.social-searcher.com/social-buzz/?q5=Sheikh%20Tamim%20OR%20Tamim%20bin%20Hamad%20OR%20Qatar%20Emir%20OR%20Qatar%20ruler%20OR%20Qatar%20leader&ntw=web,facebook,twitter,instagram,linkedin&psttyp=link,photo,status,video&wblng=&fbpage=&searchid=67cd4d995338753129aef1d7, Page title: Social Buzz – Free Social Mentions Search and Monitoring
+Scroll 1 completed.
+No more results to load.
+Found 154 results.
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-user__info"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-user__info"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: www.msn.com - Qatar's Emir Hamad Al Thani highlights his country...
+Collected: www.gulf-times.com - His Highness the Amir Sheikh Tamim bin Hamad Al-Th...
+Collected: www.qatar-tribune.com - DOHA: His Highness the Amir of the State of Qatar ...
+Collected: thepeninsulaqatar.com - Doha: The Amir HH Sheikh Tamim bin Hamad Al Thani ...
+Collected: www.commonspace.eu - Saudi Crown Prince Mohammed bin Salman on Monday (...
+Collected: marhaba.qa - HH the Amir Sheikh Tamim bin Hamad Al Thani issued...
+Collected: www.middleeastmonitor.com - Related Posts. Qatar's Emir, Sheikh Tamim Bin Hama...
+Collected: thepeninsulaqatar.com - In line with directives from the Amir H H Sheikh T...
+Collected: channel8.com - According to Qatar's official news agency (QNA), t...
+Collected: www.qatar-tribune.com - DOHA: His Highness the Amir of the State of Qatar ...
+Collected: english.alarabiya.net - The Qatari move came on the orders of the emir, Sh...
+Collected: www.aa.com.tr - In an interview with the Qatar-based Al Jazeera ch...
+Collected: www.qatarfund.org.qa - In implementation of the directives of His Highnes...
+Collected: www.newarab.com - Qatari Prime Minister Sheikh Tamim bin Hamad Al-Th...
+Collected: www.barrons.com - The Qatari move came on the orders of the emir, Sh...
+Collected: thepeninsulaqatar.com - Doha, Qatar: The Amir HH Sheikh Tamim bin Hamad Al...
+Collected: en.prothomalo.com - President Mohammed Shahabuddin welcomes Qatar Emir...
+Collected: www.gulf-times.com - His Highness the Amir Sheikh Tamim bin Hamad al-Th...
+Collected: thepeninsulaqatar.com - Doha, Qatar: The Amir HH Sheikh Tamim bin Hamad Al...
+Collected: thepeninsulaqatar.com - Doha, Qatar: The Amir HH Sheikh Tamim bin Hamad Al...
+Collected: www.msn.com - DOHA: His Highness the Amir of the State of Qatar ...
+Collected: www.dailysabah.com - ... A handout photo made available by the Iranian ...
+Collected: www.gulf-times.com - His Highness the Amir Sheikh Tamim bin Hamad Al-Th...
+Collected: thepeninsulaqatar.com - Doha, Qatar: The Amir HH Sheikh Tamim bin Hamad Al...
+Collected: www.qatar-tribune.com - DOHA: The Shura Council has hailed His Highness th...
+Collected: www.gulf-times.com - At the beginning of the session, the Council prais...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: www.tbsnews.net - Qatar's ruler has appointed a new prime minister, ...
+Collected: thepeninsulaqatar.com - Doha, Qatar: The Amir HH Sheikh Tamim bin Hamad Al...
+Collected: www.jpost.com - According to Iranian state media, Qatar said that ...
+Collected: en.wikipedia.org - Career. Sheikh Tamim bin Hamad Al Thani was commis...
+Collected: www.aljazeera.com - Sheikh Tamim bin Hamad Al Thani calls for end to w...
+Collected: www.diwan.gov.qa - HH Sheikh Tamim bin Hamad Al Thani was born on Jun...
+Collected: www.gco.gov.qa - His Highness Sheikh Tamim bin Hamad Al Thani assum...
+Collected: www.diwan.gov.qa - HH Sheikh Tamim bin Hamad Al Thani was born on Jun...
+Collected: www.haaretz.com - Netanyahu was jolted from complacency when Qatar w...
+Collected: www.tbsnews.net - Born the fourth son of former Emir Hamad bin Khali...
+Collected: www.tehrantimes.com - The Emir of Qatar, Sheikh Tamim bin Hamad Al Thani...
+Collected: www.middleeastmonitor.com - Qatar's emir meets Iranian president, supreme lead...
+Collected: www.saudigazette.com.sa - Discussing Qatar's involvement in mediating the Ga...
+Collected: www.aa.com.tr - On Doha's role in the Gaza ceasefire negotiations,...
+Collected: www.arabnews.pk - Qatari Emir Sheikh Tamim bin Hamad Al-Thani has sa...
+Collected: www.arabnews.com - Saudi leaders congratulate Qatar's emir on 11th an...
+Collected: www.diwan.gov.qa - His Highness The Amir Sheikh Tamim bin Hamad Al Th...
+Collected: www.diwan.gov.qa - His Highness The Amir Sheikh Tamim bin Hamad Al Th...
+Collected: www.minaffet.gov.rw - His Highness Sheikh Tamim Bin Hamad Al Thani, the ...
+Collected: X - On March 3, 2025, the National Leader of Turkmen P...
+Collected: X - Qatar’s ruler, Sheikh Tamim bin Hamad Al Thani tra...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - HH The Amir Sheikh Tamim bin Hamad Al Thani held t...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - There's no difference between US presidents Leader...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - His Highness the Amir Sheikh Tamim bin Hamad Al-Th...
+Collected: X - Leader of the Islamic Revolution Ayatollah Seyyed ...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - @ocjain4 PM Narendra Modi welcomes Qatar's Amir Sh...
+Collected: X - PM Narendra Modi welcomes Qatar's Amir Sheikh Tami...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: www.reuters.com - Qatar's Emir Sheikh Tamim bin Hamad Al-Thani visit...
+Collected: X - Syria’s interim president Ahmed al-Sharaa met Saud...
+Collected: X - #ICYMI: The Emir of #Qatar, Sheikh Tamim bin Hamad...
+Collected: X - Qatar's emir, Sheikh Tamim bin Hamad Al Thani, arr...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - The Emir of #Qatar, Sheikh Tamim bin Hamad Al-Than...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - The Emir of Qatar, Sheikh Tamim bin Hamad Al Thani...
+Collected: X - Qatar’s Emir Sheikh Tamim bin Hamad Al Thani has a...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - https://t.co/t6mbqv6rIJ #qatar Sheikh Tamim bin Ha...
+Collected: www.tatler.com - Born in 1980 to former Emir Hamad bin Khalifa Al T...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Collected: X - HH The Amir Sheikh Tamim bin Hamad Al Thani, began...
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+Error scraping result: Message: no such element: Unable to locate element: {"method":"css selector","selector":".rezults-item-text__url"}
+  (Session info: chrome=134.0.6998.89); For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Stacktrace:
+0   chromedriver                        0x000000010343d804 cxxbridge1$str$ptr + 2785964
+1   chromedriver                        0x0000000103435ddc cxxbridge1$str$ptr + 2754692
+2   chromedriver                        0x0000000102f89ea8 cxxbridge1$string$len + 92928
+3   chromedriver                        0x0000000102fd11d0 cxxbridge1$string$len + 384552
+4   chromedriver                        0x0000000102fc6878 cxxbridge1$string$len + 341200
+5   chromedriver                        0x0000000103012678 cxxbridge1$string$len + 651984
+6   chromedriver                        0x0000000102fc535c cxxbridge1$string$len + 335796
+7   chromedriver                        0x0000000103402cd4 cxxbridge1$str$ptr + 2545532
+8   chromedriver                        0x0000000103405fa0 cxxbridge1$str$ptr + 2558536
+9   chromedriver                        0x00000001033e2d04 cxxbridge1$str$ptr + 2414508
+10  chromedriver                        0x0000000103406800 cxxbridge1$str$ptr + 2560680
+11  chromedriver                        0x00000001033d3ba0 cxxbridge1$str$ptr + 2352712
+12  chromedriver                        0x000000010342645c cxxbridge1$str$ptr + 2690820
+13  chromedriver                        0x00000001034265e4 cxxbridge1$str$ptr + 2691212
+14  chromedriver                        0x0000000103435a50 cxxbridge1$str$ptr + 2753784
+15  libsystem_pthread.dylib             0x0000000180f402e4 _pthread_start + 136
+16  libsystem_pthread.dylib             0x0000000180f3b0fc thread_start + 8
+
+
+Collected 63 total items from Social Searcher. Saved to '/Users/omerdikyol/coding/freelance/sentiment-analysis-of-individual/data/raw/social_searcher_data_20250316.csv'.
+2025-03-16 13:39:37,245 - AgentBrain - ERROR - Error checking data consistency: Input X contains NaN.
+PCA does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2025-03-16 13:39:37,245 - AgentCore - INFO - Starting data processing...
+2025-03-16 13:39:54,235 - AutogenAgents - ERROR - Error in collaborative analysis: Completions.create() got an unexpected keyword argument 'headers'
+2025-03-16 13:39:54,236 - AgentCore - INFO - Metrics updated successfully with Autogen insights
+2025-03-16 13:39:54,236 - AgentCore - INFO - Data processing and analysis completed successfully
+2025-03-16 13:53:11,613 - AgentCore - INFO - Shutdown signal received. Cleaning up...
