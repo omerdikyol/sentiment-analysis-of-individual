@@ -9,8 +9,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Cell,
+  PieChart,
+  Pie
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
 
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
@@ -135,13 +139,6 @@ const GeographicalInsights = ({ data }) => {
     negative: (data.negative / data.total) * 100,
   }));
 
-  // Format data for regional hotspots
-  const regionalHotspots = Object.entries(countryData).map(([country, data]) => ({
-    country,
-    mentions: data.total,
-    engagementRate: (data.engagement / data.total) || 0,
-  }));
-
   // Format data for source distribution
   const sourceDistribution = ['Social Media', 'News', 'TV', 'Other'].map(sourceType => {
     const sourceData = {
@@ -210,6 +207,29 @@ const GeographicalInsights = ({ data }) => {
     })
     .slice(0, 10);
 
+  const COLORS = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.success.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+    theme.palette.warning.main,
+    theme.palette.primary.light,
+    theme.palette.secondary.light,
+    theme.palette.success.light,
+    theme.palette.error.light,
+    theme.palette.info.light,
+    theme.palette.warning.light,
+    theme.palette.primary.dark,
+    theme.palette.secondary.dark,
+    theme.palette.success.dark,
+    theme.palette.error.dark,
+    theme.palette.info.dark,
+    theme.palette.warning.dark,
+    alpha(theme.palette.primary.main, 0.7),
+    alpha(theme.palette.secondary.main, 0.7),
+  ];
+
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
@@ -231,13 +251,70 @@ const GeographicalInsights = ({ data }) => {
               variant="body2"
               sx={{ color: entry.color }}
             >
-              {`${entry.name}: ${Number(entry.value).toFixed(1)}${entry.unit || '%'}`}
+              {`${entry.name}: ${Number(entry.value).toLocaleString()}`}
             </Typography>
           ))}
         </Box>
       );
     }
     return null;
+  };
+
+  const renderTopicChart = (country) => {
+    const data = countryData[country]?.topics || {};
+    return (
+      <Box sx={{ width: '100%', height: 200 }}>
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={Object.entries(data).map(([topic, value]) => ({
+                name: topic,
+                value,
+              }))}
+              cx="50%"
+              cy="50%"
+              innerRadius={40}
+              outerRadius={80}
+              fill="#8884d8"
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {Object.entries(data).map(([topic, value], index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <Box
+                      sx={{
+                        bgcolor: 'background.paper',
+                        p: 1.5,
+                        border: 1,
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {`${payload[0].name}: ${payload[0].value}%`}
+                      </Typography>
+                    </Box>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Legend
+              layout="vertical"
+              align="right"
+              verticalAlign="middle"
+              wrapperStyle={{ paddingLeft: '10px' }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
+    );
   };
 
   return (
@@ -247,7 +324,7 @@ const GeographicalInsights = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Geographical Insights
+        Geographical Distribution & Impact
       </Typography>
       <Grid container spacing={3}>
         {/* Sentiment by Country */}
@@ -326,60 +403,37 @@ const GeographicalInsights = ({ data }) => {
           </Paper>
         </Grid>
 
-        {/* Regional Hotspots */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Regional Activity & Engagement
-            </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={regionalHotspots}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="country" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="mentions"
-                    name="Total Mentions"
-                    fill={theme.palette.primary.main}
-                  />
-                  <Bar
-                    yAxisId="right"
-                    dataKey="engagementRate"
-                    name="Avg. Engagement"
-                    fill={theme.palette.secondary.main}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
-
-        {/* Topic Distribution */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
+        {/* Top Topics by Country */}
+        <Grid item xs={12}>
+          <Paper
+            sx={{
+              p: 3,
+              backgroundColor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
               Top Topics by Country
             </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={topicHeatmap} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" unit="%" />
-                  <YAxis dataKey="topic" type="category" width={150} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar dataKey="US" name="US" fill={theme.palette.info.main} />
-                  <Bar dataKey="UK" name="UK" fill={theme.palette.warning.main} />
-                  <Bar dataKey="UAE" name="UAE" fill={theme.palette.success.main} />
-                  <Bar dataKey="QAT" name="Qatar" fill={theme.palette.secondary.main} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
+            <Grid container spacing={2}>
+              {Object.keys(countryData).map((country) => (
+                <Grid item xs={12} md={6} key={country}>
+                  <Paper
+                    sx={{
+                      p: 2,
+                      backgroundColor: 'background.default',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle1" gutterBottom>
+                      {country}
+                    </Typography>
+                    {renderTopicChart(country)}
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
           </Paper>
         </Grid>
       </Grid>
