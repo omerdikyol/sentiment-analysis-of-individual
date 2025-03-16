@@ -218,14 +218,14 @@ const DrawerHeader = styled(Box)(({ theme }) => ({
 
 const menuItems = [
   { text: 'Dashboard', id: 'dashboard', icon: <DashboardIcon /> },
+  { text: 'Sentiment Overview', id: 'sentiment-overview', icon: <AnalyticsIcon /> },
+  { text: 'Mentions & Trends', id: 'mentions-trends', icon: <StackedLineChartIcon /> },
   { text: 'Theme Analysis', id: 'theme-analysis', icon: <BarChartIcon /> },
   { text: 'Emotional Analysis', id: 'emotional-analysis', icon: <FavoriteIcon /> },
   { text: 'Event Analysis', id: 'event-analysis', icon: <EventIcon /> },
   { text: 'Influencer Analysis', id: 'influencer-analysis', icon: <TrendingUpIcon /> },
   { text: 'Platform Sentiment', id: 'platform-sentiment', icon: <MessageIcon /> },
   { text: 'Geographical Insights', id: 'geographical-insights', icon: <PublicIcon /> },
-  { text: 'Sentiment Overview', id: 'sentiment-overview', icon: <AnalyticsIcon /> },
-  { text: 'Mentions & Trends', id: 'mentions-trends', icon: <StackedLineChartIcon /> },
 ];
 
 // Scroll to top button

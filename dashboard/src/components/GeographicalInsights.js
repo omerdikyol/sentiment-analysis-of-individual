@@ -9,11 +9,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  ScatterChart,
-  Scatter,
-  ZAxis,
+  Cell,
+  PieChart,
+  Pie
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
 
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
@@ -53,87 +54,74 @@ const GeographicalInsights = ({ data }) => {
         total: 21,
         engagement: 1650
       }
-    ],
-    sourceDistribution: [
-      {
-        source: 'Social Media',
-        positive: 13.5,
-        neutral: 61.8,
-        negative: 24.7,
-        total: 253
-      },
-      {
-        source: 'News',
-        positive: 12.8,
-        neutral: 62.5,
-        negative: 24.7,
-        total: 121
-      },
-      {
-        source: 'TV',
-        positive: 14.2,
-        neutral: 60.3,
-        negative: 25.5,
-        total: 19
-      }
-    ],
-    regionalActivity: [
-      {
-        name: 'Qatar',
-        mentions: 120,
-        engagement: 2800,
-        engagementRate: 23.3
-      },
-      {
-        name: 'UAE',
-        mentions: 85,
-        engagement: 1950,
-        engagementRate: 22.9
-      },
-      {
-        name: 'US',
-        mentions: 95,
-        engagement: 2200,
-        engagementRate: 23.2
-      },
-      {
-        name: 'UK',
-        mentions: 75,
-        engagement: 1650,
-        engagementRate: 22.0
-      }
-    ],
-    topicsByCountry: {
-      'Qatar': [
-        { name: 'Education', value: 45, sentiment: 0.6 },
-        { name: 'Technology', value: 38, sentiment: 0.4 },
-        { name: 'Economy', value: 35, sentiment: 0.3 },
-        { name: 'Sports', value: 32, sentiment: 0.5 },
-        { name: 'Culture', value: 28, sentiment: 0.7 }
-      ],
-      'UAE': [
-        { name: 'Innovation', value: 42, sentiment: 0.5 },
-        { name: 'Business', value: 38, sentiment: 0.4 },
-        { name: 'Tourism', value: 35, sentiment: 0.6 },
-        { name: 'Technology', value: 30, sentiment: 0.3 },
-        { name: 'Finance', value: 25, sentiment: 0.4 }
-      ],
-      'US': [
-        { name: 'Politics', value: 48, sentiment: -0.2 },
-        { name: 'Economy', value: 40, sentiment: 0.1 },
-        { name: 'Technology', value: 35, sentiment: 0.4 },
-        { name: 'Healthcare', value: 30, sentiment: 0.2 },
-        { name: 'Education', value: 25, sentiment: 0.3 }
-      ],
-      'UK': [
-        { name: 'Economy', value: 45, sentiment: 0.1 },
-        { name: 'Politics', value: 38, sentiment: -0.1 },
-        { name: 'Culture', value: 32, sentiment: 0.5 },
-        { name: 'Education', value: 28, sentiment: 0.4 },
-        { name: 'Healthcare', value: 25, sentiment: 0.2 }
-      ]
+      acc[country].topics[topic]++;
+    });
+
+    return acc;
+  }, {});
+
+  // Format data for sentiment by country chart
+  const sentimentByCountry = Object.entries(countryData).map(([country, data]) => ({
+    country,
+    positive: (data.positive / data.total) * 100,
+    neutral: (data.neutral / data.total) * 100,
+    negative: (data.negative / data.total) * 100,
+  }));
+
+  // Format data for source distribution
+  const sourceDistribution = ['Social Media', 'News', 'TV', 'Other'].map(sourceType => {
+    const sourceData = {
+      source: sourceType,
+    };
+
+    let totalMentions = 0;
+    let positiveMentions = 0;
+    let neutralMentions = 0;
+    let negativeMentions = 0;
+
+    // Sum up mentions across all countries for this source type
+    Object.values(countryData).forEach(data => {
+      const sourceStats = data.sources[sourceType];
+      totalMentions += sourceStats.total;
+      positiveMentions += sourceStats.positive;
+      neutralMentions += sourceStats.neutral;
+      negativeMentions += sourceStats.negative;
+    });
+
+    // Calculate percentages only if there are mentions
+    if (totalMentions > 0) {
+      sourceData.positive = (positiveMentions / totalMentions) * 100;
+      sourceData.neutral = (neutralMentions / totalMentions) * 100;
+      sourceData.negative = (negativeMentions / totalMentions) * 100;
+    } else {
+      sourceData.positive = 0;
+      sourceData.neutral = 0;
+      sourceData.negative = 0;
     }
   };
+
+  const COLORS = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.success.main,
+    theme.palette.error.main,
+    theme.palette.info.main,
+    theme.palette.warning.main,
+    theme.palette.primary.light,
+    theme.palette.secondary.light,
+    theme.palette.success.light,
+    theme.palette.error.light,
+    theme.palette.info.light,
+    theme.palette.warning.light,
+    theme.palette.primary.dark,
+    theme.palette.secondary.dark,
+    theme.palette.success.dark,
+    theme.palette.error.dark,
+    theme.palette.info.dark,
+    theme.palette.warning.dark,
+    alpha(theme.palette.primary.main, 0.7),
+    alpha(theme.palette.secondary.main, 0.7),
+  ];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -156,7 +144,7 @@ const GeographicalInsights = ({ data }) => {
               variant="body2"
               sx={{ color: entry.color }}
             >
-              {`${entry.name}: ${Number(entry.value).toFixed(1)}%`}
+              {`${entry.name}: ${Number(entry.value).toLocaleString()}`}
             </Typography>
           ))}
           {payload[0]?.payload?.total && (
@@ -174,115 +162,60 @@ const GeographicalInsights = ({ data }) => {
     }
     return null;
   };
-
-  const TopicsTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 1.5,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="subtitle2" gutterBottom>
-            {data.name}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Mentions: {data.value}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Sentiment: {(data.sentiment * 100).toFixed(1)}%
-          </Typography>
-        </Box>
-      );
-    }
-    return null;
-  };
-
   const renderTopicChart = (country) => {
-    const data = sampleData.topicsByCountry[country].map(topic => ({
-      ...topic,
-      sentimentPercentage: topic.sentiment * 100,
-    }));
-
+    const data = countryData[country]?.topics || {};
     return (
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={data}
-          margin={{
-            top: 20,
-            right: 30,
-            left: 20,
-            bottom: 60
-          }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="name"
-            angle={-45}
-            textAnchor="end"
-            interval={0}
-            height={60}
-          />
-          <YAxis
-            yAxisId="left"
-            orientation="left"
-            label={{ value: 'Mentions', angle: -90, position: 'insideLeft' }}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            domain={[-100, 100]}
-            label={{ value: 'Sentiment %', angle: 90, position: 'insideRight' }}
-          />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <Box
-                    sx={{
-                      backgroundColor: 'background.paper',
-                      p: 1.5,
-                      border: 1,
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      boxShadow: 3,
-                    }}
-                  >
-                    <Typography variant="subtitle2" gutterBottom>
-                      {payload[0].payload.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Mentions: {payload[0].payload.value}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Sentiment: {payload[0].payload.sentimentPercentage.toFixed(1)}%
-                    </Typography>
-                  </Box>
-                );
-              }
-              return null;
-            }}
-          />
-          <Legend />
-          <Bar
-            yAxisId="left"
-            dataKey="value"
-            name="Mentions"
-            fill={theme.palette.primary.main}
-          />
-          <Bar
-            yAxisId="right"
-            dataKey="sentimentPercentage"
-            name="Sentiment %"
-            fill={theme.palette.secondary.main}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <Box sx={{ width: '100%', height: 200 }}>
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              data={Object.entries(data).map(([topic, value]) => ({
+                name: topic,
+                value,
+              }))}
+              cx="50%"
+              cy="50%"
+              innerRadius={40}
+              outerRadius={80}
+              fill="#8884d8"
+              paddingAngle={2}
+              dataKey="value"
+            >
+              {Object.entries(data).map(([topic, value], index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <Box
+                      sx={{
+                        bgcolor: 'background.paper',
+                        p: 1.5,
+                        border: 1,
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {`${payload[0].name}: ${payload[0].value}%`}
+                      </Typography>
+                    </Box>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Legend
+              layout="vertical"
+              align="right"
+              verticalAlign="middle"
+              wrapperStyle={{ paddingLeft: '10px' }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </Box>
     );
   };
 
@@ -293,7 +226,7 @@ const GeographicalInsights = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Geographical Insights
+        Geographical Distribution & Impact
       </Typography>
       <Grid container spacing={3}>
         {/* Sentiment by Country */}
@@ -371,40 +304,6 @@ const GeographicalInsights = ({ data }) => {
             </Box>
           </Paper>
         </Grid>
-
-        {/* Regional Activity & Engagement */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Regional Activity & Engagement
-            </Typography>
-            <Box sx={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={sampleData.regionalActivity}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis yAxisId="left" orientation="left" label={{ value: 'Mentions', angle: -90, position: 'insideLeft' }} />
-                  <YAxis yAxisId="right" orientation="right" label={{ value: 'Engagement', angle: 90, position: 'insideRight' }} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="mentions"
-                    name="Mentions"
-                    fill={theme.palette.primary.main}
-                  />
-                  <Bar
-                    yAxisId="right"
-                    dataKey="engagement"
-                    name="Engagement"
-                    fill={theme.palette.secondary.main}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </Paper>
-        </Grid>
-
         {/* Top Topics by Country */}
         <Grid item xs={12}>
           <Paper
@@ -419,7 +318,7 @@ const GeographicalInsights = ({ data }) => {
               Top Topics by Country
             </Typography>
             <Grid container spacing={2}>
-              {Object.keys(sampleData.topicsByCountry).map((country) => (
+              {Object.keys(countryData).map((country) => (
                 <Grid item xs={12} md={6} key={country}>
                   <Paper
                     sx={{
