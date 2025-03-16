@@ -64,22 +64,29 @@ class DataService {
       // Handle date parsing
       try {
         if (typeof item.date === 'string') {
-          item.date = new Date(item.date);
+          // Skip obviously invalid dates
+          if (item.date === 'Da lid e' || !item.date.trim()) {
+            item.date = new Date('2025-01-01');
+            return;
+          }
           
-          // Check if date is valid
-          if (isNaN(item.date.getTime())) {
-            // Try to fix common date format issues
-            const dateParts = item.date.split('-');
-            if (dateParts.length === 3) {
-              item.date = new Date(`${dateParts[0]}-${dateParts[1].padStart(2, '0')}-${dateParts[2].padStart(2, '0')}`);
-            }
-            
-            // If still invalid, use a fallback date
-            if (isNaN(item.date.getTime())) {
-              console.warn('Invalid date found, using fallback:', item.date);
+          const parsedDate = new Date(item.date);
+          if (!isNaN(parsedDate.getTime())) {
+            item.date = parsedDate;
+          } else {
+            // Try to parse date in YYYY-MM-DD format
+            const match = item.date.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+            if (match) {
+              const [_, year, month, day] = match;
+              item.date = new Date(year, month - 1, day);
+            } else {
+              console.warn('Invalid date found:', item.date);
               item.date = new Date('2025-01-01');
             }
           }
+        } else if (!(item.date instanceof Date) || isNaN(item.date.getTime())) {
+          console.warn('Invalid date object:', item.date);
+          item.date = new Date('2025-01-01');
         }
       } catch (e) {
         console.warn('Error parsing date:', item.date, e);
@@ -391,11 +398,25 @@ class DataService {
   }
   
   filterDataByCountry(data, country) {
-    if (!country || country === 'All Countries') {
+    if (!country || country === 'all') {
       return data;
     }
     
-    return data.filter(item => (item.country || 'Qatar') === country);
+    return data.filter(item => (item.country || 'Qatar').toLowerCase() === country.toLowerCase());
+  }
+
+  filterDataByTimeRange(data, days) {
+    if (!days || days === 'all') {
+      return data;
+    }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - parseInt(days));
+
+    return data.filter(item => {
+      if (!item.date || !(item.date instanceof Date)) return false;
+      return item.date >= cutoffDate;
+    });
   }
 }
 

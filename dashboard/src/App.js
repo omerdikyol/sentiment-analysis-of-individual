@@ -13,7 +13,14 @@ import {
   Paper,
   useScrollTrigger,
   Zoom,
-  Fab
+  Fab,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  styled,
+  Drawer
 } from '@mui/material';
 import {
   BarChart as BarChartIcon,
@@ -24,7 +31,13 @@ import {
   StackedLineChart as StackedLineChartIcon,
   Dashboard as DashboardIcon,
   KeyboardArrowUp as KeyboardArrowUpIcon,
-  Public as PublicIcon
+  Public as PublicIcon,
+  Settings as SettingsIcon,
+  Add as AddIcon,
+  Language as LanguageIcon,
+  Analytics as AnalyticsIcon,
+  ChevronLeft as ChevronLeftIcon,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -42,9 +55,13 @@ import CountryBarChart from './components/CountryBarChart';
 // Import services
 import DataService from './services/DataService';
 
+const DRAWER_WIDTH = 240;
+const COLLAPSED_DRAWER_WIDTH = 72;
+
 // Create theme
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
       main: '#1a2035',
     },
@@ -52,7 +69,7 @@ const theme = createTheme({
       main: '#f50057',
     },
     background: {
-      default: '#f8f9fa',
+      default: '#f4f6f8',
       paper: '#ffffff',
     },
   },
@@ -86,8 +103,118 @@ const theme = createTheme({
         },
       },
     },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1a2035',
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#1a2035',
+          color: '#ffffff',
+          width: DRAWER_WIDTH,
+          borderRight: 'none',
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.12)',
+            },
+          },
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.04)',
+          },
+        },
+      },
+    },
   },
 });
+
+const StyledToolbar = styled(Toolbar)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: theme.spacing(0, 3),
+}));
+
+const FilterContainer = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  backgroundColor: '#fff',
+  borderBottom: '1px solid #e0e0e0',
+}));
+
+const ContentContainer = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3),
+}));
+
+const MainContent = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    flexGrow: 1,
+    minHeight: '100vh',
+    backgroundColor: theme.palette.background.default,
+    transition: theme.transitions.create(['margin', 'width'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+);
+
+const Sidebar = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    width: open ? DRAWER_WIDTH : COLLAPSED_DRAWER_WIDTH,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+    '& .MuiDrawer-paper': {
+      width: open ? DRAWER_WIDTH : COLLAPSED_DRAWER_WIDTH,
+      transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+      boxSizing: 'border-box',
+      backgroundColor: '#1a2035',
+      color: '#ffffff',
+      overflowX: 'hidden',
+    },
+  }),
+);
+
+const SidebarContent = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3, 2),
+  '& .MuiListItemIcon-root': {
+    color: '#ffffff',
+    minWidth: 40,
+  },
+  '& .MuiListItemText-primary': {
+    color: '#ffffff',
+  },
+}));
+
+const DrawerHeader = styled(Box)(({ theme }) => ({
+  height: 64,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: theme.spacing(0, 1),
+}));
+
+const menuItems = [
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+  { text: 'Sentiment Analysis', icon: <TrendingUpIcon />, path: '/sentiment' },
+  { text: 'Geographic Data', icon: <LanguageIcon />, path: '/geographic' },
+  { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
+  { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
+];
 
 // Scroll to top button
 function ScrollToTop(props) {
@@ -161,8 +288,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
-  const [selectedCountry, setSelectedCountry] = useState('All Countries');
+  const [selectedCountry, setSelectedCountry] = useState('all');
   const [filteredData, setFilteredData] = useState(null);
+  const [timeRange, setTimeRange] = useState('30');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -187,19 +316,20 @@ function App() {
     fetchData();
   }, []);
   
-  // Apply country filter when selected country changes
+  // Apply filters when selected country or time range changes
   useEffect(() => {
     if (!data) return;
     
-    console.log('Filtering data for country:', selectedCountry);
+    console.log('Filtering data for country:', selectedCountry, 'and time range:', timeRange);
     
-    if (selectedCountry === 'All Countries') {
-      setFilteredData(data);
-      return;
-    }
+    // First filter by country
+    let filteredRawData = selectedCountry === 'all' 
+      ? data.rawData 
+      : DataService.filterDataByCountry(data.rawData, selectedCountry);
+
+    // Then filter by time range
+    filteredRawData = DataService.filterDataByTimeRange(filteredRawData, timeRange);
     
-    // Filter raw data by country
-    const filteredRawData = DataService.filterDataByCountry(data.rawData, selectedCountry);
     console.log('Filtered raw data:', filteredRawData);
     
     // Recalculate metrics and charts with filtered data
@@ -210,13 +340,6 @@ function App() {
     const bottomSentiment = DataService.getBottomSentiment(filteredRawData, 5);
     const mentionsByPlatform = DataService.getMentionsByPlatform(filteredRawData);
     const mentionsByCountry = DataService.getMentionsByCountry(filteredRawData);
-    
-    console.log('Updated metrics:', {
-      mentionsByDate,
-      sentimentByDate,
-      mentionsByPlatform,
-      mentionsByCountry
-    });
     
     setFilteredData({
       ...data,
@@ -229,10 +352,18 @@ function App() {
       mentionsByPlatform,
       mentionsByCountry
     });
-  }, [selectedCountry, data]);
+  }, [selectedCountry, timeRange, data]);
   
   const handleCountryChange = (country) => {
-    setSelectedCountry(country);
+    setSelectedCountry(country.toLowerCase());
+  };
+
+  const handleTimeRangeChange = (event) => {
+    setTimeRange(event.target.value);
+  };
+
+  const handleDrawerToggle = () => {
+    setSidebarOpen(!sidebarOpen);
   };
   
   if (loading) {
@@ -289,140 +420,186 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Layout>
-        <Box sx={{ pb: 6 }} id="back-to-top-anchor">
-          <Grid container spacing={3}>
-            {/* Header with Country Filter */}
-            <Grid item xs={12}>
+      <Box sx={{ display: 'flex' }}>
+        <Sidebar variant="permanent" open={sidebarOpen}>
+          <DrawerHeader>
+            {sidebarOpen ? (
+              <>
+                <Typography variant="h6" noWrap component="div" sx={{ ml: 2 }}>
+                  Sentiment Analysis
+                </Typography>
+                <IconButton onClick={handleDrawerToggle} sx={{ color: 'white' }}>
+                  <ChevronLeftIcon />
+                </IconButton>
+              </>
+            ) : (
+              <IconButton onClick={handleDrawerToggle} sx={{ mx: 'auto', color: 'white' }}>
+                <MenuIcon />
+              </IconButton>
+            )}
+          </DrawerHeader>
+          <SidebarContent>
+            {menuItems.map((item) => (
               <Box
+                key={item.text}
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3,
-                  mt: 1
+                  mb: 1,
+                  px: 1,
                 }}
               >
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
-                    fontWeight: 'bold',
-                    color: theme.palette.text.primary
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    cursor: 'pointer',
+                    p: 1,
+                    borderRadius: 1,
+                    whiteSpace: 'nowrap',
+                    minHeight: 48,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    },
                   }}
                 >
-                  Dashboard Overview
-                </Typography>
-                <Box sx={{ width: '300px' }}>
-                  <CountryFilter
-                    selectedCountry={selectedCountry}
-                    onCountryChange={handleCountryChange}
-                    data={data}
-                  />
+                  {item.icon}
+                  {sidebarOpen && <Typography>{item.text}</Typography>}
                 </Box>
               </Box>
-            </Grid>
-
-            {/* Metrics */}
-            <Grid item xs={12}>
-              <SectionHeader title="Key Metrics" />
+            ))}
+          </SidebarContent>
+        </Sidebar>
+        <MainContent open={sidebarOpen}>
+          <AppBar 
+            position="fixed" 
+            elevation={0} 
+            sx={{ 
+              ml: sidebarOpen ? `${DRAWER_WIDTH}px` : `${COLLAPSED_DRAWER_WIDTH}px`,
+              width: `calc(100% - ${sidebarOpen ? DRAWER_WIDTH : COLLAPSED_DRAWER_WIDTH}px)`,
+              transition: theme.transitions.create(['width', 'margin'], {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+            }}
+          >
+            <StyledToolbar>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h6" component="div">
+                  Dashboard Overview
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <IconButton color="inherit" size="large">
+                  <AddIcon />
+                </IconButton>
+                <IconButton color="inherit" size="large">
+                  <SettingsIcon />
+                </IconButton>
+              </Box>
+            </StyledToolbar>
+          </AppBar>
+          <Box sx={{ mt: '64px' }}>
+            <FilterContainer>
+              <CountryFilter
+                data={data}
+                selectedCountry={selectedCountry}
+                onCountryChange={handleCountryChange}
+              />
+              <FormControl sx={{ minWidth: 120 }}>
+                <InputLabel>Time Range</InputLabel>
+                <Select
+                  value={timeRange}
+                  label="Time Range"
+                  onChange={handleTimeRangeChange}
+                  size="small"
+                >
+                  <MenuItem value="7">Last 7 days</MenuItem>
+                  <MenuItem value="30">Last 30 days</MenuItem>
+                  <MenuItem value="90">Last 90 days</MenuItem>
+                  <MenuItem value="all">All time</MenuItem>
+                </Select>
+              </FormControl>
+            </FilterContainer>
+            <ContentContainer>
               <Grid container spacing={3}>
-                {filteredData?.metrics && (
-                  <>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <MetricCard
-                        title="Total Mentions"
-                        value={filteredData.metrics.totalMentions}
-                        icon={<MessageIcon />}
-                        color="#3f51b5"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <MetricCard
-                        title="Positive Sentiment"
-                        value={`${filteredData.metrics.positivePercentage}%`}
-                        icon={<FavoriteIcon />}
-                        color="#4caf50"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <MetricCard
-                        title="Negative Sentiment"
-                        value={`${filteredData.metrics.negativePercentage}%`}
-                        icon={<ThumbDownIcon />}
-                        color="#f44336"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <MetricCard
-                        title="Engagement Rate"
-                        value={`${filteredData.metrics.presenceScore}%`}
-                        icon={<TrendingUpIcon />}
-                        color="#ff9800"
-                      />
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-            </Grid>
-
-            {/* Charts */}
-            <Grid item xs={12}>
-              <SectionHeader title="Trends & Analysis" />
-              <Grid container spacing={3}>
+                <Grid item xs={12} md={3}>
+                  <MetricCard
+                    title="Total Mentions"
+                    value={filteredData?.metrics?.totalMentions || 0}
+                    trend={+5.2}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <MetricCard
+                    title="Positive Sentiment"
+                    value={`${filteredData?.metrics?.positivePercentage || 0}%`}
+                    trend={+2.1}
+                    color="success"
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <MetricCard
+                    title="Negative Sentiment"
+                    value={`${filteredData?.metrics?.negativePercentage || 0}%`}
+                    trend={-1.5}
+                    color="error"
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <MetricCard
+                    title="Engagement Rate"
+                    value={`${filteredData?.metrics?.presenceScore || 0}%`}
+                    trend={+3.7}
+                    color="info"
+                  />
+                </Grid>
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
                     <MentionLineChart mentionsByDate={filteredData?.mentionsByDate} />
                   </Paper>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
                     <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate} />
                   </Paper>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
                     <PlatformBarChart mentionsByPlatform={filteredData?.mentionsByPlatform} />
                   </Paper>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, height: '100%' }}>
+                  <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
                     <CountryBarChart mentionsByCountry={filteredData?.mentionsByCountry} />
                   </Paper>
                 </Grid>
-              </Grid>
-            </Grid>
-
-            {/* Sentiment Tables */}
-            <Grid item xs={12}>
-              <SectionHeader title="Detailed Sentiment Analysis" />
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <SentimentTable 
-                      data={filteredData}
-                      title="Highest Sentiment Posts"
-                    />
-                  </Paper>
+                <Grid item xs={12}>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Paper elevation={0} sx={{ p: 2 }}>
+                        <SentimentTable
+                          data={filteredData}
+                          title="Highest Sentiment Posts"
+                          type="top"
+                        />
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Paper elevation={0} sx={{ p: 2 }}>
+                        <SentimentTable
+                          data={filteredData}
+                          title="Lowest Sentiment Posts"
+                          type="bottom"
+                        />
+                      </Paper>
+                    </Grid>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <SentimentTable 
-                      data={filteredData}
-                      title="Lowest Sentiment Posts"
-                    />
-                  </Paper>
-                </Grid>
               </Grid>
-            </Grid>
-          </Grid>
-        </Box>
-
-        <ScrollToTop>
-          <Fab color="primary" size="small" aria-label="scroll back to top">
-            <KeyboardArrowUpIcon />
-          </Fab>
-        </ScrollToTop>
-      </Layout>
+            </ContentContainer>
+          </Box>
+        </MainContent>
+      </Box>
     </ThemeProvider>
   );
 }

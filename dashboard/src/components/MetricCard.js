@@ -1,72 +1,56 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box } from '@mui/material';
-import { motion } from 'framer-motion';
-import CountUp from 'react-countup';
+import { Box, Card, Typography, styled } from '@mui/material';
+import { TrendingUp, TrendingDown } from '@mui/icons-material';
 
-const MetricCard = ({ title, value, icon, color }) => {
-  const isNumber = !isNaN(parseFloat(value)) && isFinite(value);
-  const numericValue = isNumber ? parseFloat(value) : 0;
-  const hasPercentage = isNumber && String(value).includes('%');
-  const displayValue = hasPercentage ? numericValue : value;
-  
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  padding: theme.spacing(2),
+  display: 'flex',
+  flexDirection: 'column',
+  backgroundColor: '#fff',
+  border: '1px solid #e0e0e0',
+  borderRadius: '8px',
+  boxShadow: 'none',
+}));
+
+const TrendIndicator = styled(Box)(({ theme, trend }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(0.5),
+  color: trend >= 0 ? '#4caf50' : '#f44336',
+  fontSize: '0.875rem',
+  fontWeight: 500,
+}));
+
+const MetricCard = ({ title, value, trend, color = 'primary' }) => {
+  const getValueColor = () => {
+    switch (color) {
+      case 'success':
+        return '#4caf50';
+      case 'error':
+        return '#f44336';
+      case 'info':
+        return '#2196f3';
+      default:
+        return '#1a2035';
+    }
+  };
+
   return (
-    <motion.div
-      whileHover={{ 
-        scale: 1.03,
-        transition: { duration: 0.2 }
-      }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card 
-        sx={{ 
-          height: '100%', 
-          boxShadow: 3, 
-          borderRadius: 2,
-          background: `linear-gradient(135deg, #ffffff 0%, ${color ? color + '10' : '#f5f5f5'} 100%)`,
-          transition: 'all 0.3s ease-in-out'
-        }}
-      >
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-            {icon && (
-              <motion.div
-                initial={{ rotate: -10, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Box sx={{ 
-                  mr: 1, 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  color: color || 'primary.main' 
-                }}>
-                  {icon}
-                </Box>
-              </motion.div>
-            )}
-            <Typography variant="h6" component="div" sx={{ color: 'text.secondary' }}>
-              {title}
-            </Typography>
-          </Box>
-          <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', color: color || 'text.primary' }}>
-            {isNumber ? (
-              <>
-                <CountUp 
-                  end={numericValue} 
-                  duration={2.5}
-                  decimals={hasPercentage ? 1 : 0}
-                />
-                {hasPercentage && '%'}
-              </>
-            ) : (
-              value
-            )}
-          </Typography>
-        </CardContent>
-      </Card>
-    </motion.div>
+    <StyledCard>
+      <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+        {title}
+      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 1 }}>
+        <Typography variant="h4" component="div" sx={{ fontWeight: 600, color: getValueColor() }}>
+          {value}
+        </Typography>
+        <TrendIndicator trend={trend}>
+          {trend >= 0 ? <TrendingUp fontSize="small" /> : <TrendingDown fontSize="small" />}
+          {Math.abs(trend)}%
+        </TrendIndicator>
+      </Box>
+    </StyledCard>
   );
 };
 

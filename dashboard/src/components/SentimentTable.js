@@ -23,7 +23,8 @@ import {
   Button,
   Link,
   Divider,
-  Grid
+  Grid,
+  styled
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -39,7 +40,37 @@ import {
   LocationOn as LocationIcon
 } from '@mui/icons-material';
 
-const SentimentTable = ({ data, title = "Sentiment Analysis" }) => {
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  padding: theme.spacing(2),
+  '&.MuiTableCell-head': {
+    backgroundColor: theme.palette.background.default,
+    fontWeight: 600,
+  },
+}));
+
+const SentimentBadge = styled(Box)(({ theme, sentiment }) => {
+  const getColor = () => {
+    if (sentiment >= 0.6) return '#4caf50';
+    if (sentiment >= 0.3) return '#8bc34a';
+    if (sentiment >= 0) return '#ffeb3b';
+    if (sentiment >= -0.3) return '#ff9800';
+    return '#f44336';
+  };
+
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    backgroundColor: `${getColor()}20`,
+    color: getColor(),
+    fontWeight: 600,
+    fontSize: '0.875rem',
+  };
+});
+
+const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -416,6 +447,8 @@ const SentimentTable = ({ data, title = "Sentiment Analysis" }) => {
     ));
   };
 
+  const posts = type === 'top' ? data?.topSentiment : data?.bottomSentiment;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -518,7 +551,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis" }) => {
               </TableHead>
               <TableBody>
                 <AnimatePresence>
-                  {renderTableData(title.includes('Highest') ? data.topSentiment : data.bottomSentiment)}
+                  {renderTableData(posts)}
                 </AnimatePresence>
               </TableBody>
             </Table>

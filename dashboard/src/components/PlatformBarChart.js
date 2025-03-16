@@ -35,19 +35,15 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
   
   useEffect(() => {
     if (mentionsByPlatform && mentionsByPlatform.length > 0) {
-      // Start with empty data
-      setAnimatedData([]);
-      
-      // Animate bars appearing one by one
+      // Get top 10 platforms by count
       const topPlatforms = [...mentionsByPlatform]
-        .slice(0, 10)
-        .sort((a, b) => b.count - a.count);
-        
-      topPlatforms.forEach((item, index) => {
-        setTimeout(() => {
-          setAnimatedData(prev => [...prev, item]);
-        }, index * 100);
-      });
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+      
+      // Set the data immediately without animation
+      setAnimatedData(topPlatforms);
+    } else {
+      setAnimatedData([]);
     }
   }, [mentionsByPlatform]);
 
