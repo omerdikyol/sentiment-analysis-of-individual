@@ -123,11 +123,27 @@ const EmotionalAnalysis = ({ data }) => {
     
     // Consider a shift significant if the change is more than 0.2
     if (Math.abs(change) >= 0.2) {
+      // Analyze the emotions on that day to determine the reason
+      const dominantEmotions = Object.entries({
+        Joy: curr.Joy,
+        Anger: curr.Anger,
+        Fear: curr.Fear,
+        Sadness: curr.Sadness,
+        Trust: curr.Trust
+      })
+      .filter(([_, value]) => value > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([emotion]) => emotion);
+
+      // Generate reason based on sentiment change and emotions
+      const reason = `Significant ${change > 0 ? 'positive' : 'negative'} shift detected with dominant emotions: ${dominantEmotions.join(', ')}`;
+      
       acc.push({
         date: curr.date,
         sentiment: curr.sentiment,
         change: change.toFixed(2),
-        type: change > 0 ? 'positive' : 'negative'
+        type: change > 0 ? 'positive' : 'negative',
+        reason: reason
       });
     }
     
@@ -270,7 +286,7 @@ const EmotionalAnalysis = ({ data }) => {
                   <Line
                     type="monotone"
                     dataKey="sentiment"
-                    stroke={theme.palette.primary.main}
+                    stroke={theme.palette.info.main}
                     strokeWidth={2}
                   />
                   {sentimentShifts.map((shift, index) => (
@@ -296,25 +312,37 @@ const EmotionalAnalysis = ({ data }) => {
               <Grid container spacing={2}>
                 {sentimentShifts.map((shift, index) => (
                   <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          <EventIcon 
-                            sx={{ 
-                              color: shift.type === 'positive' 
-                                ? theme.palette.success.main 
-                                : theme.palette.error.main 
-                            }}
-                          />
-                          <Typography variant="subtitle2">
-                            {shift.date}
+                    <Tooltip 
+                      title={shift.reason}
+                      placement="top"
+                      arrow
+                      sx={{
+                        backgroundColor: 'background.paper',
+                        color: 'text.primary',
+                        boxShadow: 1,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      <Card variant="outlined">
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <EventIcon 
+                              sx={{ 
+                                color: shift.type === 'positive' 
+                                  ? theme.palette.success.main 
+                                  : theme.palette.error.main 
+                              }}
+                            />
+                            <Typography variant="subtitle2">
+                              {shift.date}
+                            </Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            Sentiment shift: {shift.change > 0 ? '+' : ''}{shift.change}
                           </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          Sentiment shift: {shift.change > 0 ? '+' : ''}{shift.change}
-                        </Typography>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </Tooltip>
                   </Grid>
                 ))}
               </Grid>

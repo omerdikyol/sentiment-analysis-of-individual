@@ -1,16 +1,26 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme } from '@mui/material';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  useTheme,
+  Card,
+  CardContent,
+  LinearProgress,
+  Stack,
+  Divider,
+} from '@mui/material';
+import {
+  Twitter as TwitterIcon,
+  Facebook as FacebookIcon,
+  LinkedIn as LinkedInIcon,
+  Tv as TvIcon,
+  Article as NewsIcon,
+  Instagram as InstagramIcon,
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
 
 const PlatformSentiment = ({ data }) => {
   const theme = useTheme();
@@ -72,7 +82,6 @@ const PlatformSentiment = ({ data }) => {
       platform.toLowerCase().includes(p.toLowerCase()) || 
       source.toLowerCase().includes(p.toLowerCase())
     )) {
-      // Determine specific social media platform
       const socialPlatform = platformCategories.socialMedia.find(p => 
         platform.toLowerCase().includes(p.toLowerCase()) || 
         source.toLowerCase().includes(p.toLowerCase())
@@ -107,104 +116,31 @@ const PlatformSentiment = ({ data }) => {
     return acc;
   }, {});
 
-  // Convert to percentage and format for charts
-  const formatPlatformData = (platforms) => {
-    return Object.entries(platformData)
-      .filter(([platform]) => platforms.includes(platform))
-      .map(([platform, data]) => ({
-        platform,
-        positive: (data.positive / data.total) * 100,
-        neutral: (data.neutral / data.total) * 100,
-        negative: (data.negative / data.total) * 100,
-        engagement: data.engagement,
-        total: data.total
-      }))
-      .filter(item => item.total > 0) // Only show platforms with data
-      .sort((a, b) => b.total - a.total); // Sort by total mentions
-  };
-
-  const socialMediaData = formatPlatformData(platformCategories.socialMedia);
-  const newsData = formatPlatformData(platformCategories.news);
-  const tvData = formatPlatformData(platformCategories.tv);
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 1.5,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            {label}
-          </Typography>
-          {payload.map((entry) => (
-            <Typography
-              key={entry.name}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >
-              {`${entry.name}: ${Number(entry.value).toFixed(1)}%`}
-            </Typography>
-          ))}
-          {payload[0]?.payload?.total && (
-            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-              Total Mentions: {payload[0].payload.total}
-            </Typography>
-          )}
-          {payload[0]?.payload?.engagement && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Engagement: {payload[0].payload.engagement}
-            </Typography>
-          )}
-        </Box>
-      );
+  const getPlatformIcon = (platform) => {
+    switch (platform.toLowerCase()) {
+      case 'twitter':
+        return <TwitterIcon />;
+      case 'facebook':
+        return <FacebookIcon />;
+      case 'linkedin':
+        return <LinkedInIcon />;
+      case 'instagram':
+        return <InstagramIcon />;
+      default:
+        return platform.toLowerCase().includes('tv') ? <TvIcon /> : <NewsIcon />;
     }
-    return null;
   };
 
-  const renderPlatformChart = (data, title) => (
-    <Grid item xs={12} md={6} lg={4}>
-      <Paper elevation={0} sx={{ p: 2 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          {title}
-        </Typography>
-        <Box sx={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="platform" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Bar
-                dataKey="positive"
-                name="Positive"
-                stackId="a"
-                fill={theme.palette.success.main}
-              />
-              <Bar
-                dataKey="neutral"
-                name="Neutral"
-                stackId="a"
-                fill={theme.palette.grey[400]}
-              />
-              <Bar
-                dataKey="negative"
-                name="Negative"
-                stackId="a"
-                fill={theme.palette.error.main}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </Box>
-      </Paper>
-    </Grid>
-  );
+  // Convert to array and sort by total mentions
+  const platformStats = Object.entries(platformData)
+    .map(([platform, data]) => ({
+      platform,
+      ...data,
+      positivePercent: (data.positive / data.total) * 100,
+      neutralPercent: (data.neutral / data.total) * 100,
+      negativePercent: (data.negative / data.total) * 100,
+    }))
+    .sort((a, b) => b.total - a.total);
 
   return (
     <motion.div
@@ -216,9 +152,87 @@ const PlatformSentiment = ({ data }) => {
         Platform-Specific Sentiment Analysis
       </Typography>
       <Grid container spacing={3}>
-        {renderPlatformChart(socialMediaData, 'Social Media Sentiment')}
-        {renderPlatformChart(newsData, 'News Sources Sentiment')}
-        {renderPlatformChart(tvData, 'TV Channels Sentiment')}
+        {platformStats.map((platform) => (
+          <Grid item xs={12} sm={6} md={4} key={platform.platform}>
+            <Card variant="outlined">
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
+                  {getPlatformIcon(platform.platform)}
+                  <Typography variant="h6" component="div">
+                    {platform.platform}
+                  </Typography>
+                </Box>
+
+                <Stack spacing={1.5}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Positive ({platform.positive} mentions)
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={platform.positivePercent}
+                      sx={{
+                        height: 8,
+                        borderRadius: 1,
+                        backgroundColor: alpha(theme.palette.success.main, 0.1),
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: theme.palette.success.main,
+                        },
+                      }}
+                    />
+                  </Box>
+
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Neutral ({platform.neutral} mentions)
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={platform.neutralPercent}
+                      sx={{
+                        height: 8,
+                        borderRadius: 1,
+                        backgroundColor: alpha(theme.palette.grey[500], 0.1),
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: theme.palette.grey[500],
+                        },
+                      }}
+                    />
+                  </Box>
+
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Negative ({platform.negative} mentions)
+                    </Typography>
+                    <LinearProgress
+                      variant="determinate"
+                      value={platform.negativePercent}
+                      sx={{
+                        height: 8,
+                        borderRadius: 1,
+                        backgroundColor: alpha(theme.palette.error.main, 0.1),
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: theme.palette.error.main,
+                        },
+                      }}
+                    />
+                  </Box>
+                </Stack>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Mentions: {platform.total}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Engagement: {platform.engagement}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
     </motion.div>
   );
