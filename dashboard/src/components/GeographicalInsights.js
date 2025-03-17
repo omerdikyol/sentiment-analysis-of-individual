@@ -431,22 +431,22 @@ const GeographicalInsights = ({ data }) => {
                   <Bar
                     dataKey="Social Media"
                     stackId="a"
-                    fill="#2196F3"
+                    fill="#1565C0"
                   />
                   <Bar
                     dataKey="News"
                     stackId="a"
-                    fill="#4CAF50"
+                    fill="#2E7D32"
                   />
                   <Bar
                     dataKey="TV"
                     stackId="a"
-                    fill="#FF9800"
+                    fill="#EF6C00"
                   />
                   <Bar
                     dataKey="Other"
                     stackId="a"
-                    fill="#E91E63"
+                    fill="#C2185B"
                   />
                 </BarChart>
               </ResponsiveContainer>
