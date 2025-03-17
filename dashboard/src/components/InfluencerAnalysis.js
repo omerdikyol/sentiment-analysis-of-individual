@@ -261,7 +261,7 @@ const InfluencerAnalysis = ({ data }) => {
           <Grid item xs={12} md={6} key={index}>
             <Paper elevation={0} sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                <Avatar sx={{ bgcolor: '#2196F3' }}>
                   {influencer.avatar || <PersonIcon />}
                 </Avatar>
                 <Box sx={{ ml: 2, flex: 1 }}>
@@ -283,7 +283,13 @@ const InfluencerAnalysis = ({ data }) => {
                       icon={<TrendingUpIcon />}
                       label={`${influencer.engagementRate}% Engagement`}
                       size="small"
-                      color="primary"
+                      sx={{ 
+                        bgcolor: '#2196F3',
+                        color: 'white',
+                        '& .MuiChip-icon': {
+                          color: 'white'
+                        }
+                      }}
                     />
                   </Box>
                   <Box sx={{ 

@@ -20,26 +20,16 @@ const ThemeAnalysis = ({ data }) => {
   const theme = useTheme();
 
   const COLORS = [
-    theme.palette.primary.main,
-    theme.palette.secondary.main,
-    theme.palette.success.main,
-    theme.palette.error.main,
-    theme.palette.info.main,
-    theme.palette.warning.main,
-    theme.palette.primary.light,
-    theme.palette.secondary.light,
-    theme.palette.success.light,
-    theme.palette.error.light,
-    theme.palette.info.light,
-    theme.palette.warning.light,
-    theme.palette.primary.dark,
-    theme.palette.secondary.dark,
-    theme.palette.success.dark,
-    theme.palette.error.dark,
-    theme.palette.info.dark,
-    theme.palette.warning.dark,
-    alpha(theme.palette.primary.main, 0.7),
-    alpha(theme.palette.secondary.main, 0.7),
+    '#4CAF50', // green
+    '#2196F3', // blue
+    '#FF9800', // orange
+    '#E91E63', // pink
+    '#9C27B0', // purple
+    '#00BCD4', // cyan
+    '#FFEB3B', // yellow
+    '#FF5722', // deep orange
+    '#3F51B5', // indigo
+    '#009688'  // teal
   ];
 
   if (!data?.rawData) {
@@ -212,7 +202,7 @@ const ThemeAnalysis = ({ data }) => {
                   <Bar 
                     dataKey="value" 
                     name="Mentions" 
-                    fill={theme.palette.primary.main}
+                    fill={theme.palette.info.main}
                   />
                 </BarChart>
               </ResponsiveContainer>
