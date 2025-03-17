@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Grid,
   useTheme,
   Card,
@@ -25,97 +24,6 @@ import { alpha } from '@mui/material/styles';
 const PlatformSentiment = ({ data }) => {
   const theme = useTheme();
 
-  if (!data?.rawData) {
-    return (
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
-      </Box>
-    );
-  }
-
-  // Platform categorization
-  const platformCategories = {
-    socialMedia: ['Twitter', 'X', 'Facebook', 'LinkedIn', 'Instagram'],
-    news: ['CNN', 'BBC', 'Al Jazeera', 'Reuters', 'Associated Press', 'Bloomberg'],
-    tv: ['CNN TV', 'BBC TV', 'Al Jazeera TV', 'Sky News']
-  };
-
-  // Process data for platform-specific sentiment
-  const platformData = data.rawData.reduce((acc, item) => {
-    const platform = item.platform || '';
-    const source = item.source || '';
-    const sentiment = parseFloat(item.sentiment_score);
-
-    // Helper function to process sentiment
-    const processSentiment = (targetPlatform) => {
-      if (!acc[targetPlatform]) {
-        acc[targetPlatform] = {
-          platform: targetPlatform,
-          positive: 0,
-          neutral: 0,
-          negative: 0,
-          total: 0,
-          engagement: 0
-        };
-      }
-
-      acc[targetPlatform].total++;
-      
-      // Add engagement metrics
-      const likes = parseInt(item.likes) || 0;
-      const retweets = parseInt(item.retweets) || 0;
-      const comments = parseInt(item.comments) || 0;
-      acc[targetPlatform].engagement += likes + retweets + comments;
-
-      // Categorize sentiment
-      if (sentiment > 0.2) {
-        acc[targetPlatform].positive++;
-      } else if (sentiment < -0.2) {
-        acc[targetPlatform].negative++;
-      } else {
-        acc[targetPlatform].neutral++;
-      }
-    };
-
-    // Process social media platforms
-    if (platformCategories.socialMedia.some(p => 
-      platform.toLowerCase().includes(p.toLowerCase()) || 
-      source.toLowerCase().includes(p.toLowerCase())
-    )) {
-      const socialPlatform = platformCategories.socialMedia.find(p => 
-        platform.toLowerCase().includes(p.toLowerCase()) || 
-        source.toLowerCase().includes(p.toLowerCase())
-      );
-      processSentiment(socialPlatform === 'X' ? 'Twitter' : socialPlatform);
-    }
-
-    // Process news sources
-    if (platformCategories.news.some(p => 
-      platform.toLowerCase().includes(p.toLowerCase()) || 
-      source.toLowerCase().includes(p.toLowerCase())
-    )) {
-      const newsSource = platformCategories.news.find(p => 
-        platform.toLowerCase().includes(p.toLowerCase()) || 
-        source.toLowerCase().includes(p.toLowerCase())
-      );
-      processSentiment(newsSource);
-    }
-
-    // Process TV channels
-    if (platformCategories.tv.some(p => 
-      platform.toLowerCase().includes(p.toLowerCase()) || 
-      source.toLowerCase().includes(p.toLowerCase())
-    )) {
-      const tvChannel = platformCategories.tv.find(p => 
-        platform.toLowerCase().includes(p.toLowerCase()) || 
-        source.toLowerCase().includes(p.toLowerCase())
-      );
-      processSentiment(tvChannel);
-    }
-
-    return acc;
-  }, {});
-
   const getPlatformIcon = (platform) => {
     switch (platform.toLowerCase()) {
       case 'twitter':
@@ -131,16 +39,75 @@ const PlatformSentiment = ({ data }) => {
     }
   };
 
-  // Convert to array and sort by total mentions
-  const platformStats = Object.entries(platformData)
-    .map(([platform, data]) => ({
-      platform,
-      ...data,
-      positivePercent: (data.positive / data.total) * 100,
-      neutralPercent: (data.neutral / data.total) * 100,
-      negativePercent: (data.negative / data.total) * 100,
-    }))
-    .sort((a, b) => b.total - a.total);
+  // Placeholder data
+  const platformStats = [
+    {
+      platform: 'Twitter',
+      positive: 120,
+      neutral: 50,
+      negative: 31,
+      total: 201,
+      engagement: 1250,
+      positivePercent: 59.7,
+      neutralPercent: 24.9,
+      negativePercent: 15.4
+    },
+    {
+      platform: 'Reuters',
+      positive: 2,
+      neutral: 2,
+      negative: 1,
+      total: 5,
+      engagement: 85,
+      positivePercent: 40,
+      neutralPercent: 40,
+      negativePercent: 20
+    },
+    {
+      platform: 'CNN',
+      positive: 1,
+      neutral: 1,
+      negative: 0,
+      total: 2,
+      engagement: 45,
+      positivePercent: 50,
+      neutralPercent: 50,
+      negativePercent: 0
+    },
+    {
+      platform: 'Al Jazeera',
+      positive: 1,
+      neutral: 0,
+      negative: 1,
+      total: 2,
+      engagement: 32,
+      positivePercent: 50,
+      neutralPercent: 0,
+      negativePercent: 50
+    },
+    {
+      platform: 'Sky News',
+      positive: 0,
+      neutral: 1,
+      negative: 0,
+      total: 1,
+      engagement: 15,
+      positivePercent: 0,
+      neutralPercent: 100,
+      negativePercent: 0
+    },
+    {
+      platform: 'Associated Press',
+      positive: 1,
+      neutral: 0,
+      negative: 0,
+      total: 1,
+      engagement: 28,
+      positivePercent: 100,
+      neutralPercent: 0,
+      negativePercent: 0
+    }
+  ];
 
   return (
     <motion.div

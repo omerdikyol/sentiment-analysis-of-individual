@@ -42,83 +42,83 @@ const GeographicalInsights = ({ data }) => {
   const sampleCountryData = {
     'Qatar': {
       topics: {
-        'Sports': 85,
-        'Business': 52,
-        'Technology': 38,
-        'Infrastructure': 20,
-        'Education': 15
+        'Sports': 75,
+        'Business': 50,
+        'Technology': 35,
+        'Infrastructure': 25,
+        'Education': 13
       },
       sources: {
         'Social Media': { total: 100 },
         'News': { total: 50 },
         'TV': { total: 40 },
-        'Other': { total: 20 }
+        'Other': { total: 8 }
       },
-      positive: 45.2,
-      neutral: 35.5,
-      negative: 19.3,
-      total: 210,
+      positive: 89,
+      neutral: 70,
+      negative: 39,
+      total: 198,
       engagement: 4800
     },
     'US': {
       topics: {
-        'Technology': 65,
-        'Economy': 45,
-        'Politics': 32,
+        'Technology': 70,
+        'Economy': 55,
+        'Politics': 40,
         'Innovation': 20,
-        'Trade': 10
+        'Trade': 13
       },
       sources: {
-        'Social Media': { total: 80 },
-        'News': { total: 45 },
+        'Social Media': { total: 100 },
+        'News': { total: 50 },
         'TV': { total: 35 },
-        'Other': { total: 12 }
+        'Other': { total: 13 }
       },
-      positive: 42.8,
-      neutral: 38.5,
-      negative: 18.7,
-      total: 172,
+      positive: 89,
+      neutral: 70,
+      negative: 39,
+      total: 198,
       engagement: 3900
-    },
-    'UK': {
-      topics: {
-        'Finance': 58,
-        'Technology': 42,
-        'Business': 35,
-        'Economy': 28,
-        'Innovation': 15
-      },
-      sources: {
-        'Social Media': { total: 75 },
-        'News': { total: 55 },
-        'TV': { total: 30 },
-        'Other': { total: 15 }
-      },
-      positive: 43.5,
-      neutral: 42.2,
-      negative: 14.3,
-      total: 175,
-      engagement: 3500
     },
     'UAE': {
       topics: {
-        'Business': 72,
-        'Technology': 55,
-        'Innovation': 48,
-        'Finance': 35,
-        'Infrastructure': 25
+        'Business': 2,
+        'Technology': 1,
+        'Innovation': 1,
+        'Trade': 0,
+        'Infrastructure': 0
       },
       sources: {
-        'Social Media': { total: 90 },
-        'News': { total: 60 },
-        'TV': { total: 45 },
-        'Other': { total: 25 }
+        'Social Media': { total: 2 },
+        'News': { total: 1 },
+        'TV': { total: 1 },
+        'Other': { total: 0 }
       },
-      positive: 48.5,
-      neutral: 36.8,
-      negative: 14.7,
-      total: 220,
-      engagement: 4200
+      positive: 2,
+      neutral: 1,
+      negative: 1,
+      total: 4,
+      engagement: 85
+    },
+    'UK': {
+      topics: {
+        'Finance': 3,
+        'Technology': 2,
+        'Business': 1,
+        'Economy': 1,
+        'Innovation': 0
+      },
+      sources: {
+        'Social Media': { total: 3 },
+        'News': { total: 2 },
+        'TV': { total: 1 },
+        'Other': { total: 1 }
+      },
+      positive: 3,
+      neutral: 2,
+      negative: 2,
+      total: 7,
+      engagement: 150
     }
   };
 
