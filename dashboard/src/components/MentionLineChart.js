@@ -49,13 +49,16 @@ const MentionLineChart = ({ mentionsByDate }) => {
           top: 10,
           right: 30,
           left: 0,
-          bottom: 0,
+          bottom: 30
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="date"
           tickFormatter={(date) => new Date(date).toLocaleDateString()}
+          angle={-60}
+          textAnchor="end"
+          height={60}
         />
         <YAxis />
         <Tooltip
