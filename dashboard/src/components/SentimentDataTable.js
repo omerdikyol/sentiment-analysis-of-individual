@@ -66,40 +66,27 @@ const SentimentDataTable = () => {
               })
               .map(row => {
                 // Process location data
-                let location = row.location;
+                let country = row.country;
                 const text = (row.text || '').toLowerCase();
                 const source = (row.source || '').toLowerCase();
                 
-                // If location is missing or unknown, try to determine it
-                if (!location || location === 'Unknown Location' || location === 'unknown') {
-                  if (text.includes('al wakrah') || text.includes('al wakra')) {
-                    location = 'Al Wakrah, Qatar';
-                  } else if (text.includes('al khor')) {
-                    location = 'Al Khor, Qatar';
-                  } else if (text.includes('lusail')) {
-                    location = 'Lusail, Qatar';
-                  } else if (text.includes('al rayyan')) {
-                    location = 'Al Rayyan, Qatar';
-                  } else if (text.includes('qatar') || source.includes('qatar')) {
-                    location = 'Doha, Qatar';
-                  } else if (text.includes('dubai')) {
-                    location = 'Dubai, UAE';
-                  } else if (text.includes('abu dhabi')) {
-                    location = 'Abu Dhabi, UAE';
-                  } else if (text.includes('sharjah')) {
-                    location = 'Sharjah, UAE';
-                  } else if (text.includes('london')) {
-                    location = 'London, UK';
-                  } else if (text.includes('manchester')) {
-                    location = 'Manchester, UK';
-                  } else if (text.includes('birmingham')) {
-                    location = 'Birmingham, UK';
-                  } else if (text.includes('new york')) {
-                    location = 'New York, US';
-                  } else if (text.includes('washington')) {
-                    location = 'Washington D.C., US';
-                  } else if (text.includes('los angeles')) {
-                    location = 'Los Angeles, US';
+                // If country is missing or unknown, try to determine it
+                if (!country || country === 'unknown') {
+                  if (text.includes('qatar') || source.includes('qatar') || 
+                      text.includes('doha') || text.includes('al wakrah') || 
+                      text.includes('lusail')) {
+                    country = 'Qatar';
+                  } else if (text.includes('uae') || text.includes('emirates') || 
+                            text.includes('dubai') || text.includes('abu dhabi')) {
+                    country = 'UAE';
+                  } else if (text.includes('uk') || text.includes('britain') || 
+                            text.includes('london') || text.includes('manchester') ||
+                            source.includes('bbc')) {
+                    country = 'UK';
+                  } else if (text.includes('us') || text.includes('united states') || 
+                            text.includes('america') || source.includes('cnn') ||
+                            source.includes('fox')) {
+                    country = 'US';
                   }
                 }
 
@@ -111,8 +98,8 @@ const SentimentDataTable = () => {
                   content: row.content || row.text || row.description || '',
                   author: row.user_name || row.user_handle || 'Unknown',
                   sentimentScore: parseFloat(row.sentiment_score) || 0,
-                  location: location ? location.split(',')[1].trim() : 'Qatar', // Only show country
-                  country: location ? location.split(',')[1].trim() : 'Qatar',
+                  location: country || 'Qatar', // Use determined country
+                  country: country || 'Qatar',
                   // Store original data for detailed view
                   originalData: { ...row }
                 };
