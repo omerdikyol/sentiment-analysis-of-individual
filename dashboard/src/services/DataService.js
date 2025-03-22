@@ -43,15 +43,45 @@ class DataService {
     // Filter out rows with missing essential data
     const validData = data.filter(row => row.text && row.date);
 
-    // Add country data based on keywords
+    // Add country and location data based on keywords and context
     const processedData = validData.map(row => {
+      // Initialize with default values
       let country = 'Qatar';
-      if (row.text.toLowerCase().includes('us') || row.text.toLowerCase().includes('united states')) {
-        country = 'US';
-      } else if (row.text.toLowerCase().includes('uk') || row.text.toLowerCase().includes('united kingdom')) {
-        country = 'UK';
-      } else if (row.text.toLowerCase().includes('uae') || row.text.toLowerCase().includes('emirates')) {
+      
+      // Process text content for location detection
+      const text = (row.text || '').toLowerCase();
+      const source = (row.source || '').toLowerCase();
+      const platform = (row.platform || '').toLowerCase();
+      
+      // Determine country based on content
+      if (text.includes('qatar') || source.includes('qatar') || platform.includes('qatar') ||
+          source.includes('doha') || text.includes('doha') || 
+          text.includes('al wakrah') || text.includes('al khor') || 
+          text.includes('lusail') || text.includes('al rayyan')) {
+        country = 'Qatar';
+      }
+      // UAE detection
+      else if (text.includes('dubai') || source.includes('dubai') ||
+               text.includes('abu dhabi') || source.includes('abu dhabi') ||
+               text.includes('sharjah') || text.includes('uae') || 
+               text.includes('emirates')) {
         country = 'UAE';
+      }
+      // UK detection
+      else if (text.includes('london') || source.includes('london') ||
+               text.includes('manchester') || text.includes('birmingham') ||
+               text.includes('uk') || text.includes('united kingdom') || 
+               text.includes('britain') || source.includes('bbc') || 
+               source.includes('guardian')) {
+        country = 'UK';
+      }
+      // US detection
+      else if (text.includes('new york') || source.includes('new york') ||
+               text.includes('washington') || text.includes('los angeles') ||
+               text.includes('us') || text.includes('united states') || 
+               text.includes('america') || source.includes('cnn') || 
+               source.includes('fox')) {
+        country = 'US';
       }
 
       // Convert sentiment_score to number and ensure it's between -1 and 1
@@ -69,6 +99,7 @@ class DataService {
       return {
         ...row,
         country,
+        location: country, // Set location to be the same as country
         sentiment_score: sentimentScore,
         platform: row.platform || 'Other'
       };
