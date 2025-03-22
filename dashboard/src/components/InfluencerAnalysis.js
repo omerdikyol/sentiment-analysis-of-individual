@@ -23,7 +23,8 @@ import {
   TrendingUp as TrendingUpIcon,
   Share as ShareIcon,
   Comment as CommentIcon,
-  Favorite as FavoriteIcon
+  Favorite as FavoriteIcon,
+  LocationOn as LocationIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import {
@@ -65,7 +66,10 @@ const InfluencerAnalysis = ({ data }) => {
         negative: 19.3
       },
       topics: ['Politics', 'Economy', 'Technology'],
-      avatar: '👤'
+      avatar: '👤',
+      verified: true,
+      username: 'ahmedinsights',
+      location: 'Doha, Qatar'
     },
     '@drsharma': {
       name: 'Dr. Priya Sharma',
@@ -80,7 +84,10 @@ const InfluencerAnalysis = ({ data }) => {
         negative: 15.2
       },
       topics: ['Business', 'Innovation', 'Leadership'],
-      avatar: '👤'
+      avatar: '👤',
+      verified: true,
+      username: 'drsharma',
+      location: 'Dubai, UAE'
     },
     '@ajtechnology': {
       name: 'Al Jazeera Tech',
@@ -95,7 +102,10 @@ const InfluencerAnalysis = ({ data }) => {
         negative: 19.2
       },
       topics: ['Technology', 'Innovation', 'Digital'],
-      avatar: '📰'
+      avatar: '📰',
+      verified: true,
+      username: 'ajtechnology',
+      location: 'Abu Dhabi, UAE'
     },
     '@gulftoday': {
       name: 'Gulf Today',
@@ -110,7 +120,10 @@ const InfluencerAnalysis = ({ data }) => {
         negative: 20.3
       },
       topics: ['World News', 'Politics', 'Economy'],
-      avatar: '📺'
+      avatar: '📺',
+      verified: true,
+      username: 'gulftoday',
+      location: 'Dubai, UAE'
     },
     '@khaleejtimes': {
       name: 'Khaleej Times',
@@ -125,7 +138,10 @@ const InfluencerAnalysis = ({ data }) => {
         negative: 19.8
       },
       topics: ['Finance', 'Markets', 'Economy'],
-      avatar: '📊'
+      avatar: '📊',
+      verified: true,
+      username: 'khaleejtimes',
+      location: 'Doha, Qatar'
     }
   })
   .map(inf => ({
@@ -160,6 +176,7 @@ const InfluencerAnalysis = ({ data }) => {
     {
       text: "Exciting developments in Qatar's tech sector as new innovation hub launches! 🚀 #QatarTech #Innovation",
       author: "@techleader",
+      location: "Doha, Qatar",
       engagement: 98,
       sentiment: 0.85,
       likes: 41,
@@ -170,6 +187,7 @@ const InfluencerAnalysis = ({ data }) => {
     {
       text: "Breaking: Major international investment conference announces Qatar as next year's host city 🌟 #QatarBusiness",
       author: "@businessnews",
+      location: "Dubai, UAE",
       engagement: 85,
       sentiment: 0.75,
       likes: 35,
@@ -180,6 +198,7 @@ const InfluencerAnalysis = ({ data }) => {
     {
       text: "Qatar's sustainable initiatives are setting new standards for environmental responsibility in the region 🌿 #Sustainability",
       author: "@greentech",
+      location: "Abu Dhabi, UAE",
       engagement: 72,
       sentiment: 0.82,
       likes: 30,
@@ -190,6 +209,7 @@ const InfluencerAnalysis = ({ data }) => {
     {
       text: "New cultural exchange program launches, strengthening international ties 🤝 #QatarCulture",
       author: "@culturalbridge",
+      location: "Doha, Qatar",
       engagement: 58,
       sentiment: 0.78,
       likes: 25,
@@ -269,9 +289,9 @@ const InfluencerAnalysis = ({ data }) => {
                     <Typography variant="subtitle1">
                       {influencer.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {influencer.handle}
-                    </Typography>
+                    {influencer.verified && (
+                      <VerifiedIcon fontSize="small" color="primary" />
+                    )}
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                     <Chip
@@ -309,6 +329,21 @@ const InfluencerAnalysis = ({ data }) => {
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     Topics: {influencer.topics.join(', ')}
                   </Typography>
+                  {influencer.location && (
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 0.5,
+                        mt: 0.5 
+                      }}
+                    >
+                      <LocationIcon fontSize="small" />
+                      {influencer.location}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </Paper>
