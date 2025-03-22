@@ -45,43 +45,49 @@ class DataService {
 
     // Add country and location data based on keywords and context
     const processedData = validData.map(row => {
-      // Initialize with default values
-      let country = 'Qatar';
+      // Use existing country if available, otherwise determine from content
+      let country = row.country;
       
-      // Process text content for location detection
-      const text = (row.text || '').toLowerCase();
-      const source = (row.source || '').toLowerCase();
-      const platform = (row.platform || '').toLowerCase();
-      
-      // Determine country based on content
-      if (text.includes('qatar') || source.includes('qatar') || platform.includes('qatar') ||
-          source.includes('doha') || text.includes('doha') || 
-          text.includes('al wakrah') || text.includes('al khor') || 
-          text.includes('lusail') || text.includes('al rayyan')) {
-        country = 'Qatar';
-      }
-      // UAE detection
-      else if (text.includes('dubai') || source.includes('dubai') ||
-               text.includes('abu dhabi') || source.includes('abu dhabi') ||
-               text.includes('sharjah') || text.includes('uae') || 
-               text.includes('emirates')) {
-        country = 'UAE';
-      }
-      // UK detection
-      else if (text.includes('london') || source.includes('london') ||
-               text.includes('manchester') || text.includes('birmingham') ||
-               text.includes('uk') || text.includes('united kingdom') || 
-               text.includes('britain') || source.includes('bbc') || 
-               source.includes('guardian')) {
-        country = 'UK';
-      }
-      // US detection
-      else if (text.includes('new york') || source.includes('new york') ||
-               text.includes('washington') || text.includes('los angeles') ||
-               text.includes('us') || text.includes('united states') || 
-               text.includes('america') || source.includes('cnn') || 
-               source.includes('fox')) {
-        country = 'US';
+      // Process text content for country detection only if country is missing or unknown
+      if (!country || country === 'unknown') {
+        const text = (row.text || '').toLowerCase();
+        const source = (row.source || '').toLowerCase();
+        const platform = (row.platform || '').toLowerCase();
+        
+        // Determine country based on content
+        if (text.includes('qatar') || source.includes('qatar') || platform.includes('qatar') ||
+            source.includes('doha') || text.includes('doha') || 
+            text.includes('al wakrah') || text.includes('al khor') || 
+            text.includes('lusail') || text.includes('al rayyan')) {
+          country = 'Qatar';
+        }
+        // UAE detection
+        else if (text.includes('dubai') || source.includes('dubai') ||
+                 text.includes('abu dhabi') || source.includes('abu dhabi') ||
+                 text.includes('sharjah') || text.includes('uae') || 
+                 text.includes('emirates')) {
+          country = 'UAE';
+        }
+        // UK detection
+        else if (text.includes('london') || source.includes('london') ||
+                 text.includes('manchester') || text.includes('birmingham') ||
+                 text.includes('uk') || text.includes('united kingdom') || 
+                 text.includes('britain') || source.includes('bbc') || 
+                 source.includes('guardian')) {
+          country = 'UK';
+        }
+        // US detection
+        else if (text.includes('new york') || source.includes('new york') ||
+                 text.includes('washington') || text.includes('los angeles') ||
+                 text.includes('us') || text.includes('united states') || 
+                 text.includes('america') || source.includes('cnn') || 
+                 source.includes('fox')) {
+          country = 'US';
+        }
+        // If no specific country indicators found, leave as unknown
+        else {
+          country = 'Unknown';
+        }
       }
 
       // Convert sentiment_score to number and ensure it's between -1 and 1
@@ -143,13 +149,25 @@ class DataService {
       }
     });
 
-    // Process mentions by country with balanced sentiment
-    const mentionsByCountry = {
-      'Qatar': { positive: 35, neutral: 40, negative: 25, total: 100 },
-      'US': { positive: 30, neutral: 45, negative: 25, total: 100 },
-      'UK': { positive: 25, neutral: 50, negative: 25, total: 100 },
-      'UAE': { positive: 40, neutral: 35, negative: 25, total: 100 }
-    };
+    // Process mentions by country with actual data
+    const mentionsByCountry = {};
+    processedData.forEach(row => {
+      const country = row.country;
+      if (!mentionsByCountry[country]) {
+        mentionsByCountry[country] = { positive: 0, neutral: 0, negative: 0, total: 0 };
+      }
+      
+      mentionsByCountry[country].total++;
+      const sentiment = parseFloat(row.sentiment_score);
+      
+      if (sentiment > 0.2) {
+        mentionsByCountry[country].positive++;
+      } else if (sentiment < -0.2) {
+        mentionsByCountry[country].negative++;
+      } else {
+        mentionsByCountry[country].neutral++;
+      }
+    });
 
     // Process mentions by source with balanced sentiment
     const mentionsBySource = {
