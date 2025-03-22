@@ -9,8 +9,6 @@ import re
 from difflib import SequenceMatcher
 from pathlib import Path
 import logging
-import unicodedata
-import spacy
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import random
 
@@ -27,7 +25,6 @@ class DataProcessor:
         self.model_name = "cardiffnlp/twitter-roberta-base-sentiment"
         self.model_dir = self.base_path / "models" / "sentiment"
         self.sentiment_pipeline = self.get_sentiment_model()
-        self.nlp = spacy.load('en_core_web_sm')
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
         random.seed(42)  # For consistent random values
 
