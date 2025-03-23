@@ -349,6 +349,13 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                   label="Date"
                   value={formatDate(selectedItem.date)}
                 />
+                {selectedItem.location && (
+                  <DetailRow 
+                    icon={<LocationIcon color="primary" />} 
+                    label="Location"
+                    value={selectedItem.location}
+                  />
+                )}
               </Grid>
               <Grid item xs={12} md={6}>
                 {selectedItem.url && (
@@ -357,13 +364,6 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                     label="URL"
                     value={selectedItem.url}
                     isLink
-                  />
-                )}
-                {selectedItem.location && (
-                  <DetailRow 
-                    icon={<LocationIcon color="primary" />} 
-                    label="Location"
-                    value={selectedItem.location}
                   />
                 )}
                 {selectedItem.country && (
@@ -501,6 +501,12 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <PersonIcon fontSize="small" />
                 {item.author || 'Unknown Author'}
+                {item.location && item.location !== 'Unknown Location' && (
+                  <>
+                    <LocationIcon fontSize="small" sx={{ ml: 1 }} />
+                    {item.location}
+                  </>
+                )}
               </Typography>
             </Stack>
             <Tooltip title="Copy text">

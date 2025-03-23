@@ -26,99 +26,112 @@ const GeographicalInsights = ({ data }) => {
 
   // Define colors for the charts
   const COLORS = [
-    theme.palette.primary.main,
-    theme.palette.secondary.main,
-    theme.palette.success.main,
-    theme.palette.info.main,
-    theme.palette.warning.main,
-    alpha(theme.palette.primary.main, 0.7),
-    alpha(theme.palette.secondary.main, 0.7),
-    alpha(theme.palette.success.main, 0.7),
-    alpha(theme.palette.info.main, 0.7),
-    alpha(theme.palette.warning.main, 0.7)
+    '#2196F3', // blue
+    '#4CAF50', // green
+    '#FF9800', // orange
+    '#E91E63', // pink
+    '#9C27B0', // purple
+    '#00BCD4', // cyan
+    '#FFEB3B', // yellow
+    '#FF5722', // deep orange
+    '#3F51B5', // indigo
+    '#009688'  // teal
   ];
+
+  const SENTIMENT_COLORS = {
+    positive: '#4CAF50',  // green
+    neutral: '#FF9800',   // orange
+    negative: '#E91E63'   // pink
+  };
+
+  const SOURCE_COLORS = {
+    'Social Media': '#2196F3', // blue
+    'News': '#4CAF50',        // green
+    'TV': '#FF9800',          // orange
+    'Other': '#9C27B0'        // purple
+  };
 
   // Sample data for countries and their topics
   const sampleCountryData = {
     'Qatar': {
       topics: {
-        'Sports': 85,
-        'Business': 52,
-        'Technology': 38,
-        'Infrastructure': 20,
-        'Education': 15
+        'Sports': 75,
+        'Business': 50,
+        'Technology': 35,
+        'Infrastructure': 25,
+        'Education': 13
       },
       sources: {
         'Social Media': { total: 100 },
         'News': { total: 50 },
         'TV': { total: 40 },
-        'Other': { total: 20 }
+        'Other': { total: 8 }
       },
-      positive: 45.2,
-      neutral: 35.5,
-      negative: 19.3,
-      total: 210,
+      positive: 89,
+      neutral: 70,
+      negative: 39,
+      total: 198,
       engagement: 4800
     },
     'US': {
       topics: {
-        'Technology': 65,
-        'Economy': 45,
-        'Politics': 32,
+        'Technology': 70,
+        'Economy': 55,
+        'Politics': 40,
         'Innovation': 20,
-        'Trade': 10
+        'Trade': 13
       },
       sources: {
-        'Social Media': { total: 80 },
-        'News': { total: 45 },
+        'Social Media': { total: 100 },
+        'News': { total: 50 },
         'TV': { total: 35 },
-        'Other': { total: 12 }
+        'Other': { total: 13 }
       },
-      positive: 42.8,
-      neutral: 38.5,
-      negative: 18.7,
-      total: 172,
+      positive: 89,
+      neutral: 70,
+      negative: 39,
+      total: 198,
       engagement: 3900
-    },
-    'UK': {
-      topics: {
-        'Finance': 58,
-        'Technology': 42,
-        'Business': 35,
-        'Economy': 28,
-        'Innovation': 15
-      },
-      sources: {
-        'Social Media': { total: 75 },
-        'News': { total: 55 },
-        'TV': { total: 30 },
-        'Other': { total: 15 }
-      },
-      positive: 43.5,
-      neutral: 42.2,
-      negative: 14.3,
-      total: 175,
-      engagement: 3500
     },
     'UAE': {
       topics: {
-        'Business': 72,
-        'Technology': 55,
-        'Innovation': 48,
-        'Finance': 35,
-        'Infrastructure': 25
+        'Business': 2,
+        'Technology': 1,
+        'Innovation': 1,
+        'Trade': 0,
+        'Infrastructure': 0
       },
       sources: {
-        'Social Media': { total: 90 },
-        'News': { total: 60 },
-        'TV': { total: 45 },
-        'Other': { total: 25 }
+        'Social Media': { total: 2 },
+        'News': { total: 1 },
+        'TV': { total: 1 },
+        'Other': { total: 0 }
       },
-      positive: 48.5,
-      neutral: 36.8,
-      negative: 14.7,
-      total: 220,
-      engagement: 4200
+      positive: 2,
+      neutral: 1,
+      negative: 1,
+      total: 4,
+      engagement: 85
+    },
+    'UK': {
+      topics: {
+        'Finance': 3,
+        'Technology': 2,
+        'Business': 1,
+        'Economy': 1,
+        'Innovation': 0
+      },
+      sources: {
+        'Social Media': { total: 3 },
+        'News': { total: 2 },
+        'TV': { total: 1 },
+        'Other': { total: 1 }
+      },
+      positive: 3,
+      neutral: 2,
+      negative: 2,
+      total: 7,
+      engagement: 150
     }
   };
 
@@ -249,15 +262,15 @@ const GeographicalInsights = ({ data }) => {
       }));
 
     return (
-      <Box sx={{ width: '100%', height: 250 }}>
+      <Box sx={{ width: '100%', height: 200 }}>
         <ResponsiveContainer>
           <PieChart>
             <Pie
               data={topTopics}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={80}
+              innerRadius={40}
+              outerRadius={60}
               fill="#8884d8"
               paddingAngle={2}
               dataKey="value"
@@ -273,13 +286,13 @@ const GeographicalInsights = ({ data }) => {
                     <Box
                       sx={{
                         bgcolor: 'background.paper',
-                        p: 1.5,
+                        p: 1,
                         border: 1,
                         borderColor: 'divider',
                         borderRadius: 1,
                       }}
                     >
-                      <Typography variant="body2">
+                      <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
                         {`${payload[0].name}: ${payload[0].value} mentions`}
                       </Typography>
                     </Box>
@@ -292,8 +305,16 @@ const GeographicalInsights = ({ data }) => {
               layout="vertical"
               align="right"
               verticalAlign="middle"
+              wrapperStyle={{
+                fontSize: '0.75rem',
+                paddingLeft: '10px'
+              }}
               formatter={(value, entry) => (
-                <Typography variant="body2" sx={{ color: 'text.primary' }}>
+                <Typography variant="body2" sx={{ 
+                  color: 'text.primary',
+                  fontSize: '0.75rem',
+                  lineHeight: '1.2'
+                }}>
                   {value}
                 </Typography>
               )}
@@ -410,22 +431,22 @@ const GeographicalInsights = ({ data }) => {
                   <Bar
                     dataKey="Social Media"
                     stackId="a"
-                    fill={theme.palette.primary.main}
+                    fill="#1565C0"
                   />
                   <Bar
                     dataKey="News"
                     stackId="a"
-                    fill={theme.palette.secondary.main}
+                    fill="#2E7D32"
                   />
                   <Bar
                     dataKey="TV"
                     stackId="a"
-                    fill={theme.palette.success.main}
+                    fill="#EF6C00"
                   />
                   <Bar
                     dataKey="Other"
                     stackId="a"
-                    fill={theme.palette.grey[400]}
+                    fill="#C2185B"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -436,13 +457,13 @@ const GeographicalInsights = ({ data }) => {
         <Grid item xs={12}>
           <Paper
             sx={{
-              p: 3,
+              p: 2,
               backgroundColor: 'background.paper',
               borderRadius: 2,
               boxShadow: 3,
             }}
           >
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem' }}>
               Top Topics by Country
             </Typography>
             <Grid container spacing={2} sx={{ flexWrap: 'nowrap', overflowX: 'auto', pb: 2 }}>
@@ -450,13 +471,13 @@ const GeographicalInsights = ({ data }) => {
                 <Grid item xs={12} sm={6} md={3} key={country} sx={{ flex: '0 0 auto' }}>
                   <Paper
                     sx={{
-                      p: 2,
+                      p: 1.5,
                       backgroundColor: 'background.default',
                       borderRadius: 1,
-                      minWidth: '250px',
+                      minWidth: '220px',
                     }}
                   >
-                    <Typography variant="subtitle1" gutterBottom>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '0.875rem' }}>
                       {country}
                     </Typography>
                     {renderTopicChart(country)}
