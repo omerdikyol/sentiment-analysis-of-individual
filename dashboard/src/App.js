@@ -64,6 +64,7 @@ import InfluencerAnalysis from './components/InfluencerAnalysis';
 import EmotionalAnalysis from './components/EmotionalAnalysis';
 import ComparativeAnalysis from './components/ComparativeAnalysis';
 import EventAnalysis from './components/EventAnalysis';
+import PDFExportButton from './components/PDFExportButton';
 
 // Import services
 import DataService from './services/DataService';
@@ -478,42 +479,48 @@ function App() {
                   })
                 }}
               >
-                <Toolbar>
-                  <IconButton
-                    color="inherit"
-                    aria-label="open drawer"
-                    onClick={handleDrawerToggle}
-                    edge="start"
-                    sx={{
-                      marginRight: 2,
-                      ...(drawerOpen && { display: 'none' }),
-                    }}
-                  >
-                    <MenuIcon />
-                  </IconButton>
-                  <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                    Sentiment Analysis Dashboard
-                  </Typography>
-                  <CountryFilter 
-                    selectedCountry={selectedCountry} 
-                    onCountryChange={handleCountryChange} 
-                  />
-                  <FormControl variant="outlined" size="small" sx={{ ml: 2, minWidth: 120 }}>
-                    <InputLabel id="time-range-select-label">Time Range</InputLabel>
-                    <Select
-                      labelId="time-range-select-label"
-                      id="time-range-select"
-                      value={timeRange}
-                      onChange={handleTimeRangeChange}
-                      label="Time Range"
+                <StyledToolbar>
+                  <Box display="flex" alignItems="center">
+                    <IconButton
+                      color="inherit"
+                      aria-label="open drawer"
+                      edge="start"
+                      onClick={handleDrawerToggle}
+                      sx={{
+                        mr: 2,
+                        display: { sm: 'none' },
+                      }}
                     >
-                      <MenuItem value="all">All Time</MenuItem>
-                      <MenuItem value="7d">Last 7 Days</MenuItem>
-                      <MenuItem value="30d">Last 30 Days</MenuItem>
-                      <MenuItem value="90d">Last 90 Days</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Toolbar>
+                      <MenuIcon />
+                    </IconButton>
+                    <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
+                      Sentiment Analysis Dashboard
+                    </Typography>
+                  </Box>
+                  
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <PDFExportButton title={`${window.location.pathname === '/sentiment' ? 'Sentiment Analysis' : 'Sentiment Analysis Dashboard'} Export`} />
+                    <CountryFilter 
+                      selectedCountry={selectedCountry} 
+                      onCountryChange={handleCountryChange} 
+                    />
+                    <FormControl variant="outlined" size="small" sx={{ ml: 2, minWidth: 120 }}>
+                      <InputLabel id="time-range-select-label">Time Range</InputLabel>
+                      <Select
+                        labelId="time-range-select-label"
+                        id="time-range-select"
+                        value={timeRange}
+                        onChange={handleTimeRangeChange}
+                        label="Time Range"
+                      >
+                        <MenuItem value="all">All Time</MenuItem>
+                        <MenuItem value="7d">Last 7 Days</MenuItem>
+                        <MenuItem value="30d">Last 30 Days</MenuItem>
+                        <MenuItem value="90d">Last 90 Days</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </StyledToolbar>
               </AppBar>
               <ContentContainer>
                 <Routes>
