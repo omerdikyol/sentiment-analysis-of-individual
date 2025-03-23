@@ -10,7 +10,6 @@ from difflib import SequenceMatcher
 from pathlib import Path
 import logging
 import unicodedata
-import spacy
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import random
 
@@ -27,7 +26,6 @@ class DataProcessor:
         self.model_name = "cardiffnlp/twitter-roberta-base-sentiment"
         self.model_dir = self.base_path / "models" / "sentiment"
         self.sentiment_pipeline = self.get_sentiment_model()
-        self.nlp = spacy.load('en_core_web_sm')
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
         random.seed(42)  # For consistent random values
 
@@ -385,6 +383,80 @@ class DataProcessor:
         logger.info(f"Total records loaded: {len(combined_df)}")
         return combined_df
 
+    def populate_user_name(self, df):
+        """
+        Populate user_name field based on different data sources:
+        - X data: "user_name" column
+        - Social Searcher data: "platform" column
+        - RSS News data: "source" column
+        - News Data: Extract domain from "url" column (address between "https://" and "/", removing "www." if present)
+        - Mention data: "source_name" column
+        """
+        logger.info("Populating user_name field based on data sources...")
+        
+        def extract_domain_from_url(url):
+            """
+            Extract domain from URL as per requirements:
+            - Get the address between "https://" and "/"
+            - Remove "www." if present
+            Example: "https://www.fark.com/comments/13591050" -> "fark.com"
+            """
+            if pd.isna(url) or not isinstance(url, str):
+                return ""
+            
+            # Extract domain from URL
+            match = re.search(r'https?://(?:www\.)?([^/]+)', url)
+            if match:
+                domain = match.group(1)
+                # Remove www. if present
+                domain = re.sub(r'^www\.', '', domain)
+                return domain
+            else:
+                # Try matching just www. pattern
+                www_match = re.search(r'www\.([^/]+)', url)
+                if www_match:
+                    return www_match.group(1)
+            return ""
+        
+        # Process each row to determine user_name
+        for idx, row in df.iterrows():
+            file_source = row.get('file_source', '').lower()
+            # X data (use user_name column directly)
+            if file_source == 'x' or file_source == 'twitter':
+                # Keep existing value if exists
+                if not pd.isna(row.get('user_name')) and row['user_name'] != '':
+                    continue
+                    
+            # Social Searcher data
+            elif file_source == 'social':
+                if not pd.isna(row.get('user_location')) and row.get('user_location') != '':
+                    if "https://" in row['user_location'] or "www." in row['user_location']:
+                        domain = extract_domain_from_url(row['user_location'])
+                        df.at[idx, 'user_name'] = domain
+                    else:
+                        df.at[idx, 'user_name'] = row['user_location']
+                elif not pd.isna(row.get('platform')):
+                    df.at[idx, 'user_name'] = row['platform']
+                    
+            # RSS News data
+            elif file_source == 'rss':
+                if not pd.isna(row.get('source')):
+                    df.at[idx, 'user_name'] = row['source']
+                    
+            # News Data
+            elif file_source == 'news':
+                if not pd.isna(row.get('url')):
+                    domain = extract_domain_from_url(row['url'])
+                    df.at[idx, 'user_name'] = domain
+                    
+            # Mention data
+            elif file_source == 'mention':
+                if not pd.isna(row.get('source_name')):
+                    df.at[idx, 'user_name'] = row['source_name']
+        
+        logger.info(f"User_name population complete. {df['user_name'].notna().sum()} records have user_name values.")
+        return df
+
     def process_data(self):
         """Process and analyze the data"""
         # Load raw data
@@ -434,6 +506,9 @@ class DataProcessor:
         df['country'] = df.apply(self.detect_country, axis=1)
         logger.info(f"Country distribution: {df['country'].value_counts().to_dict()}")
 
+        # Populate user_name column based on source files
+        df = self.populate_user_name(df)
+        
         # Apply sentiment analysis
         logger.info("Applying sentiment analysis...")
         sentiments = df['text'].apply(self.get_sentiment)
