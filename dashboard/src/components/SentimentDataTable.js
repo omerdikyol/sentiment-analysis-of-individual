@@ -386,6 +386,14 @@ const SentimentDataTable = () => {
                       <strong>Source:</strong> {selectedRow.source}
                     </Typography>
                   </Box>
+                  {selectedRow.originalData.url && (
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                      <LanguageIcon sx={{ mr: 1, mt: 0.5, color: 'text.secondary' }} />
+                      <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                        <strong>URL:</strong> {selectedRow.originalData.url}
+                      </Typography>
+                    </Box>
+                  )}
                 </Grid>
                 
                 <Grid item xs={12} md={6}>
