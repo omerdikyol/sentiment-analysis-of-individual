@@ -232,7 +232,7 @@ const SentimentDataTable = () => {
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Platform</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Sentiment</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Content</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Author</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Source/User</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Location</TableCell>
               </TableRow>
             </TableHead>
