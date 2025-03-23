@@ -86,13 +86,13 @@ const SentimentOverview = ({ data }) => {
       <Typography variant="h6" gutterBottom>
         Sentiment Overview
       </Typography>
-      <Box sx={{ width: '100%', height: 300 }}>
+      <Box sx={{ width: '100%', height: 300, position: 'relative' }}>
         <ResponsiveContainer>
           <PieChart>
             <Pie
               data={sentimentData}
               cx="50%"
-              cy="50%"
+              cy="40%"
               innerRadius={60}
               outerRadius={100}
               paddingAngle={2}
@@ -118,6 +118,10 @@ const SentimentOverview = ({ data }) => {
             justifyContent: 'center',
             gap: 3,
             mt: 2,
+            position: 'absolute',
+            bottom: 20,
+            left: 0,
+            right: 0,
           }}
         >
           {sentimentData.map((item) => (
