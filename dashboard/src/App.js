@@ -40,6 +40,9 @@ import {
   TableChart as TableChartIcon,
   Timeline as TimelineIcon,
   Settings as SettingsIcon,
+  Psychology as PsychologyIcon,
+  Share as ShareIcon,
+  AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
@@ -65,6 +68,12 @@ import EmotionalAnalysis from './components/EmotionalAnalysis';
 import ComparativeAnalysis from './components/ComparativeAnalysis';
 import EventAnalysis from './components/EventAnalysis';
 import PDFExportButton from './components/PDFExportButton';
+
+// Import our new advanced NLP & AI components
+import EntityRelationshipGraph from './components/EntityRelationshipGraph';
+import ContextualSentiment from './components/ContextualSentiment';
+import AutoSummary from './components/AutoSummary';
+import EmotionalSpectrum from './components/EmotionalSpectrum';
 
 // Import services
 import DataService from './services/DataService';
@@ -676,6 +685,77 @@ function App() {
                         <Grid item xs={12} id="geographical-insights">
                           <Paper elevation={0} sx={{ p: 2 }}>
                             <GeographicalInsights data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Divider for Advanced AI Features */}
+                        <Grid item xs={12} id="ai-features">
+                          <Paper elevation={0} sx={{ p: 2, mb: 2, mt: 2, bgcolor: 'primary.main', color: 'white' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <AutoAwesomeIcon sx={{ mr: 1 }} />
+                              <Typography variant="h5">Advanced AI-Powered Analysis</Typography>
+                            </Box>
+                            <Typography variant="body2" sx={{ mt: 1, opacity: 0.8 }}>
+                              Explore deeper insights with our advanced natural language processing and artificial intelligence features
+                            </Typography>
+                          </Paper>
+                        </Grid>
+
+                        {/* Advanced AI Features Section */}
+                        <Grid item xs={12} sx={{ mt: 4 }}>
+                          <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
+                            Advanced AI Features
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                            AI-powered advanced analysis for deeper understanding of sentiment data
+                          </Typography>
+                        </Grid>
+
+                        {/* Auto Summary */}
+                        <Grid item xs={12} md={12} lg={12} sx={{ mb: 3 }}>
+                          <Paper 
+                            elevation={0} 
+                            sx={{ p: 3, borderRadius: 2 }}
+                            id="auto-summary"
+                          >
+                            <AutoSummary data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Entity Relationship Graph */}
+                        <Grid item xs={12} md={12} lg={12} sx={{ mb: 3 }}>
+                          <Paper 
+                            elevation={0} 
+                            sx={{ p: 3, borderRadius: 2 }}
+                            id="entity-relationship"
+                          >
+                            <EntityRelationshipGraph data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Contextual Sentiment */}
+                        <Grid item xs={12} md={12} lg={12} sx={{ mb: 3 }}>
+                          <Paper 
+                            elevation={0} 
+                            sx={{ p: 3, borderRadius: 2 }}
+                            id="contextual-sentiment"
+                          >
+                            <ContextualSentiment data={filteredData} />
+                          </Paper>
+                        </Grid>
+
+                        {/* Emotional Spectrum */}
+                        <Grid item xs={12} md={12} lg={12} sx={{ mb: 5 }}>
+                          <Paper 
+                            elevation={0} 
+                            sx={{ p: 3, borderRadius: 2 }}
+                            id="emotional-spectrum"
+                          >
+                            <EmotionalSpectrum 
+                              data={filteredData} 
+                              timeRange={timeRange}
+                              onTimeRangeChange={setTimeRange}
+                            />
                           </Paper>
                         </Grid>
                       </Grid>
