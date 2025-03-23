@@ -185,7 +185,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                 }}
               >
                 {item.source || 'Unknown Source'}
-                {item.author && ` • ${item.author}`}
+                {(item.user_name || item.author) && ` • ${item.user_name || item.author}`}
               </Typography>
             </Box>
           }
@@ -500,7 +500,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               </Tooltip>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <PersonIcon fontSize="small" />
-                {item.author || 'Unknown Author'}
+                {item.user_name || item.author || 'Unknown'}
                 {item.location && item.location !== 'Unknown Location' && (
                   <>
                     <LocationIcon fontSize="small" sx={{ ml: 1 }} />

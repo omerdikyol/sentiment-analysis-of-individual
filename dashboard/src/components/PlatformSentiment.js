@@ -43,10 +43,10 @@ const PlatformSentiment = ({ data }) => {
   const platformStats = [
     {
       platform: 'Twitter',
-      positive: 120,
-      neutral: 50,
-      negative: 31,
-      total: 201,
+      positive: 80,
+      neutral: 35,
+      negative: 21,
+      total: 136,
       engagement: 1250,
       positivePercent: 59.7,
       neutralPercent: 24.9,

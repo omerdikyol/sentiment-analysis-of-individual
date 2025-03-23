@@ -8,9 +8,9 @@ const SentimentOverview = ({ data }) => {
 
   // Sample data for demonstration
   const sampleMetrics = {
-    positivePercentage: 35.5,
-    neutralPercentage: 40.1,
-    negativePercentage: 24.4
+    positivePercentage: 14.2,
+    neutralPercentage: 74.2,
+    negativePercentage: 11.6
   };
 
   const sentimentData = [
