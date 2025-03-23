@@ -61,3 +61,28 @@ code {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
+
+/* PDF Export Styles */
+@media print {
+  .exportable {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+}
+
+/* Element being captured for PDF */
+.exportable {
+  transition: all 0.2s ease-in-out;
+}
+
+.exporting .exportable {
+  box-shadow: 0 0 0 2px #1a73e8 !important;
+}
+
+/* Currently being exported element */
+.currently-exporting {
+  box-shadow: 0 0 0 3px #ff4081 !important;
+  position: relative;
+  z-index: 1;
+}
