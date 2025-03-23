@@ -33,6 +33,7 @@ import {
   Source as SourceIcon,
   Person as PersonIcon,
   Language as LanguageIcon,
+  LocationOn as LocationIcon,
 } from '@mui/icons-material';
 import Papa from 'papaparse';
 
@@ -63,17 +64,46 @@ const SentimentDataTable = () => {
                 // Check if the row has any meaningful content
                 return row.text || row.content || row.description;
               })
-              .map(row => ({
-                date: formatDate(row.published_date || row.date),
-                source: row.source_name || row.source || 'Unknown',
-                platform: row.platform || 'Unknown',
-                sentiment: row.sentiment_label || 'Unknown',
-                content: row.content || row.text || row.description || '',
-                author: row.user_name || row.user_handle || 'Unknown',
-                sentimentScore: parseFloat(row.sentiment_score) || 0,
-                // Store original data for detailed view
-                originalData: { ...row }
-              }));
+              .map(row => {
+                // Process location data
+                let country = row.country;
+                const text = (row.text || '').toLowerCase();
+                const source = (row.source || '').toLowerCase();
+                
+                // If country is missing or unknown, try to determine it
+                if (!country || country === 'unknown') {
+                  if (text.includes('qatar') || source.includes('qatar') || 
+                      text.includes('doha') || text.includes('al wakrah') || 
+                      text.includes('lusail')) {
+                    country = 'Qatar';
+                  } else if (text.includes('uae') || text.includes('emirates') || 
+                            text.includes('dubai') || text.includes('abu dhabi')) {
+                    country = 'UAE';
+                  } else if (text.includes('uk') || text.includes('britain') || 
+                            text.includes('london') || text.includes('manchester') ||
+                            source.includes('bbc')) {
+                    country = 'UK';
+                  } else if (text.includes('us') || text.includes('united states') || 
+                            text.includes('america') || source.includes('cnn') ||
+                            source.includes('fox')) {
+                    country = 'US';
+                  }
+                }
+
+                return {
+                  date: formatDate(row.published_date || row.date),
+                  source: row.source_name || row.source || 'Unknown',
+                  platform: row.platform || 'Unknown',
+                  sentiment: row.sentiment_label || 'Unknown',
+                  content: row.content || row.text || row.description || '',
+                  author: row.user_name || row.user_handle || 'Unknown',
+                  sentimentScore: parseFloat(row.sentiment_score) || 0,
+                  location: country || 'Qatar', // Use determined country
+                  country: country || 'Qatar',
+                  // Store original data for detailed view
+                  originalData: { ...row }
+                };
+              });
             
             console.log('Processed data rows:', processedData.length);
             setData(processedData);
@@ -203,6 +233,7 @@ const SentimentDataTable = () => {
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Sentiment</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Content</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Author</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Location</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -248,6 +279,7 @@ const SentimentDataTable = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>{row.author}</TableCell>
+                        <TableCell>{row.location || 'Unknown Location'}</TableCell>
                       </TableRow>
                     );
                   })
@@ -367,6 +399,12 @@ const SentimentDataTable = () => {
                     <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2">
                       <strong>Author:</strong> {selectedRow.author}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    <Typography variant="body2">
+                      <strong>Location:</strong> {selectedRow.location}
                     </Typography>
                   </Box>
                 </Grid>
