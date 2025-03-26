@@ -6,16 +6,11 @@ import {
   Grid, 
   useTheme, 
   Avatar, 
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
   Chip,
-  LinearProgress,
   Card,
   CardContent,
-  IconButton,
-  Tooltip
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -24,20 +19,10 @@ import {
   Share as ShareIcon,
   Comment as CommentIcon,
   Favorite as FavoriteIcon,
-  LocationOn as LocationIcon
+  LocationOn as LocationIcon,
+  Language as LanguageIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Legend,
-  Cell
-} from 'recharts';
 
 const InfluencerAnalysis = ({ data }) => {
   const theme = useTheme();
@@ -51,220 +36,159 @@ const InfluencerAnalysis = ({ data }) => {
     return { text: 'Very Negative', color: theme.palette.error.dark, icon: '😞' };
   };
 
-  // Process influencer data
-  const topInfluencers = Object.values(data?.influencers || {
-    '@ahmedinsights': {
-      name: 'Ahmed Al-Mansouri',
-      handle: '@ahmedinsights',
-      platform: 'Twitter',
-      followers: 125000,
-      engagement: 3200,
-      posts: 42,
-      sentiment: {
-        positive: 45.5,
-        neutral: 35.2,
-        negative: 19.3
-      },
-      topics: ['Politics', 'Economy', 'Technology'],
-      avatar: '👤',
-      verified: true,
-      username: 'ahmedinsights',
-      location: 'Doha, Qatar'
-    },
-    '@drsharma': {
-      name: 'Dr. Priya Sharma',
-      handle: '@drsharma',
-      platform: 'LinkedIn',
-      followers: 98000,
-      engagement: 2800,
-      posts: 38,
-      sentiment: {
-        positive: 52.3,
-        neutral: 32.5,
-        negative: 15.2
-      },
-      topics: ['Business', 'Innovation', 'Leadership'],
-      avatar: '👤',
-      verified: true,
-      username: 'drsharma',
-      location: 'Dubai, UAE'
-    },
-    '@ajtechnology': {
-      name: 'Al Jazeera Tech',
-      handle: '@ajtechnology',
-      platform: 'News',
-      followers: 185000,
-      engagement: 4500,
-      posts: 65,
-      sentiment: {
-        positive: 38.7,
-        neutral: 42.1,
-        negative: 19.2
-      },
-      topics: ['Technology', 'Innovation', 'Digital'],
-      avatar: '📰',
-      verified: true,
-      username: 'ajtechnology',
-      location: 'Abu Dhabi, UAE'
-    },
-    '@gulftoday': {
-      name: 'Gulf Today',
-      handle: '@gulftoday',
-      platform: 'TV',
-      followers: 250000,
-      engagement: 5800,
-      posts: 78,
-      sentiment: {
-        positive: 41.2,
-        neutral: 38.5,
-        negative: 20.3
-      },
-      topics: ['World News', 'Politics', 'Economy'],
-      avatar: '📺',
-      verified: true,
-      username: 'gulftoday',
-      location: 'Dubai, UAE'
-    },
-    '@khaleejtimes': {
-      name: 'Khaleej Times',
-      handle: '@khaleejtimes',
-      platform: 'News',
-      followers: 165000,
-      engagement: 3900,
-      posts: 55,
-      sentiment: {
-        positive: 43.8,
-        neutral: 36.4,
-        negative: 19.8
-      },
-      topics: ['Finance', 'Markets', 'Economy'],
-      avatar: '📊',
-      verified: true,
-      username: 'khaleejtimes',
-      location: 'Doha, Qatar'
-    }
-  })
-  .map(inf => ({
-    ...inf,
-    averageSentiment: (inf.sentiment.positive - inf.sentiment.negative) / 100,
-    engagementRate: (inf.engagement / inf.posts / inf.followers * 100).toFixed(2),
-    sentimentInfo: getSentimentInfo((inf.sentiment.positive - inf.sentiment.negative) / 100)
-  }))
-  .sort((a, b) => b.engagement - a.engagement)
-  .slice(0, 5);
+  // Process raw data to identify influencers
+  const processInfluencers = (rawData) => {
+    if (!rawData || !Array.isArray(rawData)) return [];
 
-  // Process media sentiment
-  const mediaSentiment = data.rawData.reduce((acc, item) => {
-    const mediaOutlets = ['news', 'times', 'post', 'herald', 'journal', 'daily'];
-    const isMediaPost = mediaOutlets.some(outlet => 
-      item.author?.toLowerCase().includes(outlet) || 
-      item.source?.toLowerCase().includes(outlet)
-    );
+    // Helper function to validate and clean author name
+    const isValidAuthor = (author) => {
+      if (!author) return false;
+      
+      // Convert to string and trim
+      const name = author.toString().trim();
+      
+      // Exclude single characters, numbers only, and specific invalid names
+      const invalidNames = ['x', 'unknown', 'anonymous', 'user'];
+      if (
+        name.length <= 1 || 
+        /^\d+$/.test(name) || 
+        invalidNames.includes(name.toLowerCase()) ||
+        name.toLowerCase() === name.toUpperCase() // Contains only special characters
+      ) {
+        return false;
+      }
+      
+      return true;
+    };
 
-    if (isMediaPost) {
-      const sentiment = parseFloat(item.sentiment_score) || 0;
-      if (sentiment > 0) acc.positive++;
-      else if (sentiment < 0) acc.negative++;
-      else acc.neutral++;
-    }
+    // Group mentions by author
+    const influencerMap = rawData.reduce((acc, mention) => {
+      // Try to get the best author name from available fields
+      const possibleAuthors = [
+        mention.author,
+        mention.username,
+        mention.user_name,
+        mention.name
+      ].filter(isValidAuthor);
 
-    return acc;
-  }, { positive: 0, negative: 0, neutral: 0 });
+      // Use the first valid author name
+      const author = possibleAuthors[0];
+      if (!author) return acc;
 
-  // Calculate virality scores
-  const viralPosts = [
-    {
-      text: "Exciting developments in Qatar's tech sector as new innovation hub launches! 🚀 #QatarTech #Innovation",
-      author: "@techleader",
-      location: "Doha, Qatar",
-      engagement: 98,
-      sentiment: 0.85,
-      likes: 41,
-      retweets: 32,
-      comments: 25,
-      viralityScore: 8.5
-    },
-    {
-      text: "Breaking: Major international investment conference announces Qatar as next year's host city 🌟 #QatarBusiness",
-      author: "@businessnews",
-      location: "Dubai, UAE",
-      engagement: 85,
-      sentiment: 0.75,
-      likes: 35,
-      retweets: 28,
-      comments: 22,
-      viralityScore: 7.8
-    },
-    {
-      text: "Qatar's sustainable initiatives are setting new standards for environmental responsibility in the region 🌿 #Sustainability",
-      author: "@greentech",
-      location: "Abu Dhabi, UAE",
-      engagement: 72,
-      sentiment: 0.82,
-      likes: 30,
-      retweets: 25,
-      comments: 17,
-      viralityScore: 7.2
-    },
-    {
-      text: "New cultural exchange program launches, strengthening international ties 🤝 #QatarCulture",
-      author: "@culturalbridge",
-      location: "Doha, Qatar",
-      engagement: 58,
-      sentiment: 0.78,
-      likes: 25,
-      retweets: 20,
-      comments: 13,
-      viralityScore: 6.8
-    },
-    {
-      text: "Qatar's education sector announces innovative partnership with leading global universities 📚 #Education",
-      author: "@eduqatar",
-      engagement: 41,
-      sentiment: 0.76,
-      likes: 18,
-      retweets: 15,
-      comments: 8,
-      viralityScore: 6.5
-    }
-  ];
+      // Clean up the author name
+      const cleanAuthorName = author.replace(/^@/, '').trim();
+      
+      if (!acc[cleanAuthorName]) {
+        acc[cleanAuthorName] = {
+          name: cleanAuthorName,
+          handle: author.startsWith('@') ? author : `@${cleanAuthorName}`,
+          platform: mention.platform || mention.source || 'Unknown',
+          posts: 0,
+          totalSentiment: 0,
+          sentiments: [],
+          location: mention.location || mention.country,
+          mentions: [],
+          topics: new Set(),
+          engagement: 0
+        };
+      }
 
-  // Format media sentiment for chart
-  const mediaSentimentData = [
-    { name: 'Positive', value: mediaSentiment.positive },
-    { name: 'Negative', value: mediaSentiment.negative },
-    { name: 'Neutral', value: mediaSentiment.neutral }
-  ];
+      // Add mention data
+      acc[cleanAuthorName].posts += 1;
+      acc[cleanAuthorName].totalSentiment += parseFloat(mention.sentiment_score) || 0;
+      acc[cleanAuthorName].sentiments.push(parseFloat(mention.sentiment_score) || 0);
+      acc[cleanAuthorName].mentions.push(mention);
+      
+      // Extract topics from text content
+      if (mention.text) {
+        // Extract hashtags and meaningful words
+        const hashtags = mention.text.match(/#\w+/g) || [];
+        hashtags.forEach(tag => {
+          const cleanTag = tag.substring(1).toLowerCase();
+          if (cleanTag.length > 2) { // Only add tags with more than 2 characters
+            acc[cleanAuthorName].topics.add(cleanTag);
+          }
+        });
+      }
 
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 1.5,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            {label}
-          </Typography>
-          {payload.map((entry) => (
-            <Typography
-              key={entry.name}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >
-              {`${entry.name}: ${Number(entry.value).toFixed(1)}%`}
-            </Typography>
-          ))}
-        </Box>
-      );
-    }
-    return null;
+      // Calculate engagement (if available)
+      if (mention.likes || mention.shares || mention.comments) {
+        acc[cleanAuthorName].engagement += (mention.likes || 0) + (mention.shares || 0) + (mention.comments || 0);
+      }
+
+      return acc;
+    }, {});
+
+    // Convert to array and calculate metrics
+    return Object.values(influencerMap)
+      .map(inf => {
+        const avgSentiment = inf.totalSentiment / inf.posts;
+        const positivePosts = inf.sentiments.filter(s => s > 0.2).length;
+        const negativePosts = inf.sentiments.filter(s => s < -0.2).length;
+        const neutralPosts = inf.posts - positivePosts - negativePosts;
+
+        return {
+          ...inf,
+          averageSentiment: avgSentiment,
+          topics: Array.from(inf.topics)
+            .filter(topic => topic.length > 2) // Filter out short topics
+            .slice(0, 3), // Take top 3 topics
+          sentiment: {
+            positive: (positivePosts / inf.posts) * 100,
+            negative: (negativePosts / inf.posts) * 100,
+            neutral: (neutralPosts / inf.posts) * 100
+          },
+          engagementRate: ((inf.engagement / inf.posts) * 100).toFixed(2),
+          sentimentInfo: getSentimentInfo(avgSentiment)
+        };
+      })
+      .filter(inf => 
+        inf.posts >= 3 && // Must have at least 3 posts
+        inf.name.length > 1 && // Name must be longer than 1 character
+        !/^\d+$/.test(inf.name) // Name cannot be just numbers
+      )
+      .sort((a, b) => b.engagement - a.engagement || b.posts - a.posts)
+      .slice(0, 5); // Get top 5 influencers
   };
+
+  const topInfluencers = processInfluencers(data?.rawData);
+
+  // Process viral posts
+  const getViralPosts = (rawData) => {
+    if (!rawData || !Array.isArray(rawData)) return [];
+
+    return rawData
+      .filter(post => post.text && post.sentiment_score) // Ensure posts have content and sentiment
+      .map(post => {
+        // Get the author name if available
+        const author = post.author || post.username || post.user_name;
+        const platform = post.platform || post.source;
+        
+        // Clean up author and platform names
+        const cleanAuthor = author?.toLowerCase().replace(/^www\./, '').replace(/\.[^.]+$/, '');
+        const cleanPlatform = platform?.toLowerCase().replace(/^www\./, '').replace(/\.[^.]+$/, '');
+        
+        return {
+          text: post.text,
+          author: cleanAuthor === cleanPlatform ? null : author, // Only set author if different from platform
+          location: post.location || post.country,
+          sentiment: parseFloat(post.sentiment_score),
+          likes: post.likes || 0,
+          retweets: post.shares || 0,
+          comments: post.comments || 0,
+          platform: platform,
+          date: post.date,
+          viralityScore: (
+            Math.abs(parseFloat(post.sentiment_score)) * 5 +
+            ((post.likes || 0) + (post.shares || 0) * 2 + (post.comments || 0) * 3) / 100
+          )
+        };
+      })
+      .sort((a, b) => b.viralityScore - a.viralityScore)
+      .slice(0, 5); // Get top 5 viral posts
+  };
+
+  const viralPosts = getViralPosts(data?.rawData);
 
   return (
     <motion.div
@@ -282,26 +206,24 @@ const InfluencerAnalysis = ({ data }) => {
             <Paper elevation={0} sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Avatar sx={{ bgcolor: '#2196F3' }}>
-                  {influencer.avatar || <PersonIcon />}
+                  {influencer.name ? influencer.name[0].toUpperCase() : <PersonIcon />}
                 </Avatar>
                 <Box sx={{ ml: 2, flex: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="subtitle1">
                       {influencer.name}
                     </Typography>
-                    {influencer.verified && (
-                      <VerifiedIcon fontSize="small" color="primary" />
-                    )}
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                     <Chip
+                      icon={<LanguageIcon />}
                       label={influencer.platform}
                       size="small"
                       sx={{ mr: 1 }}
                     />
                     <Chip
                       icon={<TrendingUpIcon />}
-                      label={`${influencer.engagementRate}% Engagement`}
+                      label={`${influencer.posts} Posts`}
                       size="small"
                       sx={{ 
                         bgcolor: '#2196F3',
@@ -326,9 +248,11 @@ const InfluencerAnalysis = ({ data }) => {
                       ({(influencer.averageSentiment * 100).toFixed(1)}%)
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Topics: {influencer.topics.join(', ')}
-                  </Typography>
+                  {influencer.topics.length > 0 && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      Topics: {influencer.topics.join(', ')}
+                    </Typography>
+                  )}
                   {influencer.location && (
                     <Typography 
                       variant="body2" 
@@ -350,8 +274,6 @@ const InfluencerAnalysis = ({ data }) => {
           </Grid>
         ))}
 
-  
-
         {/* Viral Posts */}
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
@@ -364,28 +286,55 @@ const InfluencerAnalysis = ({ data }) => {
                   <Card variant="outlined">
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          {post.author}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {(post.author || post.platform) && (
+                            <>
+                              {post.author && (
+                                <Typography variant="subtitle2" color="text.secondary">
+                                  {post.author}
+                                </Typography>
+                              )}
+                              {post.platform && (
+                                <Chip 
+                                  size="small" 
+                                  label={post.platform}
+                                  sx={{
+                                    '& .MuiChip-label': {
+                                      maxWidth: '200px',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }
+                                  }}
+                                />
+                              )}
+                            </>
+                          )}
+                        </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Tooltip title="Likes">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <FavoriteIcon color="error" sx={{ fontSize: 16, mr: 0.5 }} />
-                              <Typography variant="body2">{post.likes}</Typography>
-                            </Box>
-                          </Tooltip>
-                          <Tooltip title="Retweets">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <ShareIcon color="primary" sx={{ fontSize: 16, mr: 0.5 }} />
-                              <Typography variant="body2">{post.retweets}</Typography>
-                            </Box>
-                          </Tooltip>
-                          <Tooltip title="Comments">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <CommentIcon color="action" sx={{ fontSize: 16, mr: 0.5 }} />
-                              <Typography variant="body2">{post.comments}</Typography>
-                            </Box>
-                          </Tooltip>
+                          {post.likes > 0 && (
+                            <Tooltip title="Likes">
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <FavoriteIcon color="error" sx={{ fontSize: 16, mr: 0.5 }} />
+                                <Typography variant="body2">{post.likes}</Typography>
+                              </Box>
+                            </Tooltip>
+                          )}
+                          {post.retweets > 0 && (
+                            <Tooltip title="Shares">
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <ShareIcon color="primary" sx={{ fontSize: 16, mr: 0.5 }} />
+                                <Typography variant="body2">{post.retweets}</Typography>
+                              </Box>
+                            </Tooltip>
+                          )}
+                          {post.comments > 0 && (
+                            <Tooltip title="Comments">
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <CommentIcon color="action" sx={{ fontSize: 16, mr: 0.5 }} />
+                                <Typography variant="body2">{post.comments}</Typography>
+                              </Box>
+                            </Tooltip>
+                          )}
                         </Box>
                       </Box>
                       <Typography variant="body2" sx={{ mb: 1 }}>

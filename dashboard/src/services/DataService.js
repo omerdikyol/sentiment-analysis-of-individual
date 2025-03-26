@@ -439,7 +439,23 @@ class DataService {
     };
     
     data.forEach(item => {
-      const country = item.country || 'Qatar'; // Default to Qatar for this dataset
+      // Normalize country name and skip unknown
+      let country = item.country || 'Qatar'; // Default to Qatar for this dataset
+      
+      // Skip unknown entries
+      if (country.toLowerCase() === 'unknown') {
+        return;
+      }
+      
+      // Normalize country names to uppercase versions
+      const countryMap = {
+        'us': 'US',
+        'uk': 'UK',
+        'uae': 'UAE',
+        'qatar': 'Qatar'
+      };
+      
+      country = countryMap[country.toLowerCase()] || country;
       
       if (!countries[country]) {
         countries[country] = {

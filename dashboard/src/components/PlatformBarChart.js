@@ -29,19 +29,50 @@ const COLORS = [
   '#d0ed57'  // Lime
 ];
 
+// List of platforms to exclude
+const EXCLUDED_PLATFORMS = ['us', 'qa', 'US', 'QA', 'unknown', 'gb', 'ae'];
+
+// Function to normalize platform names
+const normalizePlatformName = (platform) => {
+  if (!platform) return 'Unknown';
+  
+  // Convert to lowercase for comparison
+  const lowerPlatform = platform.toLowerCase();
+  
+  // Map of common platform names to their proper display names
+  const platformMap = {
+    'twitter': 'Twitter',
+    'facebook': 'Facebook',
+    'instagram': 'Instagram',
+    'linkedin': 'LinkedIn',
+    'youtube': 'YouTube',
+    'tiktok': 'TikTok',
+    'reddit': 'Reddit',
+    'pinterest': 'Pinterest',
+    'tumblr': 'Tumblr',
+    'snapchat': 'Snapchat'
+  };
+
+  return platformMap[lowerPlatform] || platform;
+};
+
 const PlatformBarChart = ({ mentionsByPlatform }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   useEffect(() => {
     if (mentionsByPlatform && mentionsByPlatform.length > 0) {
-      // Get top 10 platforms by count
-      const topPlatforms = [...mentionsByPlatform]
+      // Filter out excluded platforms and normalize platform names
+      const filteredPlatforms = mentionsByPlatform
+        .filter(item => !EXCLUDED_PLATFORMS.includes(item.platform?.toLowerCase()))
+        .map(item => ({
+          ...item,
+          platform: normalizePlatformName(item.platform)
+        }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
       
-      // Set the data immediately without animation
-      setAnimatedData(topPlatforms);
+      setAnimatedData(filteredPlatforms);
     } else {
       setAnimatedData([]);
     }

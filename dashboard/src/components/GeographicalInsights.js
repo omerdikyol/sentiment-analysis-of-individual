@@ -51,134 +51,279 @@ const GeographicalInsights = ({ data }) => {
     'Other': '#9C27B0'        // purple
   };
 
-  // Sample data for countries and their topics
-  const sampleCountryData = {
-    'Qatar': {
-      topics: {
-        'Sports': 75,
-        'Business': 50,
-        'Technology': 35,
-        'Infrastructure': 25,
-        'Education': 13
-      },
-      sources: {
-        'Social Media': { total: 100 },
-        'News': { total: 50 },
-        'TV': { total: 40 },
-        'Other': { total: 8 }
-      },
-      positive: 89,
-      neutral: 70,
-      negative: 39,
-      total: 198,
-      engagement: 4800
-    },
-    'US': {
-      topics: {
-        'Technology': 70,
-        'Economy': 55,
-        'Politics': 40,
-        'Innovation': 20,
-        'Trade': 13
-      },
-      sources: {
-        'Social Media': { total: 100 },
-        'News': { total: 50 },
-        'TV': { total: 35 },
-        'Other': { total: 13 }
-      },
-      positive: 89,
-      neutral: 70,
-      negative: 39,
-      total: 198,
-      engagement: 3900
-    },
-    'UAE': {
-      topics: {
-        'Business': 2,
-        'Technology': 1,
-        'Innovation': 1,
-        'Trade': 0,
-        'Infrastructure': 0
-      },
-      sources: {
-        'Social Media': { total: 2 },
-        'News': { total: 1 },
-        'TV': { total: 1 },
-        'Other': { total: 0 }
-      },
-      positive: 2,
-      neutral: 1,
-      negative: 1,
-      total: 4,
-      engagement: 85
-    },
-    'UK': {
-      topics: {
-        'Finance': 3,
-        'Technology': 2,
-        'Business': 1,
-        'Economy': 1,
-        'Innovation': 0
-      },
-      sources: {
-        'Social Media': { total: 3 },
-        'News': { total: 2 },
-        'TV': { total: 1 },
-        'Other': { total: 1 }
-      },
-      positive: 3,
-      neutral: 2,
-      negative: 2,
-      total: 7,
-      engagement: 150
+  // Helper function to categorize sources
+  const categorizeSource = (source) => {
+    if (!source) return 'Other';
+    
+    const sourceLower = source.toLowerCase().trim();
+    
+    // Social Media platforms and their variations
+    const socialMediaPlatforms = {
+      patterns: [
+        // Twitter/X variations
+        'twitter', 'x', 'x.com', 'tweet', 
+        // Facebook variations
+        'facebook', 'fb', 'facebook.com', 'meta',
+        // Instagram variations
+        'instagram', 'ig', 'instagram.com', 'insta',
+        // LinkedIn variations
+        'linkedin', 'linkedin.com', 'lnkd',
+        // YouTube variations
+        'youtube', 'youtube.com', 'yt',
+        // TikTok variations
+        'tiktok', 'tiktok.com', 'douyin',
+        // General social terms
+        'social', 'tweet', 'post', 'feed',
+        // Other platforms
+        'reddit', 'pinterest', 'snapchat', 'weibo',
+        'tumblr', 'medium', 'threads'
+      ],
+      domains: ['.social', 'social.', 'connect.', '.connect']
+    };
+
+    // News platforms and variations
+    const newsPlatforms = {
+      patterns: [
+        // Major news agencies
+        'reuters', 'bloomberg', 'associated press', 'ap news',
+        'afp', 'agence france', 'united press', 'press association',
+        // Major news networks
+        'cnn', 'bbc', 'msnbc', 'fox news', 'sky news',
+        'abc news', 'cbs news', 'nbc news', 'newsweek',
+        'aljazeera', 'al jazeera', 'euronews', 'rt.com',
+        // News keywords
+        'news', 'press', 'media', 'journal', 'gazette',
+        'herald', 'tribune', 'times', 'daily', 'weekly',
+        'post', 'chronicle', 'observer', 'reporter',
+        // Regional variations
+        'guardian', 'independent', 'telegraph', 'mirror',
+        'express', 'mail', 'sun', 'standard', 'globe',
+        // Digital news
+        'huffpost', 'buzzfeed', 'vox', 'axios', 'politico',
+        'insider', 'verge', 'techcrunch', 'mashable',
+        // Common news source words
+        'report', 'bulletin', 'dispatch', 'digest',
+        'wire', 'correspondent', 'editorial', 'newsroom'
+      ],
+      domains: ['.news', 'news.', '.press', 'press.',
+                '.media', 'media.', '.journal', 'journal.',
+                'daily.', '.daily', '.report', 'report.']
+    };
+
+    // TV/Broadcast platforms and variations
+    const tvPlatforms = {
+      patterns: [
+        // TV Networks
+        'abc', 'cbs', 'nbc', 'fox', 'pbs',
+        'bbc', 'itv', 'channel 4', 'sky', 'mtv',
+        // Broadcast terms
+        'tv', 'television', 'broadcast', 'broadcasting',
+        'channel', 'network', 'station', 'cable',
+        // Streaming services
+        'netflix', 'hulu', 'prime video', 'disney+',
+        'hbo', 'peacock', 'paramount+', 'streaming',
+        // Radio
+        'radio', 'fm', 'am radio', 'satellite radio',
+        // Other broadcast terms
+        'show', 'program', 'series', 'episode',
+        'live', 'on air', 'broadcast', 'telecast',
+        // Entertainment
+        'entertainment', 'media group', 'studios',
+        'production', 'network group', 'channel group'
+      ],
+      domains: ['.tv', 'tv.', '.broadcast', 'broadcast.',
+                '.media', 'media.', '.entertainment',
+                'channel.', '.channel']
+    };
+
+    // Check for exact matches first
+    const checkExactMatch = (str, patterns) => {
+      return patterns.some(pattern => 
+        str === pattern ||
+        str.startsWith(pattern + ' ') ||
+        str.endsWith(' ' + pattern)
+      );
+    };
+
+    // Check for partial matches
+    const checkPartialMatch = (str, patterns) => {
+      return patterns.some(pattern => str.includes(pattern));
+    };
+
+    // Check for domain patterns
+    const checkDomainPatterns = (str, domains) => {
+      return domains.some(domain => str.includes(domain));
+    };
+
+    // Social Media checks
+    if (checkExactMatch(sourceLower, socialMediaPlatforms.patterns) ||
+        checkDomainPatterns(sourceLower, socialMediaPlatforms.domains) ||
+        sourceLower.includes('share') || sourceLower.includes('follow')) {
+      return 'Social Media';
     }
+
+    // News checks
+    if (checkExactMatch(sourceLower, newsPlatforms.patterns) ||
+        checkDomainPatterns(sourceLower, newsPlatforms.domains) ||
+        checkPartialMatch(sourceLower, newsPlatforms.patterns) ||
+        sourceLower.match(/\b(news|press)\b/)) {
+      return 'News';
+    }
+
+    // TV/Broadcast checks
+    if (checkExactMatch(sourceLower, tvPlatforms.patterns) ||
+        checkDomainPatterns(sourceLower, tvPlatforms.domains) ||
+        checkPartialMatch(sourceLower, tvPlatforms.patterns) ||
+        sourceLower.match(/\b(tv|television|broadcast)\b/)) {
+      return 'TV';
+    }
+
+    // Additional checks for URLs and common patterns
+    if (sourceLower.includes('news') || 
+        sourceLower.includes('media') ||
+        sourceLower.match(/\.(com|org|net|edu)\/news/) ||
+        sourceLower.match(/\/(news|press|media)\//)) {
+      return 'News';
+    }
+
+    // Check for common website patterns that indicate news/media
+    if (sourceLower.match(/\b(article|story|coverage|report)\b/)) {
+      return 'News';
+    }
+
+    // Final check for any remaining media-related terms
+    if (sourceLower.match(/\b(media|press|publication|broadcast)\b/)) {
+      return 'News';
+    }
+
+    return 'Other';
+  };
+
+  // Process raw data to get country statistics
+  const processCountryData = (rawData) => {
+    if (!rawData || !Array.isArray(rawData)) return {};
+
+    // Define topics and their keywords (same as ThemeAnalysis)
+    const topicDefinitions = {
+      'Politics': ['government', 'policy', 'election', 'minister', 'political', 'parliament'],
+      'Economy': ['economy', 'business', 'market', 'trade', 'financial', 'investment'],
+      'Sports': ['sports', 'football', 'tournament', 'championship', 'athlete', 'game'],
+      'Diplomacy': ['diplomatic', 'relations', 'international', 'embassy', 'foreign'],
+      'Technology': ['technology', 'digital', 'innovation', 'tech', 'AI', 'software'],
+      'Culture': ['culture', 'art', 'music', 'festival', 'heritage', 'tradition'],
+      'Education': ['education', 'school', 'university', 'student', 'academic', 'research'],
+      'Healthcare': ['health', 'medical', 'hospital', 'healthcare', 'doctor', 'patient']
+    };
+
+    const countryStats = rawData.reduce((acc, mention) => {
+      const country = mention.country || mention.location || 'Unknown';
+      if (!acc[country]) {
+        acc[country] = {
+          topics: Object.keys(topicDefinitions).reduce((topics, topic) => {
+            topics[topic] = 0;
+            return topics;
+          }, {}),
+          sources: {},
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          total: 0,
+          engagement: 0,
+          sourcesDebug: []
+        };
+      }
+
+      // Calculate sentiment
+      const sentiment = parseFloat(mention.sentiment_score);
+      if (!isNaN(sentiment)) {
+        if (sentiment > 0.2) {
+          acc[country].positive += 1;
+        } else if (sentiment < -0.2) {
+          acc[country].negative += 1;
+        } else {
+          acc[country].neutral += 1;
+        }
+        acc[country].total += 1;
+      }
+
+      // Calculate engagement
+      const engagement = (
+        parseInt(mention.likes) || 0 +
+        parseInt(mention.shares) || 0 +
+        parseInt(mention.comments) || 0
+      );
+      acc[country].engagement += engagement;
+
+      // Process source
+      const source = mention.platform || mention.source;
+      if (source) {
+        const sourceType = categorizeSource(source);
+        acc[country].sources[sourceType] = acc[country].sources[sourceType] || { total: 0 };
+        acc[country].sources[sourceType].total += 1;
+        
+        acc[country].sourcesDebug.push({
+          original: source,
+          categorized: sourceType
+        });
+      }
+
+      // Process topics using the same logic as ThemeAnalysis
+      const text = mention.text?.toLowerCase() || '';
+      Object.entries(topicDefinitions).forEach(([topic, keywords]) => {
+        if (keywords.some(keyword => text.includes(keyword))) {
+          acc[country].topics[topic] += 1;
+        }
+      });
+
+      return acc;
+    }, {});
+
+    // Log source categorization for debugging
+    console.log('Source Categorization Debug:', 
+      Object.entries(countryStats).reduce((acc, [country, data]) => {
+        acc[country] = data.sourcesDebug;
+        return acc;
+      }, {})
+    );
+
+    return countryStats;
   };
 
   // Process the data
-  const countryData = data?.sentimentByCountry ? data.sentimentByCountry.reduce((acc, item) => {
-    const country = item.country;
-    if (!acc[country]) {
-      acc[country] = {
-        topics: item.topics || {},
-        sources: item.sources || {},
-        positive: item.positive,
-        neutral: item.neutral,
-        negative: item.negative,
-        total: item.total,
-        engagement: item.engagement
-      };
-    }
-    return acc;
-  }, {}) : sampleCountryData;
+  const countryData = processCountryData(data?.rawData);
 
   // Format data for sentiment by country chart
-  const sentimentByCountry = Object.entries(countryData).map(([country, data]) => ({
-    country,
-    positive: (data.positive / data.total) * 100,
-    neutral: (data.neutral / data.total) * 100,
-    negative: (data.negative / data.total) * 100,
-    total: data.total,
-  }));
-
-  // Format data for source distribution
-  const sourceDistribution = Object.entries(countryData).map(([country, data]) => {
-    // If sources data is not available, provide default distribution
-    const sources = data.sources || {
-      'Social Media': { total: data.total * 0.4 },
-      'News': { total: data.total * 0.3 },
-      'TV': { total: data.total * 0.2 },
-      'Other': { total: data.total * 0.1 }
-    };
-
-    return {
+  const sentimentByCountry = Object.entries(countryData)
+    .filter(([country]) => country !== 'Unknown')
+    .map(([country, data]) => ({
       country,
-      'Social Media': Math.round((sources['Social Media']?.total || 0) / (data.total || 1) * 100),
-      'News': Math.round((sources['News']?.total || 0) / (data.total || 1) * 100),
-      'TV': Math.round((sources['TV']?.total || 0) / (data.total || 1) * 100),
-      'Other': Math.round((sources['Other']?.total || 0) / (data.total || 1) * 100),
-    };
-  });
+      positive: (data.positive / data.total) * 100,
+      neutral: (data.neutral / data.total) * 100,
+      negative: (data.negative / data.total) * 100,
+      total: data.total,
+      engagement: data.engagement
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  // Format data for source distribution with improved sorting
+  const sourceDistribution = Object.entries(countryData)
+    .filter(([country]) => country !== 'Unknown')
+    .map(([country, data]) => {
+      const total = data.total || 1;
+      return {
+        country,
+        'Social Media': Math.round(((data.sources['Social Media']?.total || 0) / total) * 100),
+        'News': Math.round(((data.sources['News']?.total || 0) / total) * 100),
+        'TV': Math.round(((data.sources['TV']?.total || 0) / total) * 100),
+        'Other': Math.round(((data.sources['Other']?.total || 0) / total) * 100),
+        total: total,
+        engagement: data.engagement
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+
+  // Log the final distribution for verification
+  console.log('Source Distribution:', sourceDistribution);
 
   // Format data for media sentiment chart
   const mediaSentimentData = [
@@ -254,6 +399,7 @@ const GeographicalInsights = ({ data }) => {
   const renderTopicChart = (country) => {
     const data = countryData[country]?.topics || {};
     const topTopics = Object.entries(data)
+      .filter(([, value]) => value > 0) // Only show topics with mentions
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([topic, value]) => ({
@@ -286,13 +432,13 @@ const GeographicalInsights = ({ data }) => {
                     <Box
                       sx={{
                         bgcolor: 'background.paper',
-                        p: 1,
+                        p: 1.5,
                         border: 1,
                         borderColor: 'divider',
                         borderRadius: 1,
                       }}
                     >
-                      <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                      <Typography variant="body2">
                         {`${payload[0].name}: ${payload[0].value} mentions`}
                       </Typography>
                     </Box>

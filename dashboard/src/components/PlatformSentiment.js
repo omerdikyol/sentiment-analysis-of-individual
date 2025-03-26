@@ -9,6 +9,7 @@ import {
   LinearProgress,
   Stack,
   Divider,
+  Tooltip,
 } from '@mui/material';
 import {
   Twitter as TwitterIcon,
@@ -25,8 +26,10 @@ const PlatformSentiment = ({ data }) => {
   const theme = useTheme();
 
   const getPlatformIcon = (platform) => {
-    switch (platform.toLowerCase()) {
+    const platformLower = platform.toLowerCase();
+    switch (platformLower) {
       case 'twitter':
+      case 'x':
         return <TwitterIcon />;
       case 'facebook':
         return <FacebookIcon />;
@@ -35,79 +38,131 @@ const PlatformSentiment = ({ data }) => {
       case 'instagram':
         return <InstagramIcon />;
       default:
-        return platform.toLowerCase().includes('tv') ? <TvIcon /> : <NewsIcon />;
+        return platformLower.includes('tv') ? <TvIcon /> : <NewsIcon />;
     }
   };
 
-  // Placeholder data
-  const platformStats = [
-    {
-      platform: 'Twitter',
-      positive: 120,
-      neutral: 50,
-      negative: 31,
-      total: 201,
-      engagement: 1250,
-      positivePercent: 59.7,
-      neutralPercent: 24.9,
-      negativePercent: 15.4
-    },
-    {
-      platform: 'Reuters',
-      positive: 2,
-      neutral: 2,
-      negative: 1,
-      total: 5,
-      engagement: 85,
-      positivePercent: 40,
-      neutralPercent: 40,
-      negativePercent: 20
-    },
-    {
-      platform: 'CNN',
-      positive: 1,
-      neutral: 1,
-      negative: 0,
-      total: 2,
-      engagement: 45,
-      positivePercent: 50,
-      neutralPercent: 50,
-      negativePercent: 0
-    },
-    {
-      platform: 'Al Jazeera',
-      positive: 1,
-      neutral: 0,
-      negative: 1,
-      total: 2,
-      engagement: 32,
-      positivePercent: 50,
-      neutralPercent: 0,
-      negativePercent: 50
-    },
-    {
-      platform: 'Sky News',
-      positive: 0,
-      neutral: 1,
-      negative: 0,
-      total: 1,
-      engagement: 15,
-      positivePercent: 0,
-      neutralPercent: 100,
-      negativePercent: 0
-    },
-    {
-      platform: 'Associated Press',
-      positive: 1,
-      neutral: 0,
-      negative: 0,
-      total: 1,
-      engagement: 28,
-      positivePercent: 100,
-      neutralPercent: 0,
-      negativePercent: 0
-    }
-  ];
+  // Process raw data to get platform statistics
+  const processPlatformStats = (rawData) => {
+    if (!rawData || !Array.isArray(rawData)) return [];
+
+    // List of sources to exclude
+    const excludedSources = new Set([
+      'us', 'US', 'usa', 'USA',
+      'uk', 'UK',
+      'qa', 'QA',
+      'ae', 'AE',
+      'gb', 'GB',
+      'fr', 'FR',
+      'de', 'DE',
+      'it', 'IT',
+      'es', 'ES'
+    ]);
+
+    // Helper function to validate platform name
+    const isValidPlatform = (platform) => {
+      if (!platform) return false;
+      
+      const platformLower = platform.toLowerCase().trim();
+      
+      if (excludedSources.has(platformLower)) return false;
+      if (platformLower.length <= 3 && !/^(bbc|cnn|sky|itv)$/i.test(platformLower)) return false;
+      
+      return true;
+    };
+
+    // Group mentions by platform
+    const platformMap = rawData.reduce((acc, mention) => {
+      const platform = mention.platform || mention.source;
+      
+      if (!isValidPlatform(platform)) return acc;
+
+      if (!acc[platform]) {
+        acc[platform] = {
+          platform,
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          total: 0,
+          engagement: 0,
+          sentiments: []
+        };
+      }
+
+      const sentimentScore = parseFloat(mention.sentiment_score);
+      if (!isNaN(sentimentScore)) {
+        acc[platform].sentiments.push(sentimentScore);
+        
+        if (sentimentScore > 0.2) {
+          acc[platform].positive += 1;
+        } else if (sentimentScore < -0.2) {
+          acc[platform].negative += 1;
+        } else {
+          acc[platform].neutral += 1;
+        }
+        
+        acc[platform].total += 1;
+      }
+      
+      const likes = parseInt(mention.likes) || 0;
+      const shares = parseInt(mention.shares) || 0;
+      const comments = parseInt(mention.comments) || 0;
+      acc[platform].engagement += likes + shares + comments;
+
+      return acc;
+    }, {});
+
+    // Process platforms and combine single-mention sources
+    const processedPlatforms = Object.values(platformMap)
+      .filter(platform => platform.total > 0)
+      .reduce((acc, platform) => {
+        if (platform.total === 1) {
+          // Add to "Other Sources"
+          if (!acc.other) {
+            acc.other = {
+              platform: 'Other Sources',
+              positive: 0,
+              neutral: 0,
+              negative: 0,
+              total: 0,
+              engagement: 0,
+              sentiments: [],
+              sources: [] // Keep track of individual sources
+            };
+          }
+          acc.other.positive += platform.positive;
+          acc.other.neutral += platform.neutral;
+          acc.other.negative += platform.negative;
+          acc.other.total += platform.total;
+          acc.other.engagement += platform.engagement;
+          acc.other.sentiments.push(...platform.sentiments);
+          acc.other.sources.push(platform.platform);
+        } else {
+          // Keep platforms with more than one mention
+          acc[platform.platform] = platform;
+        }
+        return acc;
+      }, {});
+
+    // Convert to array and calculate percentages
+    return Object.values(processedPlatforms)
+      .map(platform => {
+        const total = platform.total || 1;
+        return {
+          ...platform,
+          positivePercent: (platform.positive / total) * 100,
+          neutralPercent: (platform.neutral / total) * 100,
+          negativePercent: (platform.negative / total) * 100,
+          averageSentiment: platform.sentiments.reduce((sum, score) => sum + score, 0) / platform.sentiments.length
+        };
+      })
+      .sort((a, b) => b.total - a.total);
+  };
+
+  const platformStats = processPlatformStats(data?.rawData);
+
+  // Log for debugging
+  console.log('Platform Stats:', platformStats);
 
   return (
     <motion.div
@@ -125,15 +180,22 @@ const PlatformSentiment = ({ data }) => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
                   {getPlatformIcon(platform.platform)}
-                  <Typography variant="h6" component="div">
-                    {platform.platform}
-                  </Typography>
+                  <Tooltip title={platform.sources ? `Including: ${platform.sources.join(', ')}` : ''}>
+                    <Typography variant="h6" component="div">
+                      {platform.platform}
+                      {platform.sources && (
+                        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                          ({platform.sources.length} sources)
+                        </Typography>
+                      )}
+                    </Typography>
+                  </Tooltip>
                 </Box>
 
                 <Stack spacing={1.5}>
                   <Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Positive ({platform.positive} mentions)
+                      Positive ({Math.round(platform.positivePercent)}%)
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -151,7 +213,7 @@ const PlatformSentiment = ({ data }) => {
 
                   <Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Neutral ({platform.neutral} mentions)
+                      Neutral ({Math.round(platform.neutralPercent)}%)
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -169,7 +231,7 @@ const PlatformSentiment = ({ data }) => {
 
                   <Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Negative ({platform.negative} mentions)
+                      Negative ({Math.round(platform.negativePercent)}%)
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -190,11 +252,13 @@ const PlatformSentiment = ({ data }) => {
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">
-                    Total Mentions: {platform.total}
+                    Total: {platform.total}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Engagement: {platform.engagement}
-                  </Typography>
+                  {platform.engagement > 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      Engagement: {platform.engagement.toLocaleString()}
+                    </Typography>
+                  )}
                 </Box>
               </CardContent>
             </Card>

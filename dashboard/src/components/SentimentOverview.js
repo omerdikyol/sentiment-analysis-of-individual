@@ -6,27 +6,20 @@ import { motion } from 'framer-motion';
 const SentimentOverview = ({ data }) => {
   const theme = useTheme();
 
-  // Sample data for demonstration
-  const sampleMetrics = {
-    positivePercentage: 35.5,
-    neutralPercentage: 40.1,
-    negativePercentage: 24.4
-  };
-
   const sentimentData = [
     {
       name: 'Positive',
-      value: Number(sampleMetrics.positivePercentage || 0),
+      value: Number(data?.metrics?.positivePercentage || 0),
       color: theme.palette.success.main,
     },
     {
       name: 'Neutral',
-      value: Number(sampleMetrics.neutralPercentage || 0),
+      value: Number(data?.metrics?.neutralPercentage || 0),
       color: theme.palette.grey[400],
     },
     {
       name: 'Negative',
-      value: Number(sampleMetrics.negativePercentage || 0),
+      value: Number(data?.metrics?.negativePercentage || 0),
       color: theme.palette.error.main,
     },
   ];

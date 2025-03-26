@@ -160,6 +160,19 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
     navigator.clipboard.writeText(text);
   };
 
+  const getAuthorDisplay = (item) => {
+    // Try to get author from different possible fields
+    const author = item.author || item.username || item.user_name || item.name;
+    if (!author) return null;
+    
+    // Clean up the author name (remove @, handle special cases)
+    let displayName = author;
+    if (displayName.startsWith('@')) {
+      displayName = displayName.substring(1);
+    }
+    return displayName;
+  };
+
   const renderSourceInfo = (item) => {
     const sourceLower = (item.source || '').toLowerCase();
     const isUserContent = sourceLower.includes('x') || sourceLower.includes('twitter') || sourceLower.includes('social');
@@ -318,61 +331,144 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               </Typography>
             </Box>
           </DialogTitle>
-          <DialogContent dividers>
+          <DialogContent 
+            dividers 
+            sx={{
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+          >
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Content
-              </Typography>
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                {selectedItem.text}
-              </Typography>
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 2.5,
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  overflow: 'visible',
+                  '& img': {
+                    maxWidth: '100%',
+                    height: 'auto',
+                    borderRadius: 1,
+                    marginTop: 1,
+                    marginBottom: 1
+                  }
+                }}
+              >
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    lineHeight: 1.8,
+                    letterSpacing: '0.01em',
+                    fontFamily: "'Inter', sans-serif",
+                    '& a': {
+                      color: 'primary.main',
+                      textDecoration: 'none',
+                      '&:hover': {
+                        textDecoration: 'underline',
+                      },
+                    },
+                  }}
+                >
+                  {selectedItem.text}
+                </Typography>
+                {getAuthorDisplay(selectedItem) && (
+                  <Box 
+                    sx={{ 
+                      mt: 2, 
+                      pt: 2,
+                      borderTop: '1px solid',
+                      borderColor: 'divider',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <PersonIcon fontSize="small" />
+                      {getAuthorDisplay(selectedItem)}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <CalendarIcon fontSize="small" />
+                      {formatDate(selectedItem.date)}
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
             </Box>
-            
-            <Divider sx={{ my: 2 }} />
             
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <DetailRow 
-                  icon={getSourceIcon(selectedItem.source)} 
-                  label="Source"
-                  value={selectedItem.source || 'Unknown'}
-                />
-                {selectedItem.username && (
-                  <DetailRow 
-                    icon={<PersonIcon color="primary" />} 
-                    label="Username"
-                    value={selectedItem.username}
-                  />
-                )}
-                <DetailRow 
-                  icon={<CalendarIcon color="primary" />} 
-                  label="Date"
-                  value={formatDate(selectedItem.date)}
-                />
-                {selectedItem.location && (
-                  <DetailRow 
-                    icon={<LocationIcon color="primary" />} 
-                    label="Location"
-                    value={selectedItem.location}
-                  />
-                )}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Source Information
+                  </Typography>
+                  <Stack spacing={2}>
+                    <DetailRow 
+                      icon={getSourceIcon(selectedItem.source)} 
+                      label="Source"
+                      value={selectedItem.source || 'Unknown'}
+                    />
+                    {selectedItem.username && (
+                      <DetailRow 
+                        icon={<PersonIcon color="primary" />} 
+                        label="Username"
+                        value={selectedItem.username}
+                      />
+                    )}
+                    {selectedItem.location && (
+                      <DetailRow 
+                        icon={<LocationIcon color="primary" />} 
+                        label="Location"
+                        value={selectedItem.location}
+                      />
+                    )}
+                  </Stack>
+                </Box>
               </Grid>
               <Grid item xs={12} md={6}>
-                {selectedItem.url && (
-                  <DetailRow 
-                    icon={<LanguageIcon color="primary" />} 
-                    label="URL"
-                    value={selectedItem.url}
-                    isLink
-                  />
-                )}
-                {selectedItem.country && (
-                  <DetailRow 
-                    icon={<PublicIcon color="primary" />} 
-                    label="Country"
-                    value={selectedItem.country}
-                  />
-                )}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Additional Details
+                  </Typography>
+                  <Stack spacing={2}>
+                    {selectedItem.url && (
+                      <DetailRow 
+                        icon={<LanguageIcon color="primary" />} 
+                        label="URL"
+                        value={selectedItem.url}
+                        isLink
+                      />
+                    )}
+                    {selectedItem.country && (
+                      <DetailRow 
+                        icon={<PublicIcon color="primary" />} 
+                        label="Country"
+                        value={selectedItem.country}
+                      />
+                    )}
+                  </Stack>
+                </Box>
               </Grid>
             </Grid>
           </DialogContent>
@@ -462,21 +558,29 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Stack spacing={1} sx={{ flex: 1 }}>
               <Tooltip 
-                title={item.text || 'N/A'} 
+                title={
+                  <Box sx={{ p: 1, maxWidth: '600px' }}>
+                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {item.text || 'N/A'}
+                    </Typography>
+                    {getAuthorDisplay(item) && (
+                      <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
+                        - {getAuthorDisplay(item)}
+                      </Typography>
+                    )}
+                  </Box>
+                }
                 placement="top-start"
-                sx={{ maxWidth: 'none' }}
                 componentsProps={{
                   tooltip: {
                     sx: {
-                      bgcolor: 'background.paper',
-                      color: 'text.primary',
-                      border: '1px solid',
-                      borderColor: 'divider',
+                      bgcolor: 'rgba(0, 0, 0, 0.9)',
+                      color: 'white',
                       borderRadius: 1,
                       p: 1.5,
-                      maxWidth: '500px',
+                      maxWidth: '600px !important',
                       '& .MuiTooltip-arrow': {
-                        color: 'background.paper',
+                        color: 'rgba(0, 0, 0, 0.9)',
                       },
                     },
                   },
@@ -500,7 +604,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               </Tooltip>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <PersonIcon fontSize="small" />
-                {item.author || 'Unknown Author'}
+                {getAuthorDisplay(item) || 'Anonymous'}
                 {item.location && item.location !== 'Unknown Location' && (
                   <>
                     <LocationIcon fontSize="small" sx={{ ml: 1 }} />
