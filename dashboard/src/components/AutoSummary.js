@@ -178,12 +178,25 @@ const AutoSummary = ({ data }) => {
             wordFrequency[word].count += 1;
             wordFrequency[word].totalSentiment += sentiment;
             
-            if (sentiment > 0.2) {
+            // Get sentiment label
+            const sentimentLabel = (item.sentiment_label || '').toLowerCase();
+            
+            // Categorize based on sentiment_label
+            if (sentimentLabel && sentimentLabel.includes('positive')) {
               wordFrequency[word].positiveCount += 1;
-            } else if (sentiment < -0.2) {
+            } else if (sentimentLabel && sentimentLabel.includes('negative')) {
               wordFrequency[word].negativeCount += 1;
-            } else {
+            } else if (sentimentLabel && sentimentLabel.includes('neutral')) {
               wordFrequency[word].neutralCount += 1;
+            } else {
+              // Fallback to score-based categorization if label is unclear
+              if (sentiment > 0.2) {
+                wordFrequency[word].positiveCount += 1;
+              } else if (sentiment < -0.2) {
+                wordFrequency[word].negativeCount += 1;
+              } else {
+                wordFrequency[word].neutralCount += 1;
+              }
             }
           });
         });

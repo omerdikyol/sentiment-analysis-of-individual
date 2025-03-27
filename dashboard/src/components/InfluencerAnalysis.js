@@ -27,7 +27,8 @@ import { motion } from 'framer-motion';
 const InfluencerAnalysis = ({ data }) => {
   const theme = useTheme();
 
-  // Helper function to get sentiment info
+  // Helper function to get sentiment info based on average sentiment score
+  // Keep using score for the gradient classification
   const getSentimentInfo = (sentiment) => {
     if (sentiment >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark, icon: '😄' };
     if (sentiment >= 0.3) return { text: 'Positive', color: theme.palette.success.main, icon: '🙂' };
@@ -123,10 +124,30 @@ const InfluencerAnalysis = ({ data }) => {
     return Object.values(influencerMap)
       .map(inf => {
         const avgSentiment = inf.totalSentiment / inf.posts;
-        const positivePosts = inf.sentiments.filter(s => s > 0.2).length;
-        const negativePosts = inf.sentiments.filter(s => s < -0.2).length;
-        const neutralPosts = inf.posts - positivePosts - negativePosts;
-
+        
+        // Count posts by sentiment label
+        let positivePosts = 0;
+        let negativePosts = 0;
+        let neutralPosts = 0;
+        
+        // Use mentions to access original data with labels
+        inf.mentions.forEach(mention => {
+          const label = (mention.sentiment_label || '').toLowerCase();
+          if (label && label.includes('positive')) {
+            positivePosts++;
+          } else if (label && label.includes('negative')) {
+            negativePosts++;
+          } else if (label && label.includes('neutral')) {
+            neutralPosts++;
+          } else {
+            // Fallback to sentiment score
+            const score = parseFloat(mention.sentiment_score) || 0;
+            if (score > 0.2) positivePosts++;
+            else if (score < -0.2) negativePosts++;
+            else neutralPosts++;
+          }
+        });
+        
         return {
           ...inf,
           averageSentiment: avgSentiment,

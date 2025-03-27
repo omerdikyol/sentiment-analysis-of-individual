@@ -233,15 +233,27 @@ const GeographicalInsights = ({ data }) => {
         };
       }
 
-      // Calculate sentiment
+      // Get sentiment label
+      const sentimentLabel = (mention.sentiment_label || '').toLowerCase();
       const sentiment = parseFloat(mention.sentiment_score);
+      
       if (!isNaN(sentiment)) {
-        if (sentiment > 0.2) {
+        // Categorize based on sentiment_label directly
+        if (sentimentLabel && sentimentLabel.includes('positive')) {
           acc[country].positive += 1;
-        } else if (sentiment < -0.2) {
-          acc[country].negative += 1;
-        } else {
+        } else if (sentimentLabel && sentimentLabel.includes('negative')) {
+          acc[country].negative += 1; 
+        } else if (sentimentLabel && sentimentLabel.includes('neutral')) {
           acc[country].neutral += 1;
+        } else {
+          // Fallback to score-based categorization if label is unclear
+          if (sentiment > 0.2) {
+            acc[country].positive += 1;
+          } else if (sentiment < -0.2) {
+            acc[country].negative += 1;
+          } else {
+            acc[country].neutral += 1;
+          }
         }
         acc[country].total += 1;
       }

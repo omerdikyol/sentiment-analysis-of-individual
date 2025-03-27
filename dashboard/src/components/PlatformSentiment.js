@@ -46,6 +46,20 @@ const PlatformSentiment = ({ data }) => {
   const processPlatformStats = (rawData) => {
     if (!rawData || !Array.isArray(rawData)) return [];
 
+    // Add debugging logs
+    console.log('Processing platform stats, raw data length:', rawData.length);
+    // Log sample records with sentiment values for debugging
+    console.log('Sample records with sentiment values:');
+    rawData.slice(0, 3).forEach((item, index) => {
+      console.log(`Record ${index + 1}:`, {
+        platform: item.platform || item.source,
+        sentiment: item.sentiment,
+        sentiment_score: item.sentiment_score,
+        score: item.score,
+        sentiment_label: item.sentiment_label
+      });
+    });
+
     // List of sources to exclude
     const excludedSources = new Set([
       'us', 'US', 'usa', 'USA',
@@ -89,16 +103,46 @@ const PlatformSentiment = ({ data }) => {
         };
       }
 
-      const sentimentScore = parseFloat(mention.sentiment_score);
-      if (!isNaN(sentimentScore)) {
+      // Get sentiment value for average calculation
+      let sentimentScore = null;
+      if (typeof mention.sentiment_score === 'number') {
+        sentimentScore = mention.sentiment_score;
+      } else if (typeof mention.sentiment === 'number') {
+        sentimentScore = mention.sentiment;
+      } else if (typeof mention.score === 'number') {
+        sentimentScore = mention.score;
+      } else {
+        // Try parsing string values
+        const sentimentStr = mention.sentiment_score || mention.sentiment || mention.score;
+        if (sentimentStr) {
+          sentimentScore = parseFloat(sentimentStr);
+        }
+      }
+      
+      // Get sentiment label
+      const sentimentLabel = (mention.sentiment_label || '').toLowerCase();
+      
+      // Process if we have valid sentiment data
+      if (sentimentLabel && (sentimentScore !== null && !isNaN(sentimentScore))) {
+        // Store sentiment score for average calculation
         acc[platform].sentiments.push(sentimentScore);
         
-        if (sentimentScore > 0.2) {
+        // Categorize based on sentiment_label directly
+        if (sentimentLabel.includes('positive')) {
           acc[platform].positive += 1;
-        } else if (sentimentScore < -0.2) {
+        } else if (sentimentLabel.includes('negative')) {
           acc[platform].negative += 1;
-        } else {
+        } else if (sentimentLabel.includes('neutral')) {
           acc[platform].neutral += 1;
+        } else {
+          // Fallback to score-based categorization if label is unclear
+          if (sentimentScore > 0.2) {
+            acc[platform].positive += 1;
+          } else if (sentimentScore < -0.2) {
+            acc[platform].negative += 1;
+          } else {
+            acc[platform].neutral += 1;
+          }
         }
         
         acc[platform].total += 1;
@@ -144,10 +188,21 @@ const PlatformSentiment = ({ data }) => {
         return acc;
       }, {});
 
+    // Add counters for sentiment categories
+    let totalPositive = 0;
+    let totalNeutral = 0;
+    let totalNegative = 0;
+    
     // Convert to array and calculate percentages
-    return Object.values(processedPlatforms)
+    const result = Object.values(processedPlatforms)
       .map(platform => {
         const total = platform.total || 1;
+        
+        // Update counters
+        totalPositive += platform.positive;
+        totalNeutral += platform.neutral;
+        totalNegative += platform.negative;
+        
         return {
           ...platform,
           positivePercent: (platform.positive / total) * 100,
@@ -157,6 +212,16 @@ const PlatformSentiment = ({ data }) => {
         };
       })
       .sort((a, b) => b.total - a.total);
+    
+    // Log platform distributions
+    result.forEach(platform => {
+      console.log(`Platform "${platform.platform}": Positive: ${platform.positive}/${platform.total} (${platform.positivePercent.toFixed(1)}%), Neutral: ${platform.neutral}/${platform.total} (${platform.neutralPercent.toFixed(1)}%), Negative: ${platform.negative}/${platform.total} (${platform.negativePercent.toFixed(1)}%)`);
+    });
+    
+    // Log total counts
+    console.log(`TOTAL SENTIMENT DISTRIBUTION - Positive: ${totalPositive}, Neutral: ${totalNeutral}, Negative: ${totalNegative}, Total: ${totalPositive + totalNeutral + totalNegative}`);
+    
+    return result;
   };
 
   const platformStats = processPlatformStats(data?.rawData);

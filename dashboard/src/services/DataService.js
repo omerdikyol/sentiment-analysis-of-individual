@@ -137,15 +137,25 @@ class DataService {
         };
       }
       
-      const sentiment = parseFloat(row.sentiment_score);
+      const sentimentLabel = (row.sentiment_label || '').toLowerCase();
       mentionsByPlatform[row.platform].total++;
       
-      if (sentiment > 0.2) {
+      if (sentimentLabel && sentimentLabel.includes('positive')) {
         mentionsByPlatform[row.platform].positive++;
-      } else if (sentiment < -0.2) {
+      } else if (sentimentLabel && sentimentLabel.includes('negative')) {
         mentionsByPlatform[row.platform].negative++;
-      } else {
+      } else if (sentimentLabel && sentimentLabel.includes('neutral')) {
         mentionsByPlatform[row.platform].neutral++;
+      } else {
+        // Fallback to score-based categorization
+        const sentiment = parseFloat(row.sentiment_score);
+        if (sentiment > 0.2) {
+          mentionsByPlatform[row.platform].positive++;
+        } else if (sentiment < -0.2) {
+          mentionsByPlatform[row.platform].negative++;
+        } else {
+          mentionsByPlatform[row.platform].neutral++;
+        }
       }
     });
 
@@ -158,14 +168,24 @@ class DataService {
       }
       
       mentionsByCountry[country].total++;
-      const sentiment = parseFloat(row.sentiment_score);
+      const sentimentLabel = (row.sentiment_label || '').toLowerCase();
       
-      if (sentiment > 0.2) {
+      if (sentimentLabel && sentimentLabel.includes('positive')) {
         mentionsByCountry[country].positive++;
-      } else if (sentiment < -0.2) {
+      } else if (sentimentLabel && sentimentLabel.includes('negative')) {
         mentionsByCountry[country].negative++;
-      } else {
+      } else if (sentimentLabel && sentimentLabel.includes('neutral')) {
         mentionsByCountry[country].neutral++;
+      } else {
+        // Fallback to score-based categorization
+        const sentiment = parseFloat(row.sentiment_score);
+        if (sentiment > 0.2) {
+          mentionsByCountry[country].positive++;
+        } else if (sentiment < -0.2) {
+          mentionsByCountry[country].negative++;
+        } else {
+          mentionsByCountry[country].neutral++;
+        }
       }
     });
 
