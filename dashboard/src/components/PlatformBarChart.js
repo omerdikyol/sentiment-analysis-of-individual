@@ -5,6 +5,7 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import ChartModal from './ChartModal';
+import { useNavigate } from 'react-router-dom';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -59,6 +60,7 @@ const normalizePlatformName = (platform) => {
 const PlatformBarChart = ({ mentionsByPlatform }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (mentionsByPlatform && mentionsByPlatform.length > 0) {
@@ -84,6 +86,17 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
+  };
+  
+  const handleBarClick = (data) => {
+    // Navigate to sentiment data page with platform filter
+    if (data && data.platform) {
+      navigate('/sentiment-data', { 
+        state: { 
+          sourceFilter: data.platform 
+        } 
+      });
+    }
   };
 
   if (!mentionsByPlatform || mentionsByPlatform.length === 0) {
@@ -121,7 +134,7 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
     return null;
   };
 
-  const renderChart = (containerHeight = '100%') => (
+  const renderChart = (containerHeight = '100%', clickable = false) => (
     <ResponsiveContainer width="100%" height={containerHeight}>
       <BarChart
         data={animatedData}
@@ -138,7 +151,12 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
         />
         <YAxis tick={{ fontSize: 12 }} />
         <Tooltip content={CustomTooltip} />
-        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+        <Bar 
+          dataKey="count" 
+          radius={[4, 4, 0, 0]}
+          cursor={clickable ? 'pointer' : 'default'}
+          onClick={clickable ? handleBarClick : null}
+        >
           {animatedData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
@@ -170,8 +188,9 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
         open={isModalOpen}
         onClose={handleModalClose}
         title="Platform Distribution - Detailed View"
+        subtitle="Click on any bar to see mentions for that platform"
       >
-        {renderChart('100%')}
+        {renderChart('100%', true)}
       </ChartModal>
     </>
   );

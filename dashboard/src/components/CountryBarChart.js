@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import ChartModal from './ChartModal';
+import { useNavigate } from 'react-router-dom';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -45,6 +46,7 @@ const COLORS = [
 const CountryBarChart = ({ mentionsByCountry }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (mentionsByCountry && mentionsByCountry.length > 0) {
@@ -114,8 +116,19 @@ const CountryBarChart = ({ mentionsByCountry }) => {
   const handleModalClose = () => {
     setIsModalOpen(false);
   };
+  
+  const handleBarClick = (data) => {
+    // Navigate to sentiment data page with country filter
+    if (data && data.country) {
+      navigate('/sentiment-data', { 
+        state: { 
+          countryFilter: data.country 
+        } 
+      });
+    }
+  };
 
-  const renderChart = (containerHeight = '100%') => (
+  const renderChart = (containerHeight = '100%', clickable = false) => (
     <ResponsiveContainer width="100%" height={containerHeight}>
       <BarChart
         data={animatedData}
@@ -132,7 +145,12 @@ const CountryBarChart = ({ mentionsByCountry }) => {
         />
         <YAxis tick={{ fontSize: 12 }} />
         <Tooltip content={CustomTooltip} />
-        <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+        <Bar 
+          dataKey="total" 
+          radius={[4, 4, 0, 0]}
+          cursor={clickable ? 'pointer' : 'default'}
+          onClick={clickable ? handleBarClick : null}
+        >
           {animatedData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
@@ -164,8 +182,9 @@ const CountryBarChart = ({ mentionsByCountry }) => {
         open={isModalOpen}
         onClose={handleModalClose}
         title="Country Distribution - Detailed View"
+        subtitle="Click on any bar to see mentions for that country"
       >
-        {renderChart('100%')}
+        {renderChart('100%', true)}
       </ChartModal>
     </>
   );

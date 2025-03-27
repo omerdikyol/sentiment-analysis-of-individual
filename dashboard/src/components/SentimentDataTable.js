@@ -37,7 +37,7 @@ import {
 } from '@mui/icons-material';
 import Papa from 'papaparse';
 
-const SentimentDataTable = () => {
+const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter = null, initialDateFilter = null, initialCountryFilter = null, initialTextFilter = null }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -46,6 +46,11 @@ const SentimentDataTable = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [sentimentFilter, setSentimentFilter] = useState(initialSentimentFilter);
+  const [sourceFilter, setSourceFilter] = useState(initialSourceFilter);
+  const [dateFilter, setDateFilter] = useState(initialDateFilter);
+  const [countryFilter, setCountryFilter] = useState(initialCountryFilter);
+  const [textFilter, setTextFilter] = useState(initialTextFilter);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,19 +144,68 @@ const SentimentDataTable = () => {
   };
 
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = data.filter(item => 
-        (item.content && item.content.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.author && item.author.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.source && item.source.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (item.platform && item.platform.toLowerCase().includes(searchTerm.toLowerCase()))
-      );
+    if (searchTerm || sentimentFilter || sourceFilter || dateFilter || countryFilter || textFilter) {
+      const filtered = data.filter(item => {
+        // Apply sentiment filter if it exists
+        if (sentimentFilter && item.sentiment && 
+            item.sentiment.toLowerCase() !== sentimentFilter.toLowerCase()) {
+          return false;
+        }
+        
+        // Apply source/platform filter if it exists
+        if (sourceFilter && 
+            !(item.source?.toLowerCase() === sourceFilter.toLowerCase() || 
+              item.platform?.toLowerCase() === sourceFilter.toLowerCase())) {
+          return false;
+        }
+        
+        // Apply date filter if it exists
+        if (dateFilter && item.date) {
+          // If dateFilter is a range, check if the item date is within the range
+          if (dateFilter.start && dateFilter.end) {
+            const itemDate = new Date(item.date);
+            const startDate = new Date(dateFilter.start);
+            const endDate = new Date(dateFilter.end);
+            if (itemDate < startDate || itemDate > endDate) {
+              return false;
+            }
+          } else if (typeof dateFilter === 'string') {
+            // If dateFilter is a string, check if it's equal to the item date
+            if (!item.date.includes(dateFilter)) {
+              return false;
+            }
+          }
+        }
+        
+        // Apply country filter if it exists
+        if (countryFilter && item.country && 
+            item.country.toLowerCase() !== countryFilter.toLowerCase()) {
+          return false;
+        }
+        
+        // Apply text filter if it exists
+        if (textFilter && item.content) {
+          if (!item.content.toLowerCase().includes(textFilter.toLowerCase())) {
+            return false;
+          }
+        }
+        
+        // Then apply search term if it exists
+        if (searchTerm) {
+          return (item.content && item.content.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.author && item.author.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.source && item.source.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (item.platform && item.platform.toLowerCase().includes(searchTerm.toLowerCase()));
+        }
+        
+        return true;
+      });
       setFilteredData(filtered);
       setPage(0);
     } else {
       setFilteredData(data);
     }
-  }, [searchTerm, data]);
+  }, [searchTerm, data, sentimentFilter, sourceFilter, dateFilter, countryFilter, textFilter]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -186,6 +240,34 @@ const SentimentDataTable = () => {
     setDialogOpen(false);
   };
 
+  const clearFilters = () => {
+    setSentimentFilter(null);
+    setSourceFilter(null);
+    setDateFilter(null);
+    setCountryFilter(null);
+    setTextFilter(null);
+  };
+
+  const clearSentimentFilter = () => {
+    setSentimentFilter(null);
+  };
+
+  const clearSourceFilter = () => {
+    setSourceFilter(null);
+  };
+
+  const clearDateFilter = () => {
+    setDateFilter(null);
+  };
+
+  const clearCountryFilter = () => {
+    setCountryFilter(null);
+  };
+
+  const clearTextFilter = () => {
+    setTextFilter(null);
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -196,31 +278,96 @@ const SentimentDataTable = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
           Sentiment Data {filteredData.length > 0 && `(${filteredData.length} records)`}
         </Typography>
-        <TextField
-          size="small"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton size="small">
-                  <FilterListIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          sx={{ width: '300px' }}
-        />
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          {(sentimentFilter || sourceFilter || dateFilter || countryFilter || textFilter) && (
+            <Chip 
+              label="Clear all filters"
+              color="default"
+              onDelete={clearFilters}
+              size="small"
+              sx={{ fontWeight: 500 }}
+            />
+          )}
+          
+          {sentimentFilter && (
+            <Chip 
+              label={`${sentimentFilter.charAt(0).toUpperCase() + sentimentFilter.slice(1)} sentiment`}
+              color={sentimentFilter === 'positive' ? 'success' : sentimentFilter === 'negative' ? 'error' : 'primary'}
+              onDelete={clearSentimentFilter}
+              size="small"
+              sx={{ fontWeight: 500 }}
+            />
+          )}
+          
+          {sourceFilter && (
+            <Chip 
+              label={`Source: ${sourceFilter}`}
+              color="info"
+              onDelete={clearSourceFilter}
+              size="small"
+              sx={{ fontWeight: 500 }}
+            />
+          )}
+          
+          {dateFilter && (
+            <Chip 
+              label={typeof dateFilter === 'string' 
+                ? `Date: ${dateFilter}` 
+                : `Date: ${dateFilter.start} - ${dateFilter.end}`}
+              color="warning"
+              onDelete={clearDateFilter}
+              size="small"
+              sx={{ fontWeight: 500 }}
+            />
+          )}
+          
+          {countryFilter && (
+            <Chip 
+              label={`Country: ${countryFilter}`}
+              color="success"
+              onDelete={clearCountryFilter}
+              size="small"
+              sx={{ fontWeight: 500 }}
+            />
+          )}
+          
+          {textFilter && (
+            <Chip 
+              label={`Contains: ${textFilter}`}
+              color="default"
+              onDelete={clearTextFilter}
+              size="small"
+              sx={{ fontWeight: 500 }}
+            />
+          )}
+          
+          <TextField
+            size="small"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton size="small">
+                    <FilterListIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: '300px' }}
+          />
+        </Box>
       </Box>
       <Paper sx={{ width: '100%', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
         <TableContainer sx={{ maxHeight: 'calc(100vh - 250px)' }}>

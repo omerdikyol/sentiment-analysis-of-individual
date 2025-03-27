@@ -2,9 +2,11 @@ import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const SentimentOverview = ({ data }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const sentimentData = [
     {
@@ -23,6 +25,11 @@ const SentimentOverview = ({ data }) => {
       color: theme.palette.error.main,
     },
   ];
+
+  const handleSentimentClick = (sentiment) => {
+    // Navigate to sentiment data page with appropriate filter
+    navigate('/sentiment-data', { state: { sentimentFilter: sentiment.name.toLowerCase() } });
+  };
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -90,6 +97,9 @@ const SentimentOverview = ({ data }) => {
               outerRadius={100}
               paddingAngle={2}
               dataKey="value"
+              onClick={handleSentimentClick}
+              // Make the chart segments interactive
+              style={{ cursor: 'pointer' }}
             >
               {sentimentData.map((entry, index) => (
                 <Cell 
@@ -124,7 +134,12 @@ const SentimentOverview = ({ data }) => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
+                cursor: 'pointer',
+                '&:hover': {
+                  textDecoration: 'underline'
+                }
               }}
+              onClick={() => handleSentimentClick(item)}
             >
               <Box
                 sx={{

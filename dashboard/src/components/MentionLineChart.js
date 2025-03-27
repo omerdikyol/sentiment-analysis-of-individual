@@ -5,6 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import ChartModal from './ChartModal';
+import { useNavigate } from 'react-router-dom';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -18,6 +19,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 const MentionLineChart = ({ mentionsByDate }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (mentionsByDate && mentionsByDate.length > 0) {
@@ -41,7 +43,18 @@ const MentionLineChart = ({ mentionsByDate }) => {
     setIsModalOpen(false);
   };
 
-  const renderChart = (containerHeight = '100%') => (
+  const handleDataPointClick = (data) => {
+    if (data && data.activePayload && data.activePayload.length > 0) {
+      const clickedData = data.activePayload[0].payload;
+      navigate('/sentiment-data', { 
+        state: { 
+          dateFilter: clickedData.date 
+        } 
+      });
+    }
+  };
+
+  const renderChart = (containerHeight = '100%', clickable = false) => (
     <ResponsiveContainer width="100%" height={containerHeight}>
       <AreaChart
         data={animatedData}
@@ -51,6 +64,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
           left: 0,
           bottom: 30
         }}
+        onClick={clickable ? handleDataPointClick : undefined}
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
@@ -68,6 +82,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           }}
+          cursor={clickable ? { stroke: '#ccc', strokeWidth: 2 } : undefined}
         />
         <Area
           type="monotone"
@@ -76,6 +91,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
           fill="#8884d8"
           fillOpacity={0.3}
           strokeWidth={2}
+          activeDot={clickable ? { r: 8, strokeWidth: 2, onClick: handleDataPointClick } : { r: 6 }}
         />
       </AreaChart>
     </ResponsiveContainer>
@@ -115,8 +131,9 @@ const MentionLineChart = ({ mentionsByDate }) => {
         open={isModalOpen}
         onClose={handleModalClose}
         title="Mentions Over Time - Detailed View"
+        subtitle="Click on any data point to see mentions for that date"
       >
-        {renderChart('100%')}
+        {renderChart('100%', true)}
       </ChartModal>
     </>
   );

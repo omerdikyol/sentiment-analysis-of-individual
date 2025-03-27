@@ -20,9 +20,11 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   // Define colors for the charts
   const COLORS = [
@@ -369,45 +371,74 @@ const GeographicalInsights = ({ data }) => {
     }
   ];
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
       return (
         <Box
           sx={{
             backgroundColor: 'background.paper',
-            p: 1.5,
+            p: 2,
             border: 1,
             borderColor: 'divider',
             borderRadius: 1,
           }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            {label}
+          <Typography variant="subtitle2" gutterBottom>
+            {data.country}
           </Typography>
-          {payload.map((entry) => (
-            <Typography
-              key={entry.name}
-              variant="body2"
-              sx={{ color: entry.color }}
-            >
-              {`${entry.name}: ${Number(entry.value).toLocaleString()}`}
-            </Typography>
-          ))}
-          {payload[0]?.payload?.total && (
-            <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-              Total Mentions: {payload[0].payload.total}
-            </Typography>
-          )}
-          {payload[0]?.payload?.engagement && (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Engagement: {payload[0].payload.engagement}
-            </Typography>
-          )}
+          <Typography variant="body2">
+            Total Mentions: {data.total}
+          </Typography>
+          <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.positive }}>
+            Positive: {data.positive.toFixed(1)}%
+          </Typography>
+          <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.neutral }}>
+            Neutral: {data.neutral.toFixed(1)}%
+          </Typography>
+          <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.negative }}>
+            Negative: {data.negative.toFixed(1)}%
+          </Typography>
         </Box>
       );
     }
     return null;
   };
+
+  const SourceTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <Box
+          sx={{
+            backgroundColor: 'background.paper',
+            p: 2,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1,
+          }}
+        >
+          <Typography variant="subtitle2" gutterBottom>
+            {data.country}
+          </Typography>
+          {payload.map((entry, index) => (
+            <Typography 
+              key={index} 
+              variant="body2" 
+              sx={{ color: entry.color }}
+            >
+              {`${entry.name}: ${entry.value}%`}
+            </Typography>
+          ))}
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Total Mentions: {data.total}
+          </Typography>
+        </Box>
+      );
+    }
+    return null;
+  };
+
   const renderTopicChart = (country) => {
     const data = countryData[country]?.topics || {};
     const topTopics = Object.entries(data)
@@ -483,6 +514,17 @@ const GeographicalInsights = ({ data }) => {
     );
   };
 
+  // Handle click events
+  const handleCountryClick = (data) => {
+    if (data && data.country) {
+      navigate('/sentiment-data', { 
+        state: { 
+          countryFilter: data.country 
+        } 
+      });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -510,6 +552,8 @@ const GeographicalInsights = ({ data }) => {
                     cy="50%"
                     outerRadius={80}
                     label={(entry) => entry.country}
+                    onClick={handleCountryClick}
+                    cursor="pointer"
                   >
                     {sentimentByCountry.map((entry, index) => (
                       <Cell 
@@ -547,64 +591,35 @@ const GeographicalInsights = ({ data }) => {
                     tick={{ fontSize: 12 }}
                     width={35}
                   />
-                  <Tooltip
-                    formatter={(value) => `${value}%`}
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <Box
-                            sx={{
-                              bgcolor: 'background.paper',
-                              p: 1.5,
-                              border: 1,
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Typography variant="subtitle2" gutterBottom>
-                              {label}
-                            </Typography>
-                            {payload.map((entry) => (
-                              <Typography
-                                key={entry.name}
-                                variant="body2"
-                                sx={{
-                                  color: entry.color,
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  gap: 2,
-                                }}
-                              >
-                                <span>{entry.name}:</span>
-                                <span>{entry.value}%</span>
-                              </Typography>
-                            ))}
-                          </Box>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
+                  <Tooltip content={<SourceTooltip />} />
                   <Legend />
                   <Bar
                     dataKey="Social Media"
                     stackId="a"
-                    fill="#1565C0"
+                    fill={SOURCE_COLORS['Social Media']}
+                    cursor="pointer"
+                    onClick={handleCountryClick}
                   />
                   <Bar
                     dataKey="News"
                     stackId="a"
-                    fill="#2E7D32"
+                    fill={SOURCE_COLORS['News']}
+                    cursor="pointer"
+                    onClick={handleCountryClick}
                   />
                   <Bar
                     dataKey="TV"
                     stackId="a"
-                    fill="#EF6C00"
+                    fill={SOURCE_COLORS['TV']}
+                    cursor="pointer"
+                    onClick={handleCountryClick}
                   />
                   <Bar
                     dataKey="Other"
                     stackId="a"
-                    fill="#C2185B"
+                    fill={SOURCE_COLORS['Other']}
+                    cursor="pointer"
+                    onClick={handleCountryClick}
                   />
                 </BarChart>
               </ResponsiveContainer>

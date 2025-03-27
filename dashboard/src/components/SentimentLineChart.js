@@ -5,6 +5,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import ChartModal from './ChartModal';
+import { useNavigate } from 'react-router-dom';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -15,9 +16,16 @@ const StyledCard = styled(Card)(({ theme }) => ({
   },
 }));
 
+// Helper function to format date to M/D/YYYY
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+};
+
 const SentimentLineChart = ({ sentimentByDate }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     if (sentimentByDate && sentimentByDate.length > 0) {
@@ -27,7 +35,10 @@ const SentimentLineChart = ({ sentimentByDate }) => {
       // Animate data points appearing one by one
       sentimentByDate.forEach((item, index) => {
         setTimeout(() => {
-          setAnimatedData(prev => [...prev, item]);
+          setAnimatedData(prev => [...prev, {
+            ...item,
+            formattedDate: formatDate(item.date) // Add formatted date
+          }]);
         }, index * 50);
       });
     }
@@ -39,6 +50,17 @@ const SentimentLineChart = ({ sentimentByDate }) => {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
+  };
+  
+  const handleDataPointClick = (data) => {
+    if (data && data.activePayload && data.activePayload.length > 0) {
+      const clickedData = data.activePayload[0].payload;
+      navigate('/sentiment-data', { 
+        state: { 
+          dateFilter: clickedData.formattedDate // Use formatted date
+        } 
+      });
+    }
   };
 
   if (!sentimentByDate || sentimentByDate.length === 0) {
@@ -55,7 +77,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       // Find the data point that matches the label
-      const dataPoint = sentimentByDate.find(item => new Date(item.date).toLocaleDateString() === label);
+      const dataPoint = animatedData.find(item => item.formattedDate === label);
       
       return (
         <Box
@@ -98,15 +120,16 @@ const SentimentLineChart = ({ sentimentByDate }) => {
     avgScorePercent: (item.avgScore * 100).toFixed(1)
   }));
 
-  const renderChart = (containerHeight = '100%') => (
+  const renderChart = (containerHeight = '100%', clickable = false) => (
     <ResponsiveContainer width="100%" height={containerHeight}>
       <LineChart
         data={animatedData}
         margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+        onClick={clickable ? handleDataPointClick : undefined}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
         <XAxis
-          dataKey="date"
+          dataKey="formattedDate"
           angle={-45}
           textAnchor="end"
           height={60}
@@ -120,6 +143,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           }}
+          cursor={clickable ? { stroke: '#ccc', strokeWidth: 2 } : undefined}
         />
         <Legend />
         <Line
@@ -128,7 +152,18 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           stroke="#4caf50"
           strokeWidth={2}
           dot={{ r: 3 }}
-          activeDot={{ r: 5 }}
+          activeDot={clickable ? { 
+            r: 6, 
+            strokeWidth: 2, 
+            onClick: (e, payload) => {
+              navigate('/sentiment-data', { 
+                state: { 
+                  dateFilter: payload.payload.formattedDate,
+                  sentimentFilter: 'positive'
+                } 
+              });
+            } 
+          } : { r: 5 }}
         />
         <Line
           type="monotone"
@@ -136,7 +171,18 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           stroke="#f44336"
           strokeWidth={2}
           dot={{ r: 3 }}
-          activeDot={{ r: 5 }}
+          activeDot={clickable ? { 
+            r: 6, 
+            strokeWidth: 2, 
+            onClick: (e, payload) => {
+              navigate('/sentiment-data', { 
+                state: { 
+                  dateFilter: payload.payload.formattedDate,
+                  sentimentFilter: 'negative'
+                } 
+              });
+            } 
+          } : { r: 5 }}
         />
         <Line
           type="monotone"
@@ -144,7 +190,18 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           stroke="#9e9e9e"
           strokeWidth={2}
           dot={{ r: 3 }}
-          activeDot={{ r: 5 }}
+          activeDot={clickable ? { 
+            r: 6, 
+            strokeWidth: 2, 
+            onClick: (e, payload) => {
+              navigate('/sentiment-data', { 
+                state: { 
+                  dateFilter: payload.payload.formattedDate,
+                  sentimentFilter: 'neutral'
+                } 
+              });
+            } 
+          } : { r: 5 }}
         />
       </LineChart>
     </ResponsiveContainer>
@@ -173,8 +230,9 @@ const SentimentLineChart = ({ sentimentByDate }) => {
         open={isModalOpen}
         onClose={handleModalClose}
         title="Sentiment Trends - Detailed View"
+        subtitle="Click on any data point to filter by date and sentiment type"
       >
-        {renderChart('100%')}
+        {renderChart('100%', true)}
       </ChartModal>
     </>
   );

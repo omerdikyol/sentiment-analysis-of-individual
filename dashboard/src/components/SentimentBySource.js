@@ -26,9 +26,11 @@ import {
 } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import InfoIcon from '@mui/icons-material/Info';
+import { useNavigate } from 'react-router-dom';
 
 const SentimentBySource = ({ data }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [minMentions, setMinMentions] = useState(5);
 
   // Process raw data to get sentiment distribution by source
@@ -221,6 +223,11 @@ const SentimentBySource = ({ data }) => {
     return null;
   };
 
+  const handleSourceClick = (entry) => {
+    // Navigate to sentiment data page with source filter
+    navigate('/sentiment-data', { state: { sourceFilter: entry.source } });
+  };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -251,68 +258,75 @@ const SentimentBySource = ({ data }) => {
                 <MenuItem value={5}>≥ 5</MenuItem>
                 <MenuItem value={10}>≥ 10</MenuItem>
                 <MenuItem value={20}>≥ 20</MenuItem>
+                <MenuItem value={50}>≥ 50</MenuItem>
               </Select>
             </FormControl>
           </Box>
 
           {processSourceData.length > 0 ? (
             <Box sx={{ width: '100%', height: 400 }}>
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
+                  layout="vertical"
                   data={processSourceData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                  margin={{
+                    top: 20,
+                    right: 20,
+                    bottom: 20,
+                    left: 100,
+                  }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                  <XAxis
+                  <CartesianGrid stroke="#f5f5f5" />
+                  <XAxis type="number" tickFormatter={(value) => `${value}%`} />
+                  <YAxis
                     dataKey="source"
+                    type="category"
+                    scale="band"
                     tick={{ fontSize: 12 }}
-                    interval={0}
-                    angle={-45}
-                    textAnchor="end"
-                    height={70}
+                    width={90}
+                    style={{ cursor: 'pointer' }}
+                    onClick={(data) => {
+                      const entry = processSourceData.find(item => item.source === data.value);
+                      if (entry) handleSourceClick(entry);
+                    }}
                   />
-                  <YAxis
-                    yAxisId="left"
-                    domain={[0, 100]}
-                    tickFormatter={(value) => `${value}%`}
+                  <RechartsTooltip
+                    content={<CustomTooltip />}
+                    cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
                   />
-                  <YAxis
-                    yAxisId="right"
-                    orientation="right"
-                    domain={[-1, 1]}
-                    tickFormatter={(value) => value.toFixed(2)}
-                  />
-                  <RechartsTooltip content={<CustomTooltip />} />
                   <Legend />
                   <Bar
-                    yAxisId="left"
                     dataKey="positive"
-                    name="Positive"
                     stackId="a"
                     fill={theme.palette.success.main}
+                    name="Positive"
+                    onClick={handleSourceClick}
+                    style={{ cursor: 'pointer' }}
                   />
                   <Bar
-                    yAxisId="left"
                     dataKey="neutral"
-                    name="Neutral"
                     stackId="a"
                     fill={theme.palette.grey[400]}
+                    name="Neutral"
+                    onClick={handleSourceClick}
+                    style={{ cursor: 'pointer' }}
                   />
                   <Bar
-                    yAxisId="left"
                     dataKey="negative"
-                    name="Negative"
                     stackId="a"
                     fill={theme.palette.error.main}
+                    name="Negative"
+                    onClick={handleSourceClick}
+                    style={{ cursor: 'pointer' }}
                   />
                   <Line
-                    yAxisId="right"
                     type="monotone"
                     dataKey="avgSentiment"
+                    stroke={theme.palette.info.main}
                     name="Avg. Sentiment"
-                    stroke={theme.palette.primary.main}
                     strokeWidth={2}
-                    dot={{ r: 4 }}
+                    dot={{ fill: theme.palette.info.main, r: 3 }}
+                    activeDot={{ r: 5 }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
