@@ -63,44 +63,229 @@ const EventAnalysis = ({ data }) => {
     return { text: 'Very Negative', color: theme.palette.error.dark };
   };
 
-  // Placeholder data for key events
-  const keyEvents = [
-    {
-      date: '2024-03-15',
-      type: 'Diplomatic',
-      title: 'GCC Summit',
-      description: 'Annual Gulf Cooperation Council Summit in Doha',
-      location: 'Doha, Qatar',
-      beforeSentiment: 0.65,
-      afterSentiment: 0.82,
-      impact: 'positive',
-      mentions: 1200
-    },
-    {
-      date: '2024-02-20',
-      type: 'Sports',
-      title: 'Asian Cup Final',
-      description: 'Qatar hosts major sporting event',
-      location: 'Al Wakrah, Qatar',
-      beforeSentiment: 0.70,
-      afterSentiment: 0.85,
-      impact: 'positive',
-      mentions: 2500
-    },
-    {
-      date: '2024-01-10',
-      type: 'Economic',
-      title: 'Investment Forum',
-      description: 'International Investment Conference',
-      location: 'Dubai, UAE',
-      beforeSentiment: 0.60,
-      afterSentiment: 0.75,
-      impact: 'positive',
-      mentions: 800
-    }
-  ];
+  // Helper function to extract event-related information from text
+  const extractEventInfo = (text) => {
+    if (!text) return null;
 
-  // Calculate sentiment changes for events
+    // Common event-related keywords
+    const eventKeywords = [
+      'announced', 'launched', 'unveiled', 'hosted', 'organized',
+      'conference', 'summit', 'meeting', 'agreement', 'signed',
+      'initiative', 'project', 'partnership', 'collaboration',
+      'investment', 'development', 'inauguration', 'ceremony'
+    ];
+
+    // Event type patterns
+    const eventTypes = {
+      'Diplomatic': ['diplomatic', 'bilateral', 'multilateral', 'relations', 'cooperation', 'ambassador', 'embassy', 'foreign', 'minister', 'delegation'],
+      'Economic': ['economic', 'business', 'trade', 'investment', 'financial', 'market', 'economy', 'commerce', 'industry'],
+      'Sports': ['sports', 'tournament', 'championship', 'match', 'game', 'competition', 'athlete', 'team', 'stadium'],
+      'Cultural': ['cultural', 'festival', 'exhibition', 'art', 'heritage', 'tradition', 'celebration', 'museum'],
+      'Technology': ['technology', 'innovation', 'digital', 'tech', 'startup', 'AI', 'software', 'platform'],
+      'Infrastructure': ['infrastructure', 'construction', 'development', 'project', 'facility', 'building'],
+      'Education': ['education', 'academic', 'university', 'school', 'training', 'learning', 'students'],
+      'Healthcare': ['health', 'medical', 'healthcare', 'hospital', 'clinic', 'treatment', 'patient']
+    };
+
+    // Check if text contains event-related keywords
+    const hasEventKeyword = eventKeywords.some(keyword => 
+      text.toLowerCase().includes(keyword)
+    );
+
+    if (!hasEventKeyword) return null;
+
+    // Determine event type
+    let eventType = 'General';
+    let maxMatches = 0;
+
+    Object.entries(eventTypes).forEach(([type, keywords]) => {
+      const matches = keywords.filter(keyword => 
+        text.toLowerCase().includes(keyword)
+      ).length;
+      
+      if (matches > maxMatches) {
+        maxMatches = matches;
+        eventType = type;
+      }
+    });
+
+    // Extract location using common patterns
+    const locationPattern = /(?:in|at|from)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)/g;
+    const locationMatches = [...text.matchAll(locationPattern)];
+    const location = locationMatches.length > 0 ? locationMatches[0][1] : null;
+
+    return {
+      type: eventType,
+      location: location || 'Multiple Locations',
+      hasEvent: true
+    };
+  };
+
+  // Process real data to identify key events and their impact
+  const processEventData = (rawData) => {
+    if (!rawData || !Array.isArray(rawData)) return [];
+
+    // Group posts by date and analyze content for events
+    const eventsByDate = rawData.reduce((acc, post) => {
+      const date = post.date?.split('T')[0] || 'unknown';
+      
+      // Skip if no content or not from a news source
+      if (!post.content || !post.source) return acc;
+
+      // Extract event information from content
+      const eventInfo = extractEventInfo(post.content);
+      if (!eventInfo?.hasEvent) return acc;
+
+      if (!acc[date]) {
+        acc[date] = {
+          posts: [],
+          totalSentiment: 0,
+          mentions: 0,
+          topics: new Set(),
+          sources: new Set(),
+          events: new Map() // Track unique events by type
+        };
+      }
+
+      acc[date].posts.push(post);
+      acc[date].totalSentiment += post.sentiment || 0;
+      acc[date].mentions++;
+      acc[date].sources.add(post.source);
+
+      // Track event by type
+      const eventKey = `${eventInfo.type}-${eventInfo.location}`;
+      if (!acc[date].events.has(eventKey)) {
+        acc[date].events.set(eventKey, {
+          type: eventInfo.type,
+          location: eventInfo.location,
+          content: post.content,
+          mentions: 1,
+          sentiment: post.sentiment || 0,
+          sources: new Set([post.source])
+        });
+      } else {
+        const event = acc[date].events.get(eventKey);
+        event.mentions++;
+        event.sentiment += post.sentiment || 0;
+        event.sources.add(post.source);
+      }
+
+      return acc;
+    }, {});
+
+    // Convert events map to array and identify significant events
+    const significantEvents = Object.entries(eventsByDate)
+      .flatMap(([date, data]) => {
+        return Array.from(data.events.values())
+          .map(event => ({
+            date,
+            type: event.type,
+            title: `${event.type} Event`,
+            description: event.content.slice(0, 150) + '...',
+            location: event.location,
+            avgSentiment: event.sentiment / event.mentions,
+            mentions: event.mentions,
+            sources: Array.from(event.sources)
+          }));
+      })
+      .filter(event => event.mentions >= 3) // Events mentioned at least 3 times
+      .sort((a, b) => b.mentions - a.mentions)
+      .slice(0, 3); // Get top 3 most significant events
+
+    // Calculate sentiment changes and format event data
+    return significantEvents.map(event => {
+      // Get data from day before the event
+      const eventDate = new Date(event.date);
+      const beforeDate = new Date(eventDate);
+      beforeDate.setDate(beforeDate.getDate() - 1);
+      const beforeDateStr = beforeDate.toISOString().split('T')[0];
+
+      // Calculate before sentiment
+      const beforeData = eventsByDate[beforeDateStr];
+      const beforeSentiment = beforeData ? 
+        beforeData.totalSentiment / beforeData.mentions : 0;
+
+      return {
+        date: event.date,
+        type: event.type,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        beforeSentiment: Math.max(0, Math.min(1, beforeSentiment + 0.5)), // Normalize to 0-1
+        afterSentiment: Math.max(0, Math.min(1, event.avgSentiment + 0.5)), // Normalize to 0-1
+        impact: event.avgSentiment > beforeSentiment ? 'positive' : 'negative',
+        mentions: event.mentions
+      };
+    });
+  };
+
+  // Process crisis events from real data
+  const processCrisisEvents = (rawData) => {
+    if (!rawData || !Array.isArray(rawData)) return [];
+
+    // Group posts by date
+    const postsByDate = rawData.reduce((acc, post) => {
+      const date = post.date?.split('T')[0] || 'unknown';
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(post);
+      return acc;
+    }, {});
+
+    // Identify crisis events (days with significantly negative sentiment)
+    const crisisEvents = Object.entries(postsByDate)
+      .map(([date, posts]) => {
+        const avgSentiment = posts.reduce((sum, post) => sum + (post.sentiment || 0), 0) / posts.length;
+        return {
+          date,
+          avgSentiment,
+          posts: posts.length
+        };
+      })
+      .filter(event => event.avgSentiment < -0.2 && event.posts >= 30) // Filter significant negative events
+      .sort((a, b) => a.avgSentiment - b.avgSentiment)
+      .slice(0, 2); // Get top 2 most negative events
+
+    return crisisEvents.map(crisis => {
+      const timeline = [];
+      const crisisDate = new Date(crisis.date);
+      
+      // Generate 72-hour timeline
+      for (let i = 0; i < 4; i++) {
+        const timePoint = new Date(crisisDate);
+        timePoint.setHours(timePoint.getHours() + (i * 24));
+        const timeStr = timePoint.toISOString().split('T')[0];
+        const dayPosts = postsByDate[timeStr] || [];
+        const daySentiment = dayPosts.length > 0 ?
+          dayPosts.reduce((sum, post) => sum + (post.sentiment || 0), 0) / dayPosts.length : 0;
+        
+        timeline.push({
+          time: `${i * 24}h`,
+          sentiment: Math.max(0, Math.min(1, daySentiment + 0.5)) // Normalize to 0-1
+        });
+      }
+
+      return {
+        date: crisis.date,
+        title: 'Sentiment Crisis',
+        initialSentiment: Math.max(0, Math.min(1, crisis.avgSentiment + 0.5)),
+        responseEffectiveness: Math.max(0, Math.min(1, timeline[timeline.length - 1].sentiment)),
+        recoveryTime: '72 hours',
+        reputationImpact: Math.round(crisis.avgSentiment * 100),
+        recoveryRate: Math.round(
+          ((timeline[timeline.length - 1].sentiment - crisis.avgSentiment) / Math.abs(crisis.avgSentiment)) * 100
+        ),
+        timeline
+      };
+    });
+  };
+
+  // Process the real data
+  const keyEvents = processEventData(data);
+  const crisisEvents = processCrisisEvents(data);
+
+  // Calculate event impacts
   const eventImpacts = keyEvents.map(event => {
     const change = event.afterSentiment - event.beforeSentiment;
     const changeInfo = formatSentimentChange(change);
@@ -112,40 +297,6 @@ const EventAnalysis = ({ data }) => {
       impact: change > 0 ? 'Positive' : 'Negative'
     };
   });
-
-  // Placeholder data for crisis response
-  const crisisEvents = [
-    {
-      date: '2024-03-01',
-      title: 'Policy Controversy',
-      initialSentiment: 0.45,
-      responseEffectiveness: 0.75,
-      recoveryTime: '48 hours',
-      reputationImpact: -15, // percentage drop in reputation
-      recoveryRate: 85, // percentage of recovery achieved
-      timeline: [
-        { time: '0h', sentiment: 0.45 },
-        { time: '24h', sentiment: 0.55 },
-        { time: '48h', sentiment: 0.75 },
-        { time: '72h', sentiment: 0.80 }
-      ]
-    },
-    {
-      date: '2024-02-15',
-      title: 'Media Criticism',
-      initialSentiment: 0.40,
-      responseEffectiveness: 0.70,
-      recoveryTime: '72 hours',
-      reputationImpact: -25,
-      recoveryRate: 75,
-      timeline: [
-        { time: '0h', sentiment: 0.40 },
-        { time: '24h', sentiment: 0.50 },
-        { time: '48h', sentiment: 0.65 },
-        { time: '72h', sentiment: 0.70 }
-      ]
-    }
-  ];
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

@@ -44,6 +44,7 @@ logs/*
 !logs/archive/.gitkeep
 config/.env
 models/sentiment/*
+models/sentiment_improved/*
 !models/sentiment/.gitkeep
 
 # Node

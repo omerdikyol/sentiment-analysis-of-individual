@@ -378,6 +378,7 @@ function App() {
     const bottomSentiment = DataService.getBottomSentiment(filteredRawData, 5);
     const mentionsByPlatform = DataService.getMentionsByPlatform(filteredRawData);
     const mentionsByCountry = DataService.getMentionsByCountry(filteredRawData);
+    const sourceSentimentData = DataService.getSourceSentimentData(filteredRawData);
     
     setFilteredData({
       ...data,
@@ -388,7 +389,8 @@ function App() {
       topSentiment,
       bottomSentiment,
       mentionsByPlatform,
-      mentionsByCountry
+      mentionsByCountry,
+      sourceSentimentData
     });
   }, [selectedCountry, timeRange, data]);
   

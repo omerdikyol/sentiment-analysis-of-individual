@@ -613,7 +613,9 @@ const GeographicalInsights = ({ data }) => {
               Top Topics by Country
             </Typography>
             <Grid container spacing={2} sx={{ flexWrap: 'nowrap', overflowX: 'auto', pb: 2 }}>
-              {Object.keys(countryData).map((country) => (
+              {Object.keys(countryData)
+                .filter(country => country !== 'Unknown')  // Filter out Unknown country
+                .map((country) => (
                 <Grid item xs={12} sm={6} md={3} key={country} sx={{ flex: '0 0 auto' }}>
                   <Paper
                     sx={{

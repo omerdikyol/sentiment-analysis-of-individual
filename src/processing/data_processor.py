@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import os
 import glob
 from datetime import datetime
@@ -10,8 +9,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 import logging
 import unicodedata
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import random
+from sentiment_analyzer import ImprovedSentimentAnalyzer
 
 # Configure logging
 logging.basicConfig(
@@ -23,36 +22,12 @@ logger = logging.getLogger('DataProcessor')
 class DataProcessor:
     def __init__(self):
         self.base_path = Path(__file__).parent.parent.parent
-        self.model_name = "cardiffnlp/twitter-roberta-base-sentiment"
-        self.model_dir = self.base_path / "models" / "sentiment"
-        self.sentiment_pipeline = self.get_sentiment_model()
-        self.sentiment_analyzer = SentimentIntensityAnalyzer()
+        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
         random.seed(42)  # For consistent random values
 
-    def get_sentiment_model(self):
-        """Load or download sentiment model"""
-        if self.model_dir.exists():
-            logger.info("Loading model from local directory...")
-            model = AutoModelForSequenceClassification.from_pretrained(str(self.model_dir))
-            tokenizer = AutoTokenizer.from_pretrained(str(self.model_dir))
-            return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
-        else:
-            logger.info("Downloading and saving model...")
-            # Download and create the pipeline
-            sentiment_pipe = pipeline("sentiment-analysis", model=self.model_name)
-            # Save the model and tokenizer
-            self.model_dir.mkdir(parents=True, exist_ok=True)
-            sentiment_pipe.model.save_pretrained(str(self.model_dir))
-            sentiment_pipe.tokenizer.save_pretrained(str(self.model_dir))
-            return sentiment_pipe
-
     def get_sentiment(self, text):
-        """Get sentiment for a piece of text"""
-        if pd.isna(text) or str(text).lower() == "none":
-            return "neutral", 0.0
-        result = self.sentiment_pipeline(str(text)[:512])[0]  # Limit text length
-        label_map = {"LABEL_0": "negative", "LABEL_1": "neutral", "LABEL_2": "positive"}
-        return label_map[result["label"]], result["score"]
+        """Get sentiment for a piece of text using the improved analyzer"""
+        return self.sentiment_analyzer.analyze(text)
 
     def normalize_text(self, text):
         """Clean text for better duplicate detection"""

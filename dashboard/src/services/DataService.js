@@ -502,9 +502,49 @@ class DataService {
     cutoffDate.setDate(cutoffDate.getDate() - parseInt(days));
 
     return data.filter(item => {
-      if (!item.date || !(item.date instanceof Date)) return false;
-      return item.date >= cutoffDate;
+      const itemDate = new Date(item.published_date || item.date);
+      return !isNaN(itemDate.getTime()) && itemDate >= cutoffDate;
     });
+  }
+
+  getSourceSentimentData(data) {
+    const sourceStats = data.reduce((acc, item) => {
+      const source = item.source_name || item.source || 'Unknown';
+      if (!acc[source]) {
+        acc[source] = {
+          total: 0,
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          sentimentSum: 0
+        };
+      }
+
+      acc[source].total++;
+      const sentimentScore = parseFloat(item.sentiment_score) || 0;
+      acc[source].sentimentSum += sentimentScore;
+
+      if (sentimentScore > 0.7) {
+        acc[source].positive++;
+      } else if (sentimentScore < 0.3) {
+        acc[source].negative++;
+      } else {
+        acc[source].neutral++;
+      }
+
+      return acc;
+    }, {});
+
+    return Object.entries(sourceStats)
+      .map(([source, stats]) => ({
+        source,
+        positive: (stats.positive / stats.total * 100).toFixed(1),
+        neutral: (stats.neutral / stats.total * 100).toFixed(1),
+        negative: (stats.negative / stats.total * 100).toFixed(1),
+        avgSentiment: (stats.sentimentSum / stats.total).toFixed(2),
+        total: stats.total
+      }))
+      .sort((a, b) => b.total - a.total);
   }
 }
 
