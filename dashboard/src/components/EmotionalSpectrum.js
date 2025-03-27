@@ -61,6 +61,36 @@ const EmotionalSpectrum = ({ data }) => {
   const [platform, setPlatform] = useState('all');
   const [focusedEmotion, setFocusedEmotion] = useState(null);
 
+  // Define excluded terms
+  const excludedTerms = new Set([
+    'us', 'US', 'usa', 'USA',
+    'uk', 'UK',
+    'qa', 'QA',
+    'ae', 'AE',
+    'gb', 'GB',
+    'fr', 'FR',
+    'de', 'DE',
+    'it', 'IT',
+    'es', 'ES',
+    'unknown', 'Unknown', 'UNKNOWN',
+    'other', 'Other', 'OTHER'
+  ]);
+
+  // Helper function to validate and normalize platform names
+  const normalizePlatform = (platform) => {
+    if (!platform) return null;
+    
+    const normalizedPlatform = platform.trim();
+    
+    // Check if it's in excluded terms
+    if (excludedTerms.has(normalizedPlatform)) return null;
+    
+    // Special cases
+    if (normalizedPlatform.toLowerCase() === 'x') return 'Twitter';
+    
+    return normalizedPlatform;
+  };
+
   // Define the full emotional spectrum
   const emotionalCategories = {
     joy: ['happy', 'delighted', 'excited', 'pleased', 'proud', 'elated', 'grateful', 'satisfied', 'cheerful', 'wonderful', 'fantastic', 'amazing', 'love', 'enjoy', 'celebrate', 'success', 'win', 'victory', 'congratulations', 'thank', 'appreciation', 'positive', 'good', 'great', 'excellent', 'best'],
@@ -119,7 +149,8 @@ const EmotionalSpectrum = ({ data }) => {
         const text = item.text.toLowerCase();
         const date = new Date(item.date);
         const dateStr = date.toISOString().split('T')[0];
-        const platform = item.platform || 'Unknown';
+        const platform = normalizePlatform(item.platform || item.source);
+        if (!platform) return; // Skip this item if platform is excluded
         const source = item.source || 'Unknown';
         
         // Detect emotions in text
