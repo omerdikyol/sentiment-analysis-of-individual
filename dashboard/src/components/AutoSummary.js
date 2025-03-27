@@ -110,7 +110,7 @@ const AutoSummary = ({ data }) => {
   };
 
   useEffect(() => {
-    if (!data?.rawData) return;
+    if (!data) return;
     setLoading(true);
 
     // Generate AI-like summaries from the data
@@ -126,20 +126,19 @@ const AutoSummary = ({ data }) => {
 
       // Process data to extract insights
       if (data.rawData && data.rawData.length > 0) {
-        // Count sentiment distribution
-        const sentimentCounts = {
-          positive: data.rawData.filter(item => parseFloat(item.sentiment_score) > 0.2).length,
-          neutral: data.rawData.filter(item => parseFloat(item.sentiment_score) >= -0.2 && parseFloat(item.sentiment_score) <= 0.2).length,
-          negative: data.rawData.filter(item => parseFloat(item.sentiment_score) < -0.2).length
-        };
+        // Use metrics from the filteredData if available, otherwise calculate them
+        const positivePercentage = data.metrics?.positivePercentage || 
+          (data.rawData.filter(item => parseFloat(item.sentiment_score || item.sentiment || 0) > 0.2).length / data.rawData.length * 100).toFixed(1);
         
-        const totalItems = data.rawData.length;
-        const positivePercentage = (sentimentCounts.positive / totalItems * 100).toFixed(1);
-        const negativePercentage = (sentimentCounts.negative / totalItems * 100).toFixed(1);
-        const neutralPercentage = (sentimentCounts.neutral / totalItems * 100).toFixed(1);
+        const negativePercentage = data.metrics?.negativePercentage || 
+          (data.rawData.filter(item => parseFloat(item.sentiment_score || item.sentiment || 0) < -0.2).length / data.rawData.length * 100).toFixed(1);
+        
+        const neutralPercentage = data.metrics?.neutralPercentage || 
+          (100 - parseFloat(positivePercentage) - parseFloat(negativePercentage)).toFixed(1);
         
         // Average sentiment
-        const averageSentiment = data.rawData.reduce((sum, item) => sum + parseFloat(item.sentiment_score || 0), 0) / totalItems;
+        const averageSentiment = data.metrics?.averageSentiment || 
+          data.rawData.reduce((sum, item) => sum + parseFloat(item.sentiment_score || item.sentiment || 0), 0) / data.rawData.length;
         
         // Generate overall summary
         let sentimentTrend;
@@ -151,7 +150,7 @@ const AutoSummary = ({ data }) => {
           sentimentTrend = "mixed";
         }
         
-        summaries.overallSummary = `Analysis of ${totalItems} content items reveals an overall ${sentimentTrend} sentiment trend with an average score of ${averageSentiment.toFixed(2)}. The sentiment distribution shows ${positivePercentage}% positive, ${neutralPercentage}% neutral, and ${negativePercentage}% negative sentiment across all sources and platforms.`;
+        summaries.overallSummary = `Analysis of ${data.rawData.length} content items reveals an overall ${sentimentTrend} sentiment trend with an average score of ${averageSentiment.toFixed(2)}. The sentiment distribution shows ${positivePercentage}% positive, ${neutralPercentage}% neutral, and ${negativePercentage}% negative sentiment across all sources and platforms.`;
         
         // Extract common themes and topics using word frequency
         const wordFrequency = {};
@@ -161,7 +160,7 @@ const AutoSummary = ({ data }) => {
           if (!item.text) return;
           
           const words = item.text.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(' ');
-          const sentiment = parseFloat(item.sentiment_score);
+          const sentiment = parseFloat(item.sentiment_score || item.sentiment || 0);
           
           words.forEach(word => {
             if (word.length < 3 || excludedWords.has(word)) return;
@@ -230,7 +229,7 @@ const AutoSummary = ({ data }) => {
           }
           
           dateGroups[dateString].count += 1;
-          dateGroups[dateString].sentimentSum += parseFloat(item.sentiment_score || 0);
+          dateGroups[dateString].sentimentSum += parseFloat(item.sentiment_score || item.sentiment || 0);
           dateGroups[dateString].items.push(item);
         });
         
@@ -277,7 +276,7 @@ const AutoSummary = ({ data }) => {
           }
           
           platformSentiment[item.platform].count += 1;
-          platformSentiment[item.platform].sentimentSum += parseFloat(item.sentiment_score || 0);
+          platformSentiment[item.platform].sentimentSum += parseFloat(item.sentiment_score || item.sentiment || 0);
         });
         
         // Calculate average sentiment per platform
@@ -371,7 +370,7 @@ const AutoSummary = ({ data }) => {
             generateInsight(
               "strength",
               "Strong Positive Sentiment Overall",
-              "The high percentage of positive content (${positivePercentage}%) indicates a favorable perception. Capitalize on this positive momentum in future communications."
+              `The high percentage of positive content (${positivePercentage}%) indicates a favorable perception. Capitalize on this positive momentum in future communications.`
             )
           );
         } else if (negativePercentage > 40) {

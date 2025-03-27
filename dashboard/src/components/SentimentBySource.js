@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -31,10 +31,54 @@ const SentimentBySource = ({ data }) => {
   const theme = useTheme();
   const [minMentions, setMinMentions] = useState(5);
 
-  // Filter data based on minimum mentions
-  const processedData = React.useMemo(() => {
-    if (!data?.sourceSentimentData) return [];
-    return data.sourceSentimentData.filter(item => item.total >= minMentions);
+  // Process raw data to get sentiment distribution by source
+  const processSourceData = useMemo(() => {
+    if (!data || !data.rawData || !Array.isArray(data.rawData) || data.rawData.length === 0) {
+      return [];
+    }
+
+    // Group data by source
+    const sourceStats = data.rawData.reduce((acc, post) => {
+      const source = post.source || 'Unknown';
+      if (!acc[source]) {
+        acc[source] = {
+          total: 0,
+          positive: 0,
+          neutral: 0,
+          negative: 0,
+          sentimentSum: 0
+        };
+      }
+
+      acc[source].total++;
+      
+      // Categorize sentiment
+      const sentiment = parseFloat(post.sentiment_score || post.sentiment || 0);
+      acc[source].sentimentSum += sentiment;
+      
+      if (sentiment > 0.2) {
+        acc[source].positive++;
+      } else if (sentiment < -0.2) {
+        acc[source].negative++;
+      } else {
+        acc[source].neutral++;
+      }
+
+      return acc;
+    }, {});
+
+    // Convert to percentages and format for chart
+    return Object.entries(sourceStats)
+      .filter(([_, stats]) => stats.total >= minMentions) // Filter by min mentions
+      .map(([source, stats]) => ({
+        source: source,
+        positive: parseFloat((stats.positive / stats.total * 100).toFixed(1)),
+        neutral: parseFloat((stats.neutral / stats.total * 100).toFixed(1)),
+        negative: parseFloat((stats.negative / stats.total * 100).toFixed(1)),
+        avgSentiment: parseFloat((stats.sentimentSum / stats.total).toFixed(2)),
+        total: stats.total
+      }))
+      .sort((a, b) => b.total - a.total); // Sort by total mentions
   }, [data, minMentions]);
 
   const CustomTooltip = ({ active, payload, label }) => {
@@ -117,11 +161,11 @@ const SentimentBySource = ({ data }) => {
             </FormControl>
           </Box>
 
-          {processedData.length > 0 ? (
+          {processSourceData.length > 0 ? (
             <Box sx={{ width: '100%', height: 400 }}>
               <ResponsiveContainer>
                 <ComposedChart
-                  data={processedData}
+                  data={processSourceData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
@@ -141,7 +185,7 @@ const SentimentBySource = ({ data }) => {
                   <YAxis
                     yAxisId="right"
                     orientation="right"
-                    domain={[0, 1]}
+                    domain={[-1, 1]}
                     tickFormatter={(value) => value.toFixed(2)}
                   />
                   <RechartsTooltip content={<CustomTooltip />} />

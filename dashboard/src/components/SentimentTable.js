@@ -39,6 +39,7 @@ import {
   Language as LanguageIcon,
   LocationOn as LocationIcon
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
@@ -111,6 +112,7 @@ const SentimentBadge = styled(Box)(({ theme, sentiment }) => {
 const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const navigate = useNavigate();
 
   const handleRowClick = (item) => {
     setSelectedItem(item);
@@ -150,7 +152,12 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
         size="small"
         sx={{ 
           fontWeight: 'bold',
-          minWidth: '90px'
+          minWidth: '90px',
+          cursor: 'pointer'
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/sentiment-data?sentiment=${sentiment.toLowerCase()}`);
         }}
       />
     );
