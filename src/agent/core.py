@@ -14,8 +14,8 @@ import glob
 import threading
 import queue
 import asyncio
-from brain import AgentBrain
-from autogen_agents import AutogenAgentSystem
+from .brain import AgentBrain
+from .autogen_agents import AutogenAgentSystem
 
 # Configure logging
 logging.basicConfig(
@@ -274,58 +274,97 @@ class SentimentAnalysisAgent:
             (self.base_path / directory).mkdir(parents=True, exist_ok=True)
 
     def collect_data(self):
-        """Execute all enabled data collection processes with brain monitoring"""
-        success_count = 0
-        total_count = 0
-        collected_data = []
+        """Execute data collection using the centralized collector script with brain monitoring"""
+        try:
+            logger.info(f"\n{'='*80}\nStarting Data Collection Process\n{'='*80}")
+            collector_script = self.base_path / 'src' / 'collectors' / 'run_collectors.py'
+            
+            # Run the centralized collector script
+            logger.info("Launching centralized collector script...")
+            start_time = time.time()
+            
+            result = subprocess.run(
+                ['python', str(collector_script)],
+                check=True,
+                capture_output=True,
+                text=True,
+                cwd=str(self.base_path)
+            )
+            
+            collection_duration = time.time() - start_time
+            logger.info(f"Collection script execution completed in {collection_duration:.2f}s")
+            
+            # Log collector output
+            for line in result.stdout.strip().split('\n'):
+                if line:
+                    logger.info(f"Collector Output: {line}")
 
-        for source, script_path in self.collection_scripts.items():
-            if self.config['sources'].get(source, False):
-                total_count += 1
-                try:
-                    logger.info(f"Starting data collection for source: {source}")
-                    result = subprocess.run(
-                        ['python', str(script_path)],
-                        check=True,
-                        capture_output=True,
-                        text=True,
-                        cwd=str(self.base_path)
-                    )
-                    logger.info(f"Collection completed for {source}: {result.stdout.strip()}")
-                    success_count += 1
+            # Load and analyze collected data
+            logger.info("\nAnalyzing collected data...")
+            today = datetime.now().strftime("%Y%m%d")
+            collected_data = []
+            success_count = 0
+            total_count = 0
 
-                    # Load and analyze collected data
-                    today = datetime.now().strftime("%Y%m%d")
+            # Check data from all possible sources
+            for source in ['x', 'news', 'rss', 'mention', 'social_searcher']:
+                if self.config['sources'].get(source, False):
+                    total_count += 1
                     data_file = self.base_path / "data" / "raw" / f"{source}_data_{today}.csv"
+                    logger.info(f"\nChecking data for source: {source}")
+                    
                     if data_file.exists():
-                        df = pd.read_csv(data_file)
-                        collected_data.append(df)
-                        
-                        # Analyze data quality
-                        quality_metrics = self.brain.analyze_data_quality(df)
-                        self.data_history['data_quality_metrics'].append({
-                            'timestamp': datetime.now().isoformat(),
-                            'source': source,
-                            'metrics': quality_metrics
-                        })
+                        try:
+                            df = pd.read_csv(data_file)
+                            records_count = len(df)
+                            collected_data.append(df)
+                            success_count += 1
+                            
+                            logger.info(f"Successfully loaded {records_count} records from {source}")
+                            
+                            # Analyze data quality
+                            logger.info(f"Analyzing data quality for {source}...")
+                            quality_metrics = self.brain.analyze_data_quality(df)
+                            self.data_history['data_quality_metrics'].append({
+                                'timestamp': datetime.now().isoformat(),
+                                'source': source,
+                                'metrics': quality_metrics
+                            })
+                            logger.info(f"Data quality analysis completed for {source}")
+                            
+                        except Exception as e:
+                            logger.error(f"Error processing data from {source}: {str(e)}", exc_info=True)
+                    else:
+                        logger.warning(f"No data file found for source: {source}")
 
-                except subprocess.CalledProcessError as e:
-                    logger.error(f"Data collection failed for {source}: {str(e)}")
-                    logger.error(f"Error output: {e.stderr}")
-                except Exception as e:
-                    logger.error(f"Unexpected error in {source} collection: {str(e)}")
+            # Update system health metrics
+            total_records = sum(len(df) for df in collected_data)
+            health_metrics = {
+                'timestamp': datetime.now().isoformat(),
+                'collection_success_rate': success_count / total_count if total_count > 0 else 0,
+                'active_sources': success_count,
+                'total_sources': total_count,
+                'total_records': total_records,
+                'memory_usage': self._get_memory_usage()
+            }
+            self.data_history['system_health'].append(health_metrics)
 
-        # Update system health metrics
-        health_metrics = {
-            'timestamp': datetime.now().isoformat(),
-            'collection_success_rate': success_count / total_count if total_count > 0 else 0,
-            'active_sources': success_count,
-            'total_sources': total_count,
-            'memory_usage': self._get_memory_usage()
-        }
-        self.data_history['system_health'].append(health_metrics)
+            logger.info(f"\n{'='*80}")
+            logger.info(f"Collection Summary:")
+            logger.info(f"- Success Rate: {(success_count / total_count * 100):.1f}% ({success_count}/{total_count} sources)")
+            logger.info(f"- Total Records: {total_records}")
+            logger.info(f"- Memory Usage: {health_metrics['memory_usage']:.2f}%")
+            logger.info(f"{'='*80}\n")
 
-        return success_count > 0
+            return success_count > 0
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Centralized data collection failed: {str(e)}")
+            logger.error(f"Error output: {e.stderr}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error in centralized collection: {str(e)}", exc_info=True)
+            return False
 
     def _get_memory_usage(self) -> float:
         """Get current memory usage of the process"""

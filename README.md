@@ -66,6 +66,8 @@ cd dashboard && npm start
 - Real-time sentiment analysis
 - Automated data processing and cleanup
 - Interactive dashboard with real-time updates
+- Historical data comparison with visualization reports
+- Automatic file rotation for trend analysis
 - Configurable data retention and processing intervals
 - Automatic log rotation and archiving
 - System health monitoring

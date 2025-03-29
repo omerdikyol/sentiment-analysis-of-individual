@@ -82,11 +82,11 @@ def collect_x_data(driver, wait, query="Tamim ibn Hamad Al Thani", max_posts=20,
                                  if article.find_elements(By.XPATH, ".//a[@role='link'][.//time]") else "unknown")
                     user_avatar = (article.find_element(By.XPATH, ".//div[@data-testid='UserAvatar-Container-validatedev']/img").get_attribute("src") 
                                    if article.find_elements(By.XPATH, ".//div[@data-testid='UserAvatar-Container-validatedev']/img") else "unknown")
-                    user_name = (article.find_element(By.XPATH, ".//div[@data-testid='User-Name']/span").text 
-                                 if article.find_elements(By.XPATH, ".//div[@data-testid='User-Name']/span") else "unknown")
-                    user_handle = (article.find_element(By.XPATH, ".//div[@data-testid='User-Name']/a").text 
-                                   if article.find_elements(By.XPATH, ".//div[@data-testid='User-Name']/a") else "unknown")
-                    print(f"Scraping post: {text[:30]}... Date: {date}, Retweets: {retweets}, Likes: {likes}, Link: {post_link}, User: {user_name} ({user_handle}), Avatar: {user_avatar}")
+                    user_display_name = (article.find_element(By.XPATH, ".//div[@data-testid='User-Name']//div[contains(@class, 'r-bcqeeo')]//span[contains(@class, 'r-poiln3')]/span").text 
+                                 if article.find_elements(By.XPATH, ".//div[@data-testid='User-Name']//div[contains(@class, 'r-bcqeeo')]//span[contains(@class, 'r-poiln3')]/span") else "unknown")
+                    user_name = (article.find_element(By.XPATH, ".//div[@data-testid='User-Name']//div[contains(@class, 'r-dnmrzs')]//span[contains(@class, 'r-poiln3')]").text 
+                                 if article.find_elements(By.XPATH, ".//div[@data-testid='User-Name']//div[contains(@class, 'r-dnmrzs')]//span[contains(@class, 'r-poiln3')]") else "unknown")
+                    print(f"Scraping post: {text[:30]}... Date: {date}, Retweets: {retweets}, Likes: {likes}, Link: {post_link}, User: {user_display_name} ({user_name}), Avatar: {user_avatar}")
                     if post_link != "unknown":
                         driver.execute_script("window.open(arguments[0]);", post_link)
                         driver.switch_to.window(driver.window_handles[1])
@@ -102,7 +102,7 @@ def collect_x_data(driver, wait, query="Tamim ibn Hamad Al Thani", max_posts=20,
                         "source": "X", "platform": "X", "type": "post", "post_id": post_link.split("/")[-1] if post_link != "unknown" else "unknown",
                         "date": date, "text": text, "retweets": retweets, "likes": likes,
                         "user_location": "unknown", "country": "unknown", "comments": ";".join(comment_texts) or "none",
-                        "user_name": user_name, "user_handle": user_handle, "user_avatar": user_avatar
+                        "user_display_name": user_display_name, "user_name": user_name, "user_avatar": user_avatar
                     })
                 except Exception as e:
                     print(f"Error scraping post: {e}")

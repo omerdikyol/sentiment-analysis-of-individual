@@ -1,16 +1,19 @@
-import pandas as pd
-import numpy as np
 import os
-import glob
+import pandas as pd
 from datetime import datetime
-from dateutil import parser
-import re
-from difflib import SequenceMatcher
-from pathlib import Path
-import logging
-import unicodedata
+import glob
 import random
+import re
+import logging
+import sys
+from pathlib import Path
 from sentiment_analyzer import ImprovedSentimentAnalyzer
+from dateutil import parser
+from difflib import SequenceMatcher
+
+# Add this import for file rotation
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.file_rotation import rotate_processed_files
 
 # Configure logging
 logging.basicConfig(
@@ -60,7 +63,7 @@ class DataProcessor:
         """Parse date string to ISO format with error handling"""
         if pd.isna(date_str):
             return None
-            
+        
         try:
             # Convert to string if not already
             date_str = str(date_str).strip()
@@ -68,10 +71,25 @@ class DataProcessor:
             # Skip invalid or empty dates
             if date_str.lower() in ['none', 'nan', '', 'unknown']:
                 return None
-                
-            # Try parsing with dateutil
+            
+            # Handle ISO format with timezone (e.g., 2025-03-21T12:19:52.000Z)
+            if 'T' in date_str and ('Z' in date_str or '+' in date_str):
+                parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                return parsed_date.strftime('%Y-%m-%d')
+            
+            # Handle custom format (e.g., 04:19 09 Mar 2025)
+            if re.match(r'\d{2}:\d{2}\s+\d{2}\s+[A-Za-z]{3}\s+\d{4}', date_str):
+                parsed_date = datetime.strptime(date_str, '%H:%M %d %b %Y')
+                return parsed_date.strftime('%Y-%m-%d')
+            
+            # Handle standard datetime format (e.g., 2025-03-14 16:17:49)
+            if re.match(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}', date_str):
+                parsed_date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+                return parsed_date.strftime('%Y-%m-%d')
+            
+            # Try parsing with dateutil as fallback
             parsed_date = parser.parse(date_str)
-            return parsed_date.isoformat()
+            return parsed_date.strftime('%Y-%m-%d')
         except Exception as e:
             logger.warning(f"Could not parse date '{date_str}': {str(e)}")
             return None
@@ -442,9 +460,23 @@ class DataProcessor:
 
         logger.info(f"Processing {len(df)} records...")
 
+        # Debug: Count records with date before processing
+        date_count_before = df['date'].notna().sum()
+        logger.info(f"Records with date before processing: {date_count_before}")
+
         # Standardize date format
         logger.info("Standardizing dates...")
         df['date'] = df['date'].apply(self.parse_date)
+
+        # Debug: Count records with date after processing
+        date_count_after = df['date'].notna().sum()
+        logger.info(f"Records with date after processing: {date_count_after}")
+        
+        # Add default date for records with no date
+        if date_count_after < len(df):
+            logger.warning(f"Found {len(df) - date_count_after} records with missing dates. Adding default date.")
+            default_date = datetime.now().strftime('%Y-%m-%d')
+            df['date'] = df['date'].fillna(default_date)
         
         # Filter out records with no text
         df = df[df['text'].notna() & (df['text'] != '')]
@@ -512,6 +544,16 @@ class DataProcessor:
         df.to_csv(latest_file, index=False)
 
         logger.info(f"Processing complete. Saved {len(df)} records to {timestamped_file}")
+        
+        # Rotate files for the dashboard comparison feature
+        logger.info("Rotating processed files for dashboard comparison...")
+        print(timestamped_file)
+        success = rotate_processed_files(str(timestamped_file))
+        if success:
+            logger.info("CSV file rotation completed successfully")
+        else:
+            logger.warning("CSV file rotation failed")
+            
         return True
 
 if __name__ == "__main__":

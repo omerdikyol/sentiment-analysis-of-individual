@@ -64,39 +64,42 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
             console.log('CSV parsing complete, rows:', results.data.length);
             
             const processedData = results.data
-              // Remove empty rows or rows without essential data
-              .filter(row => {
-                // Check if the row has any meaningful content
-                return row.text || row.content || row.description;
-              })
+              .filter(row => row && row.text && row.text.trim() !== '')
               .map(row => {
+                // Debug date values
+                console.log('Processing row date:', row.date);
+                
                 // Process location data
                 let country = row.country;
-                const text = (row.text || '').toLowerCase();
-                const source = (row.source || '').toLowerCase();
-                
-                // If country is missing or unknown, try to determine it
-                if (!country || country === 'unknown') {
-                  if (text.includes('qatar') || source.includes('qatar') || 
-                      text.includes('doha') || text.includes('al wakrah') || 
-                      text.includes('lusail')) {
+                if (!country || country === 'Unknown' || country === 'unknown' || country === '') {
+                  // Country detection logic
+                  const content = (row.text || row.content || '').toLowerCase();
+                  // Set default country if detection fails
+                  country = 'Qatar';
+                  
+                  // Try to detect country from content
+                  if (content.includes('qatar') || content.includes('doha')) {
                     country = 'Qatar';
-                  } else if (text.includes('uae') || text.includes('emirates') || 
-                            text.includes('dubai') || text.includes('abu dhabi')) {
+                  } else if (content.includes('uae') || content.includes('dubai') || content.includes('abu dhabi')) {
                     country = 'UAE';
-                  } else if (text.includes('uk') || text.includes('britain') || 
-                            text.includes('london') || text.includes('manchester') ||
-                            source.includes('bbc')) {
+                  } else if (content.includes('uk') || content.includes('united kingdom') || content.includes('britain') || content.includes('london')) {
                     country = 'UK';
-                  } else if (text.includes('us') || text.includes('united states') || 
-                            text.includes('america') || source.includes('cnn') ||
-                            source.includes('fox')) {
+                  } else if (content.includes('us') || content.includes('united states') || content.includes('america')) {
                     country = 'US';
                   }
                 }
 
+                // Debug date formatting
+                let formattedDate = 'Unknown';
+                try {
+                  formattedDate = formatDate(row.date || row.published_date);
+                  console.log('Formatted date result:', row.date, '=>', formattedDate);
+                } catch (e) {
+                  console.error('Error formatting date:', e);
+                }
+
                 return {
-                  date: formatDate(row.published_date || row.date),
+                  date: formattedDate,
                   source: row.source_name || row.source || 'Unknown',
                   platform: row.platform || 'Unknown',
                   sentiment: row.sentiment_label || 'Unknown',
