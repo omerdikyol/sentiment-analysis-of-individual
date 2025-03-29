@@ -41,7 +41,10 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "copy-csv": "mkdir -p public && cp -f ../data/processed/latest.csv public/processed_data.csv && cp -f ../data/processed/processed_data_20250323_155124.csv public/processed_data_old.csv",
+    "prestart": "npm run copy-csv",
+    "prebuild": "npm run copy-csv"
   },
   "eslintConfig": {
     "extends": [

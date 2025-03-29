@@ -23,6 +23,7 @@ import {
   Psychology as PsychologyIcon,
   Share as ShareIcon,
   Summarize as SummarizeIcon,
+  CompareArrows as CompareArrowsIcon,
 } from '@mui/icons-material';
 
 const DRAWER_WIDTH = 240;
@@ -74,6 +75,7 @@ const StyledListItemIcon = styled(ListItemIcon)(({ theme, open }) => ({
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon sx={{ color: 'white' }} />, path: '/' },
   { text: 'Sentiment Data', icon: <TableChartIcon sx={{ color: 'white' }} />, path: '/sentiment-data' },
+  { text: 'Comparison Report', icon: <CompareArrowsIcon sx={{ color: 'white' }} />, path: '/comparison-report' },
 ];
 
 // Add the new AI-powered menu items

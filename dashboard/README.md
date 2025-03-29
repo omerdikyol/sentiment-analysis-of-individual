@@ -68,3 +68,31 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Comparison Report Feature
+
+The dashboard now includes a Comparison Report feature that allows users to analyze differences between two CSV datasets:
+
+### Features
+
+- **Dataset Overview**: Compare the number of entries and overall statistics between two datasets
+- **Sentiment Analysis**: Compare average sentiment scores and distribution of positive, neutral, and negative sentiments
+- **Platform Analysis**: Visualize changes in platform distribution with charts and detailed tables
+- **Country Analysis**: Track changes in geographical distribution of mentions
+- **New Entries Analysis**: View entries that appear in the new dataset but not in the old one
+
+### How to Use
+
+1. Navigate to the "Comparison Report" page using the sidebar menu
+2. By default, the system compares `processed_data_old.csv` and `processed_data.csv`
+3. You can change the filenames in the input fields if needed
+4. Click "Compare Files" to generate a new comparison report
+5. Use the Export PDF button to save the report
+
+### Technical Details
+
+The comparison functionality uses the following files:
+- `ComparisonService.js`: Handles loading and analyzing CSV files
+- `ComparisonReport.js`: React component for displaying the comparison results
+
+CSV files are automatically copied from `data/processed/` to the `public` directory when running the dashboard.

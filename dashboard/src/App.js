@@ -43,6 +43,7 @@ import {
   Psychology as PsychologyIcon,
   Share as ShareIcon,
   AutoAwesome as AutoAwesomeIcon,
+  CompareArrows as CompareArrowsIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
@@ -68,6 +69,7 @@ import EmotionalAnalysis from './components/EmotionalAnalysis';
 import ComparativeAnalysis from './components/ComparativeAnalysis';
 import EventAnalysis from './components/EventAnalysis';
 import PDFExportButton from './components/PDFExportButton';
+import ComparisonReport from './components/ComparisonReport';
 
 // Import our new advanced NLP & AI components
 import EntityRelationshipGraph from './components/EntityRelationshipGraph';
@@ -764,6 +766,14 @@ function App() {
                     )
                   } />
                   <Route path="/sentiment-data" element={<SentimentDataPage />} />
+                  <Route path="/emotional-analysis" element={<EmotionalAnalysis />} />
+                  <Route path="/geographical-insights" element={<GeographicalInsights />} />
+                  <Route path="/platform-sentiment" element={<PlatformSentiment />} />
+                  <Route path="/theme-analysis" element={<ThemeAnalysis />} />
+                  <Route path="/influencer-analysis" element={<InfluencerAnalysis />} />
+                  <Route path="/event-analysis" element={<EventAnalysis />} />
+                  <Route path="/auto-summary" element={<AutoSummary />} />
+                  <Route path="/comparison-report" element={<ComparisonReport />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </ContentContainer>
