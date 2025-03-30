@@ -11,6 +11,7 @@ logger = logging.getLogger('AutogenAgents')
 class AutogenAgentSystem:
     def __init__(self, config_path: Path, llm_config: Optional[Dict[str, Any]] = None):
         self.config_path = config_path
+        self.latest_insights = []  # Store latest insights for email reporting
         self.llm_config = llm_config or self._get_default_llm_config()
         
         # Initialize the agent group
@@ -136,24 +137,31 @@ class AutogenAgentSystem:
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _extract_insights(self, conversation: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Extract key insights from the agent conversation"""
-        insights = {
-            "data_quality": {},
-            "sentiment_analysis": {},
-            "recommendations": [],
-            "concerns": []
-        }
+    def _extract_insights(self, conversation: List[Dict[str, Any]]) -> List[str]:
+        """Extract key insights from the conversation"""
+        insights = []
         
+        # Extract insights from assistant responses
         for message in conversation:
-            if message["role"] == "researcher":
-                insights["data_quality"] = self._parse_researcher_message(message["content"])
-            elif message["role"] == "data_analyst":
-                insights["sentiment_analysis"] = self._parse_analyst_message(message["content"])
-            elif message["role"] == "critic":
-                insights["concerns"] = self._parse_critic_message(message["content"])
-            elif message["role"] == "assistant" and "summary" in message["content"].lower():
-                insights["recommendations"] = self._parse_assistant_message(message["content"])
+            if message.get('role') == 'assistant':
+                content = message.get('content', '')
+                
+                # Look for insights sections in the content
+                if 'key insight' in content.lower() or 'finding' in content.lower():
+                    # Split by common separators and extract potential insights
+                    lines = content.split('\n')
+                    for line in lines:
+                        line = line.strip()
+                        if (line.startswith('- ') or line.startswith('* ') or 
+                            line.startswith('•') or ':' in line or 
+                            'insight' in line.lower() or 'finding' in line.lower()):
+                            # Clean the line
+                            clean_line = line.strip('- *•').strip()
+                            if len(clean_line) > 10 and clean_line not in insights:
+                                insights.append(clean_line)
+        
+        # Store the latest insights for email reporting
+        self.latest_insights = insights
         
         return insights
 

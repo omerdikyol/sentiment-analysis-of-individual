@@ -10,18 +10,26 @@ sentiment-analysis/
 │   ├── agent/               # Agent core functionality
 │   ├── collectors/          # Data collection modules
 │   ├── processing/          # Data processing and analysis
-│   └── api/                 # API service
+│   ├── api/                 # API service
+│   └── utils/               # Utility functions
 ├── data/                    # Data storage
 │   ├── raw/                # Raw collected data
 │   ├── processed/          # Processed data
 │   └── metrics/            # System metrics and history
 ├── config/                 # Configuration files
+│   ├── default_config.json # Default system configuration
+│   ├── llm_config.json     # LLM configuration
+│   ├── .env                # Environment variables
+│   └── .env.example        # Example environment configuration
 ├── logs/                   # System logs
 │   └── archive/           # Archived logs
 ├── models/                # ML models
 │   └── sentiment/        # Sentiment analysis models
 ├── tests/                 # Test files
 ├── dashboard/            # React dashboard
+│   ├── src/              # Dashboard source code
+│   ├── public/           # Public assets
+│   └── build/            # Production build
 └── requirements.txt      # Python dependencies
 
 ## Setup
@@ -63,14 +71,14 @@ cd dashboard && npm start
 ## Features
 
 - Multi-source data collection (X, News, Instagram, LinkedIn, etc.)
-- Real-time sentiment analysis
+- Real-time sentiment analysis with advanced NLP models
 - Automated data processing and cleanup
 - Interactive dashboard with real-time updates
 - Historical data comparison with visualization reports
-- Automatic file rotation for trend analysis
 - Configurable data retention and processing intervals
 - Automatic log rotation and archiving
 - System health monitoring
+- Websocket support for real-time updates
 
 ## Configuration
 
@@ -97,6 +105,23 @@ The system can be configured through `config/default_config.json`:
 }
 ```
 
+## Environment Variables
+
+Key environment variables (defined in `.env`):
+- API credentials for data sources
+- Database connection settings
+- SMTP configuration for notifications
+- LLM API keys and settings
+
+## Dependencies
+
+Main dependencies include:
+- **Data Processing**: numpy, pandas, scikit-learn
+- **Machine Learning**: transformers, torch, sentence-transformers
+- **Web/API**: fastapi, uvicorn, websockets
+- **Data Collection**: selenium, beautifulsoup4
+- **Utilities**: python-dotenv, schedule, tqdm
+
 ## API Endpoints
 
 - `GET /metrics` - Get current metrics and analysis results
@@ -109,6 +134,7 @@ The system can be configured through `config/default_config.json`:
 
 - Add new collectors in `src/collectors/`
 - Add new processing modules in `src/processing/`
+- Add utility functions in `src/utils/`
 - Add tests in `tests/`
 - Update dashboard components in `dashboard/src/components/`
 

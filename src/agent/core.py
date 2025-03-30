@@ -2,9 +2,9 @@ import os
 import time
 import schedule
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Callable, Optional
 import json
 from pathlib import Path
 import subprocess
@@ -233,9 +233,142 @@ class SentimentAnalysisAgent:
     def _run_collect_and_process(self):
         """Run collection and processing in sequence"""
         # Run collection for all sources
-        self._run_task(self.collect_data, 'collect')
+        collection_success = self._run_task(self.collect_data, 'collect')
+        
         # Always run processing after collection, regardless of individual collector success
-        self._run_task(self.process_data, 'process')
+        processing_success = self._run_task(self.process_data, 'process')
+        
+        # Send email notifications if enabled
+        try:
+            from src.utils.notification_service import send_analysis_report, detect_sentiment_change
+            from src.utils.mail_config import NOTIFY_ON_ANALYSIS, get_email_recipients
+            
+            if NOTIFY_ON_ANALYSIS and processing_success:
+                # Load the latest processed data and previous data for comparison
+                try:
+                    # Path to data files
+                    processed_path = self.base_path / 'data' / 'processed'
+                    latest_file = processed_path / 'latest.csv'
+                    previous_file = processed_path / 'previous.csv'
+                    
+                    # Check if files exist
+                    if not latest_file.exists():
+                        logger.error(f"Latest processed data file not found: {latest_file}")
+                        return
+                        
+                    # Load current data
+                    latest_data = pd.read_csv(latest_file)
+                    
+                    # Initialize change detection variables
+                    sentiment_changed = False
+                    sentiment_change_data = {}
+                    
+                    # Load and compare with previous data if it exists
+                    if previous_file.exists():
+                        previous_data = pd.read_csv(previous_file)
+                        
+                        # Detect sentiment changes
+                        sentiment_change_data = detect_sentiment_change(latest_data, previous_data)
+                        sentiment_changed = sentiment_change_data.get("sentiment_changed", False)
+                        
+                        logger.info(f"Sentiment change detected: {sentiment_changed}")
+                        if sentiment_changed:
+                            change_value = sentiment_change_data.get("sentiment_change", 0)
+                            change_direction = "improved" if change_value > 0 else "declined"
+                            logger.info(f"Sentiment has {change_direction} by {abs(change_value):.2f} points")
+                    
+                    # Get overall sentiment score
+                    overall_sentiment = latest_data['sentiment_score'].mean() if 'sentiment_score' in latest_data.columns else 0
+                    
+                    # Count positive, negative, and neutral mentions
+                    if 'sentiment_label' in latest_data.columns:
+                        positive_count = len(latest_data[latest_data['sentiment_label'] == 'positive'])
+                        negative_count = len(latest_data[latest_data['sentiment_label'] == 'negative'])
+                        neutral_count = len(latest_data[latest_data['sentiment_label'] == 'neutral'])
+                    else:
+                        positive_count = len(latest_data[latest_data['sentiment_score'] > 0.2]) if 'sentiment_score' in latest_data.columns else 0
+                        negative_count = len(latest_data[latest_data['sentiment_score'] < -0.2]) if 'sentiment_score' in latest_data.columns else 0
+                        neutral_count = len(latest_data) - positive_count - negative_count
+                    
+                    # Calculate percentages
+                    total = len(latest_data)
+                    positive_pct = (positive_count / total * 100) if total > 0 else 0
+                    negative_pct = (negative_count / total * 100) if total > 0 else 0
+                    neutral_pct = (neutral_count / total * 100) if total > 0 else 0
+                    
+                    # Extract top topics by sentiment
+                    positive_topics = {}
+                    negative_topics = {}
+                    
+                    if 'keywords' in latest_data.columns and 'sentiment_score' in latest_data.columns:
+                        for _, row in latest_data.iterrows():
+                            keywords = row['keywords'].split(',') if isinstance(row['keywords'], str) else []
+                            sentiment = row['sentiment_score']
+                            
+                            for keyword in keywords:
+                                keyword = keyword.strip()
+                                if not keyword:
+                                    continue
+                                    
+                                if sentiment > 0.2:
+                                    positive_topics[keyword] = positive_topics.get(keyword, 0) + 1
+                                elif sentiment < -0.2:
+                                    negative_topics[keyword] = negative_topics.get(keyword, 0) + 1
+                    
+                    # Get insights from autogen if available
+                    insights = []
+                    if hasattr(self, 'autogen_system') and hasattr(self.autogen_system, 'latest_insights'):
+                        insights = self.autogen_system.latest_insights
+                    
+                    # Add new topics and fading topics to insights if available
+                    if sentiment_changed:
+                        # Add new topics
+                        for topic_data in sentiment_change_data.get("new_topics", []):
+                            topic = topic_data.get("topic")
+                            count = topic_data.get("count")
+                            insights.append(f"New topic detected: '{topic}' with {count} mentions")
+                        
+                        # Add fading topics
+                        for topic_data in sentiment_change_data.get("fading_topics", []):
+                            topic = topic_data.get("topic")
+                            prev_count = topic_data.get("previous_count")
+                            curr_count = topic_data.get("current_count")
+                            if curr_count == 0:
+                                insights.append(f"Topic no longer mentioned: '{topic}' (previously {prev_count} mentions)")
+                            else:
+                                insights.append(f"Topic declining: '{topic}' reduced from {prev_count} to {curr_count} mentions")
+                    
+                    # Prepare report data
+                    analysis_data = {
+                        "overall_sentiment": overall_sentiment,
+                        "positive_mentions": positive_pct,
+                        "neutral_mentions": neutral_pct,
+                        "negative_mentions": negative_pct,
+                        "total_mentions": total,
+                        "positive_topics": positive_topics,
+                        "negative_topics": negative_topics,
+                        "insights": insights
+                    }
+                    
+                    # Add sentiment change data if available
+                    if sentiment_changed:
+                        analysis_data.update(sentiment_change_data)
+                    
+                    # Send report email
+                    recipients = get_email_recipients()
+                    send_analysis_report(analysis_data, recipients)
+                    
+                    # After successful processing, copy latest.csv to previous.csv for next comparison
+                    import shutil
+                    shutil.copy2(latest_file, previous_file)
+                    
+                except Exception as e:
+                    logger.error(f"Error sending analysis notification: {str(e)}", exc_info=True)
+        
+        except ImportError as e:
+            logger.warning(f"Email notification module not available: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error in email notification: {str(e)}", exc_info=True)
 
     def discover_collection_scripts(self) -> Dict[str, Path]:
         """Discover all available collection scripts"""
