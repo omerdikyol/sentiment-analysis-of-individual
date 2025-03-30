@@ -25,7 +25,8 @@
     "language": "Language",
     "dashboardOverview": "Dashboard Overview",
     "unknown": "Unknown",
-    "close": "Close"
+    "close": "Close",
+    "export": "Export"
   },
   "metrics": {
     "totalMentions": "Total Mentions",
@@ -252,6 +253,8 @@
     "by": "by",
     "mentions": "mentions",
     "multipleLocations": "Multiple Locations",
+    "noEventsFound": "No events found in the data",
+    "noEventsDescription": "There are no significant events detected in the current data set. Try changing your filters or adding more data.",
     "eventTypes": {
       "general": "General"
     }

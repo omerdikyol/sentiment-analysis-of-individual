@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@nivo/bar": "^0.88.0",
-    "@nivo/radar": "^0.88.0"
-  }
-}

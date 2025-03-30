@@ -25,7 +25,8 @@
     "language": "Langue",
     "dashboardOverview": "Aperçu du tableau de bord",
     "unknown": "Inconnu",
-    "close": "Fermer"
+    "close": "Fermer",
+    "export": "Exporter"
   },
   "metrics": {
     "totalMentions": "Mentions Totales",
@@ -252,6 +253,8 @@
     "by": "de",
     "mentions": "mentions",
     "multipleLocations": "Plusieurs Lieux",
+    "noEventsFound": "Aucun événement trouvé dans les données",
+    "noEventsDescription": "Aucun événement significatif n'a été détecté dans l'ensemble de données actuel. Essayez de modifier vos filtres ou d'ajouter plus de données.",
     "eventTypes": {
       "general": "Général"
     }

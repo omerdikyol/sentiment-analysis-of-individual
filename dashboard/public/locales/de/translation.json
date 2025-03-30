@@ -25,7 +25,8 @@
     "language": "Sprache",
     "dashboardOverview": "Dashboard-Übersicht",
     "unknown": "Unbekannt",
-    "close": "Schließen"
+    "close": "Schließen",
+    "export": "Exportieren"
   },
   "metrics": {
     "totalMentions": "Gesamte Erwähnungen",
@@ -252,6 +253,8 @@
     "by": "um",
     "mentions": "Erwähnungen",
     "multipleLocations": "Mehrere Standorte",
+    "noEventsFound": "Keine Ereignisse in den Daten gefunden",
+    "noEventsDescription": "Es wurden keine signifikanten Ereignisse im aktuellen Datensatz erkannt. Versuchen Sie, Ihre Filter zu ändern oder mehr Daten hinzuzufügen.",
     "eventTypes": {
       "general": "Allgemein"
     }

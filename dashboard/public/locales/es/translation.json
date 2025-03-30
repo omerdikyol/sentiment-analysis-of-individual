@@ -25,7 +25,8 @@
     "language": "Idioma",
     "dashboardOverview": "Resumen del Panel",
     "unknown": "Desconocido",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "export": "Exportar"
   },
   "metrics": {
     "totalMentions": "Menciones Totales",
@@ -252,6 +253,8 @@
     "by": "por",
     "mentions": "menciones",
     "multipleLocations": "Múltiples Ubicaciones",
+    "noEventsFound": "No se encontraron eventos en los datos",
+    "noEventsDescription": "No se detectaron eventos significativos en el conjunto de datos actual. Intenta cambiar tus filtros o agregar más datos.",
     "eventTypes": {
       "general": "General"
     }
