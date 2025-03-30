@@ -16,6 +16,8 @@ import {
   IconButton,
   Tooltip,
   alpha,
+  CardHeader,
+  Divider
 } from '@mui/material';
 import {
   Info as InfoIcon,
@@ -48,9 +50,13 @@ import {
   Radar,
 } from 'recharts';
 import { scaleLinear } from 'd3-scale';
+import { useTranslation } from 'react-i18next';
+import { ResponsiveBar } from '@nivo/bar';
+import { ResponsiveRadar } from '@nivo/radar';
 
 const ContextualSentiment = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [primaryEntity, setPrimaryEntity] = useState('all');
   const [secondaryEntity, setSecondaryEntity] = useState(null);
@@ -58,6 +64,12 @@ const ContextualSentiment = ({ data }) => {
   const [contextualData, setContextualData] = useState({
     matrix: [],
     topAssociations: []
+  });
+  const [processedData, setProcessedData] = useState({
+    entityComparisons: [],
+    entityImpact: [],
+    positiveShifts: [],
+    negativeShifts: []
   });
 
   useEffect(() => {
@@ -390,23 +402,23 @@ const ContextualSentiment = ({ data }) => {
           </Typography>
           <Box sx={{ mt: 1, mb: 1 }}>
             <Typography variant="body2">
-              <strong>{data.entity1Name}</strong> alone: {data.entity1Alone.toFixed(2)}
+              <strong>{data.entity1Name}</strong> {t('contextualSentiment.alone')}: {data.entity1Alone.toFixed(2)}
             </Typography>
             <Typography variant="body2">
-              <strong>{data.entity2Name}</strong> alone: {data.entity2Alone.toFixed(2)}
+              <strong>{data.entity2Name}</strong> {t('contextualSentiment.alone')}: {data.entity2Alone.toFixed(2)}
             </Typography>
             <Typography variant="body2">
-              Together: {data.together.toFixed(2)}
+              {t('contextualSentiment.together')}: {data.together.toFixed(2)}
             </Typography>
           </Box>
           <Typography variant="body2" sx={{ 
             color: data.shift > 0 ? theme.palette.success.main : theme.palette.error.main,
             fontWeight: 'bold'
           }}>
-            Sentiment shift: {data.shift > 0 ? '+' : ''}{data.shift.toFixed(2)}
+            {t('contextualSentiment.sentimentShift')}: {data.shift > 0 ? '+' : ''}{data.shift.toFixed(2)}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Based on {data.count} mentions
+            {t('contextualSentiment.basedOn')} {data.count} {t('contextualSentiment.mentions')}
           </Typography>
         </Card>
       );
@@ -424,21 +436,21 @@ const ContextualSentiment = ({ data }) => {
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="h6" mr={1}>Contextual Sentiment Analysis</Typography>
-            <Tooltip title="See how sentiment changes when entities are mentioned together vs. individually">
+            <Typography variant="h6" mr={1}>{t('contextualSentiment.title')}</Typography>
+            <Tooltip title={t('contextualSentiment.infoTooltip')}>
               <IconButton size="small">
                 <InfoIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>
           <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Focus Entity</InputLabel>
+            <InputLabel>{t('contextualSentiment.focusEntity')}</InputLabel>
             <Select
               value={primaryEntity}
               onChange={(e) => setPrimaryEntity(e.target.value)}
-              label="Focus Entity"
+              label={t('contextualSentiment.focusEntity')}
             >
-              <MenuItem value="all">All Entities</MenuItem>
+              <MenuItem value="all">{t('contextualSentiment.allEntities')}</MenuItem>
               {topEntities.map((entity) => (
                 <MenuItem key={entity.name} value={entity.name}>
                   {entity.name.charAt(0).toUpperCase() + entity.name.slice(1)}
@@ -452,7 +464,7 @@ const ContextualSentiment = ({ data }) => {
           {/* Contextual Sentiment Shift - Bar Chart */}
           <Grid item xs={12} md={primaryEntity !== 'all' ? 7 : 12}>
             <Typography variant="subtitle1" gutterBottom>
-              Sentiment Shift When Entities Are Mentioned Together
+              {t('contextualSentiment.sentimentShiftWhenEntitiesAreMentionedTogether')}
             </Typography>
             <Box sx={{ height: 400 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -478,9 +490,9 @@ const ContextualSentiment = ({ data }) => {
                   />
                   <RechartsTooltip content={customTooltip} />
                   <ReferenceLine x={0} stroke={theme.palette.divider} />
-                  <Bar dataKey="entity1Alone" stackId="a" fill={alpha(theme.palette.primary.main, 0.3)} name="Entity 1 Alone" />
-                  <Bar dataKey="entity2Alone" stackId="b" fill={alpha(theme.palette.secondary.main, 0.3)} name="Entity 2 Alone" />
-                  <Bar dataKey="together" name="Together" radius={[0, 4, 4, 0]}>
+                  <Bar dataKey="entity1Alone" stackId="a" fill={alpha(theme.palette.primary.main, 0.3)} name={t('contextualSentiment.entity1Alone')} />
+                  <Bar dataKey="entity2Alone" stackId="b" fill={alpha(theme.palette.secondary.main, 0.3)} name={t('contextualSentiment.entity2Alone')} />
+                  <Bar dataKey="together" name={t('contextualSentiment.together')} radius={[0, 4, 4, 0]}>
                     {associationBarData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={sentimentColorScale(entry.together)} />
                     ))}
@@ -494,7 +506,7 @@ const ContextualSentiment = ({ data }) => {
           {primaryEntity !== 'all' && (
             <Grid item xs={12} md={5}>
               <Typography variant="subtitle1" gutterBottom>
-                Impact of {primaryEntity.charAt(0).toUpperCase() + primaryEntity.slice(1)} with Other Entities
+                {t('contextualSentiment.impactOf')} {primaryEntity.charAt(0).toUpperCase() + primaryEntity.slice(1)} {t('contextualSentiment.withOtherEntities')}
               </Typography>
               <Box sx={{ height: 400 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -503,14 +515,14 @@ const ContextualSentiment = ({ data }) => {
                     <PolarAngleAxis dataKey="subject" />
                     <PolarRadiusAxis angle={30} domain={[-1, 1]} />
                     <Radar
-                      name={`${primaryEntity} alone`}
+                      name={`${primaryEntity} ${t('contextualSentiment.alone')}`}
                       dataKey="primaryAlone"
                       stroke={theme.palette.primary.main}
                       fill={theme.palette.primary.main}
                       fillOpacity={0.3}
                     />
                     <Radar
-                      name="Together"
+                      name={t('contextualSentiment.together')}
                       dataKey="together"
                       stroke={theme.palette.secondary.main}
                       fill={theme.palette.secondary.main}
@@ -527,7 +539,7 @@ const ContextualSentiment = ({ data }) => {
           {/* Top Positive and Negative Shifts */}
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom>
-              Significant Contextual Shifts
+              {t('contextualSentiment.significantContextualShifts')}
             </Typography>
             <Grid container spacing={2}>
               {/* Positive Shifts */}
@@ -536,7 +548,7 @@ const ContextualSentiment = ({ data }) => {
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <ArrowUpwardIcon sx={{ color: theme.palette.success.main, mr: 1 }} />
-                      <Typography variant="h6">Most Positive Shifts</Typography>
+                      <Typography variant="h6">{t('contextualSentiment.mostPositiveShifts')}</Typography>
                     </Box>
                     
                     {contextualData.topAssociations
@@ -550,7 +562,7 @@ const ContextualSentiment = ({ data }) => {
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                              Base: {((item.entity1Sentiment + item.entity2Sentiment) / 2).toFixed(2)}
+                              {t('contextualSentiment.base')}: {((item.entity1Sentiment + item.entity2Sentiment) / 2).toFixed(2)}
                             </Typography>
                             <Chip 
                               size="small" 
@@ -575,7 +587,7 @@ const ContextualSentiment = ({ data }) => {
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <ArrowDownwardIcon sx={{ color: theme.palette.error.main, mr: 1 }} />
-                      <Typography variant="h6">Most Negative Shifts</Typography>
+                      <Typography variant="h6">{t('contextualSentiment.mostNegativeShifts')}</Typography>
                     </Box>
 
                     {contextualData.topAssociations
@@ -589,7 +601,7 @@ const ContextualSentiment = ({ data }) => {
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-                              Base: {((item.entity1Sentiment + item.entity2Sentiment) / 2).toFixed(2)}
+                              {t('contextualSentiment.base')}: {((item.entity1Sentiment + item.entity2Sentiment) / 2).toFixed(2)}
                             </Typography>
                             <Chip 
                               size="small" 

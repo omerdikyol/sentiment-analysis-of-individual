@@ -40,6 +40,7 @@ import {
   LocationOn as LocationIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
@@ -113,6 +114,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleRowClick = (item) => {
     setSelectedItem(item);
@@ -147,7 +149,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
     
     return (
       <Chip 
-        label={sentiment.charAt(0).toUpperCase() + sentiment.slice(1)} 
+        label={t(`sentiments.${sentiment}`)} 
         color={color} 
         size="small"
         sx={{ 
@@ -204,7 +206,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                   whiteSpace: 'nowrap'
                 }}
               >
-                {item.source || 'Unknown Source'}
+                {item.source || t('sentimentTable.unknownSource')}
                 {item.author && ` • ${item.author}`}
               </Typography>
             </Box>
@@ -244,7 +246,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return t('sentimentTable.notAvailable');
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -313,7 +315,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
           >
             <Box>
               <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Mention Details
+                {t('sentimentTable.mentionDetails')}
               </Typography>
               {renderSentiment(selectedItem.sentiment_label)}
             </Box>
@@ -331,7 +333,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               }}
             >
               <Typography variant="subtitle2" color="text.secondary">
-                Sentiment Score
+                {t('sentimentTable.sentimentScore')}
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {(parseFloat(selectedItem.sentiment_score) * 100).toFixed(1)}
@@ -428,25 +430,25 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               <Grid item xs={12} md={6}>
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Source Information
+                    {t('sentimentTable.sourceInformation')}
                   </Typography>
                   <Stack spacing={2}>
                     <DetailRow 
                       icon={getSourceIcon(selectedItem.source)} 
-                      label="Source"
-                      value={selectedItem.source || 'Unknown'}
+                      label={t('sentimentTable.source')}
+                      value={selectedItem.source || t('sentimentTable.unknown')}
                     />
                     {selectedItem.username && (
                       <DetailRow 
                         icon={<PersonIcon color="primary" />} 
-                        label="Username"
+                        label={t('sentimentTable.username')}
                         value={selectedItem.username}
                       />
                     )}
                     {selectedItem.location && (
                       <DetailRow 
                         icon={<LocationIcon color="primary" />} 
-                        label="Location"
+                        label={t('sentimentTable.location')}
                         value={selectedItem.location}
                       />
                     )}
@@ -456,13 +458,13 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               <Grid item xs={12} md={6}>
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Additional Details
+                    {t('sentimentTable.additionalDetails')}
                   </Typography>
                   <Stack spacing={2}>
                     {selectedItem.url && (
                       <DetailRow 
                         icon={<LanguageIcon color="primary" />} 
-                        label="URL"
+                        label={t('sentimentTable.url')}
                         value={selectedItem.url}
                         isLink
                       />
@@ -470,7 +472,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                     {selectedItem.country && (
                       <DetailRow 
                         icon={<PublicIcon color="primary" />} 
-                        label="Country"
+                        label={t('sentimentTable.country')}
                         value={selectedItem.country}
                       />
                     )}
@@ -484,7 +486,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               onClick={() => handleCopyText(selectedItem.text)}
               startIcon={<ContentCopyIcon />}
             >
-              Copy Text
+              {t('sentimentTable.copyText')}
             </Button>
             {selectedItem.url && (
               <Button
@@ -493,14 +495,14 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                 rel="noopener noreferrer"
                 startIcon={<LaunchIcon />}
               >
-                Open Source
+                {t('sentimentTable.openSource')}
               </Button>
             )}
             <Button 
               onClick={handleCloseDialog}
               variant="contained"
             >
-              Close
+              {t('general.close')}
             </Button>
           </DialogActions>
         </>
@@ -512,7 +514,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
     if (!data || data.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={4}>No data available</TableCell>
+          <TableCell colSpan={4}>{t('general.noData')}</TableCell>
         </TableRow>
       );
     }
@@ -568,7 +570,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                 title={
                   <Box sx={{ p: 1, maxWidth: '600px' }}>
                     <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {item.text || 'N/A'}
+                      {item.text || t('sentimentTable.notAvailable')}
                     </Typography>
                     {getAuthorDisplay(item) && (
                       <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
@@ -606,12 +608,12 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                     cursor: 'pointer'
                   }}
                 >
-                  {item.text || 'N/A'}
+                  {item.text || t('sentimentTable.notAvailable')}
                 </Typography>
               </Tooltip>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <PersonIcon fontSize="small" />
-                {getAuthorDisplay(item) || 'Anonymous'}
+                {getAuthorDisplay(item) || t('sentimentTable.anonymous')}
                 {item.location && item.location !== 'Unknown Location' && (
                   <>
                     <LocationIcon fontSize="small" sx={{ ml: 1 }} />
@@ -620,7 +622,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
                 )}
               </Typography>
             </Stack>
-            <Tooltip title="Copy text">
+            <Tooltip title={t('sentimentTable.copyText')}>
               <IconButton 
                 size="small" 
                 onClick={(e) => {
@@ -645,6 +647,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
   };
 
   const posts = type === 'top' ? data?.topSentiment : data?.bottomSentiment;
+  const defaultTitle = type === 'top' ? t('sentimentTable.highestSentiment') : t('sentimentTable.lowestSentiment');
 
   return (
     <motion.div
@@ -657,7 +660,7 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
           height: '100%', 
           boxShadow: 3, 
           borderRadius: 2,
-          background: title.includes('Highest') 
+          background: title.includes('Highest') || type === 'top'
             ? 'linear-gradient(135deg, #ffffff 0%, #e8f5e9 100%)' 
             : 'linear-gradient(135deg, #ffffff 0%, #ffebee 100%)',
           transition: 'all 0.3s ease-in-out'
@@ -673,23 +676,23 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
               fontWeight: 'bold'
             }}
           >
-            {title}
+            {title === "Sentiment Analysis" ? defaultTitle : title}
             <motion.div
               animate={{ rotate: [0, 5, 0, -5, 0] }}
               transition={{ repeat: Infinity, duration: 5, repeatDelay: 3 }}
               style={{ display: 'inline-block', marginLeft: '8px' }}
             >
-              {title.includes('Highest') ? '🔝' : '🔻'}
+              {title.includes('Highest') || type === 'top' ? '🔝' : '🔻'}
             </motion.div>
           </Typography>
           <StyledTableContainer>
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <StyledTableCell sx={{ width: '120px' }}>Sentiment</StyledTableCell>
-                  <StyledTableCell sx={{ width: '100px' }}>Score</StyledTableCell>
-                  <StyledTableCell>Content</StyledTableCell>
-                  <StyledTableCell sx={{ width: '200px' }}>Source</StyledTableCell>
+                  <StyledTableCell sx={{ width: '120px' }}>{t('table.sentiment')}</StyledTableCell>
+                  <StyledTableCell sx={{ width: '100px' }}>{t('sentimentTable.score')}</StyledTableCell>
+                  <StyledTableCell>{t('sentimentTable.content')}</StyledTableCell>
+                  <StyledTableCell sx={{ width: '200px' }}>{t('sentimentTable.source')}</StyledTableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

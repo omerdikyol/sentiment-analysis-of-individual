@@ -36,14 +36,16 @@ import {
   ReferenceLine,
   Label,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 const EmotionalAnalysis = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   if (!data?.rawData) {
     return (
       <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
+        <Typography variant="h6">{t('general.noData')}</Typography>
       </Box>
     );
   }
@@ -136,7 +138,7 @@ const EmotionalAnalysis = ({ data }) => {
       .map(([emotion]) => emotion);
 
       // Generate reason based on sentiment change and emotions
-      const reason = `Significant ${change > 0 ? 'positive' : 'negative'} shift detected with dominant emotions: ${dominantEmotions.join(', ')}`;
+      const reason = `${t('emotionalAnalysis.significantShift')} ${change > 0 ? t('emotionalAnalysis.positive') : t('emotionalAnalysis.negative')} ${t('emotionalAnalysis.shiftDetected')} ${t('emotionalAnalysis.dominantEmotions')}: ${dominantEmotions.map(emotion => t(`emotions.${emotion.toLowerCase()}`)).join(', ')}`;
       
       acc.push({
         date: curr.date,
@@ -179,7 +181,7 @@ const EmotionalAnalysis = ({ data }) => {
               variant="body2"
               sx={{ color: entry.color }}
             >
-              {`${entry.name}: ${Number(entry.value).toFixed(2)}`}
+              {`${entry.name === 'sentiment' ? t('emotionalAnalysis.sentiment') : t(`emotions.${entry.name.toLowerCase()}`)}: ${Number(entry.value).toFixed(2)}`}
             </Typography>
           ))}
         </Box>
@@ -195,14 +197,14 @@ const EmotionalAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Emotional Tone Analysis
+        {t('emotionalAnalysis.title')}
       </Typography>
       <Grid container spacing={3}>
         {/* Emotion Distribution */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Emotion Distribution
+              {t('emotionalAnalysis.emotionDistribution')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -214,7 +216,7 @@ const EmotionalAnalysis = ({ data }) => {
                     labelLine={false}
                     label={({ name, percent }) => {
                       if (percent === 0) return null;
-                      return `${name} (${(percent * 100).toFixed(0)}%)`;
+                      return `${t(`emotions.${name.toLowerCase()}`)} (${(percent * 100).toFixed(0)}%)`;
                     }}
                     outerRadius={80}
                     fill="#8884d8"
@@ -230,6 +232,7 @@ const EmotionalAnalysis = ({ data }) => {
                     layout="vertical" 
                     align="right"
                     verticalAlign="middle"
+                    formatter={(value) => t(`emotions.${value.toLowerCase()}`)}
                   />
                   <RechartsTooltip content={<CustomTooltip />} />
                 </PieChart>
@@ -242,7 +245,7 @@ const EmotionalAnalysis = ({ data }) => {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Emotional Tone Changes
+              {t('emotionalAnalysis.emotionalToneChanges')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -251,7 +254,7 @@ const EmotionalAnalysis = ({ data }) => {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Legend formatter={(value) => t(`emotions.${value.toLowerCase()}`)} />
                   {Object.keys(COLORS).map((emotion) => (
                     <Area
                       key={emotion}
@@ -261,6 +264,7 @@ const EmotionalAnalysis = ({ data }) => {
                       stroke={COLORS[emotion]}
                       fill={COLORS[emotion]}
                       fillOpacity={0.3}
+                      name={emotion}
                     />
                   ))}
                 </AreaChart>
@@ -273,7 +277,7 @@ const EmotionalAnalysis = ({ data }) => {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Significant Sentiment Shifts
+              {t('emotionalAnalysis.significantSentimentShifts')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -282,12 +286,13 @@ const EmotionalAnalysis = ({ data }) => {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Legend formatter={(value) => value === 'sentiment' ? t('emotionalAnalysis.sentiment') : t(`emotions.${value.toLowerCase()}`)} />
                   <Line
                     type="monotone"
                     dataKey="sentiment"
                     stroke={theme.palette.info.main}
                     strokeWidth={2}
+                    name="sentiment"
                   />
                   {sentimentShifts.map((shift, index) => (
                     <ReferenceLine
@@ -307,7 +312,7 @@ const EmotionalAnalysis = ({ data }) => {
             </Box>
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2" gutterBottom>
-                Key Events & Shifts
+                {t('emotionalAnalysis.keyEventsShifts')}
               </Typography>
               <Grid container spacing={2}>
                 {sentimentShifts.map((shift, index) => (
@@ -338,7 +343,7 @@ const EmotionalAnalysis = ({ data }) => {
                             </Typography>
                           </Box>
                           <Typography variant="body2" color="text.secondary">
-                            Sentiment shift: {shift.change > 0 ? '+' : ''}{shift.change}
+                            {t('emotionalAnalysis.sentimentShift')}: {shift.change > 0 ? '+' : ''}{shift.change}
                           </Typography>
                         </CardContent>
                       </Card>

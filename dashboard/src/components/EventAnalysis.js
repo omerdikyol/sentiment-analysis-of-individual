@@ -38,9 +38,11 @@ import {
   Cell,
 } from 'recharts';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 const EventAnalysis = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Helper function to format sentiment change
   const formatSentimentChange = (change) => {
@@ -48,7 +50,7 @@ const EventAnalysis = ({ data }) => {
     const isPositive = numChange > 0;
     return {
       text: `${Math.abs(numChange * 100).toFixed(1)}%`,
-      direction: isPositive ? 'Improved' : 'Declined',
+      direction: isPositive ? t('eventAnalysis.improved') : t('eventAnalysis.declined'),
       color: isPositive ? theme.palette.success.main : theme.palette.error.main,
       icon: isPositive ? '📈' : '📉'
     };
@@ -56,11 +58,11 @@ const EventAnalysis = ({ data }) => {
 
   // Helper function to get sentiment description and color
   const getSentimentInfo = (value) => {
-    if (value >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark };
-    if (value >= 0.3) return { text: 'Positive', color: theme.palette.success.main };
-    if (value > -0.3) return { text: 'Neutral', color: theme.palette.grey[600] };
-    if (value > -0.7) return { text: 'Negative', color: theme.palette.error.main };
-    return { text: 'Very Negative', color: theme.palette.error.dark };
+    if (value >= 0.7) return { text: t('sentiments.veryPositive'), color: theme.palette.success.dark };
+    if (value >= 0.3) return { text: t('sentiments.positive'), color: theme.palette.success.main };
+    if (value > -0.3) return { text: t('sentiments.neutral'), color: theme.palette.grey[600] };
+    if (value > -0.7) return { text: t('sentiments.negative'), color: theme.palette.error.main };
+    return { text: t('sentiments.veryNegative'), color: theme.palette.error.dark };
   };
 
   // Helper function to extract event-related information from text
@@ -95,7 +97,7 @@ const EventAnalysis = ({ data }) => {
     if (!hasEventKeyword) return null;
 
     // Determine event type
-    let eventType = 'General';
+    let eventType = t('eventAnalysis.eventTypes.general');
     let maxMatches = 0;
 
     Object.entries(eventTypes).forEach(([type, keywords]) => {
@@ -116,7 +118,7 @@ const EventAnalysis = ({ data }) => {
 
     return {
       type: eventType,
-      location: location || 'Multiple Locations',
+      location: location || t('eventAnalysis.multipleLocations'),
       hasEvent: true
     };
   };
@@ -180,7 +182,7 @@ const EventAnalysis = ({ data }) => {
           .map(event => ({
             date,
             type: event.type,
-            title: `${event.type} Event`,
+            title: `${event.type} ${t('eventAnalysis.event')}`,
             description: event.content.slice(0, 150) + '...',
             location: event.location,
             avgSentiment: event.sentiment / event.mentions,
@@ -268,10 +270,10 @@ const EventAnalysis = ({ data }) => {
 
       return {
         date: crisis.date,
-        title: 'Sentiment Crisis',
+        title: t('eventAnalysis.sentimentCrisis'),
         initialSentiment: Math.max(0, Math.min(1, crisis.avgSentiment + 0.5)),
         responseEffectiveness: Math.max(0, Math.min(1, timeline[timeline.length - 1].sentiment)),
-        recoveryTime: '72 hours',
+        recoveryTime: t('eventAnalysis.recoveryTime'),
         reputationImpact: Math.round(crisis.avgSentiment * 100),
         recoveryRate: Math.round(
           ((timeline[timeline.length - 1].sentiment - crisis.avgSentiment) / Math.abs(crisis.avgSentiment)) * 100
@@ -294,7 +296,7 @@ const EventAnalysis = ({ data }) => {
       before: event.beforeSentiment * 100,
       after: event.afterSentiment * 100,
       change: parseFloat(((event.afterSentiment - event.beforeSentiment) * 100).toFixed(1)),
-      impact: change > 0 ? 'Positive' : 'Negative'
+      impact: change > 0 ? t('eventAnalysis.positive') : t('eventAnalysis.negative')
     };
   });
 
@@ -335,14 +337,14 @@ const EventAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Event-Based Sentiment Analysis
+        {t('eventAnalysis.title')}
       </Typography>
       <Grid container spacing={3}>
         {/* Key Events Impact */}
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Impact of Key Events
+              {t('eventAnalysis.impactOfKeyEvents')}
             </Typography>
             <Grid container spacing={2}>
               {keyEvents.map((event, index) => {
@@ -385,13 +387,13 @@ const EventAnalysis = ({ data }) => {
                           borderColor: 'divider'
                         }}>
                           <Typography variant="subtitle2" gutterBottom>
-                            Sentiment Impact {impactInfo.icon}
+                            {t('eventAnalysis.sentimentImpact')} {impactInfo.icon}
                           </Typography>
                           
                           {/* Before State */}
                           <Box sx={{ mb: 2 }}>
                             <Typography variant="caption" color="text.secondary">
-                              Before Event:
+                              {t('eventAnalysis.beforeEvent')}:
                             </Typography>
                             <Box sx={{ 
                               display: 'flex', 
@@ -414,7 +416,7 @@ const EventAnalysis = ({ data }) => {
                           {/* After State */}
                           <Box>
                             <Typography variant="caption" color="text.secondary">
-                              After Event:
+                              {t('eventAnalysis.afterEvent')}:
                             </Typography>
                             <Box sx={{ 
                               display: 'flex', 
@@ -452,7 +454,7 @@ const EventAnalysis = ({ data }) => {
                                 fontWeight: 'bold'
                               }}
                             >
-                              Sentiment {impactInfo.direction} by {impactInfo.text}
+                              {t('eventAnalysis.sentiment')} {impactInfo.direction} {t('eventAnalysis.by')} {impactInfo.text}
                             </Typography>
                           </Box>
                         </Box>
@@ -460,7 +462,7 @@ const EventAnalysis = ({ data }) => {
                         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <MessageIcon sx={{ fontSize: 'small', color: 'text.secondary' }} />
                           <Typography variant="body2" color="text.secondary">
-                            {event.mentions.toLocaleString()} mentions
+                            {event.mentions.toLocaleString()} {t('eventAnalysis.mentions')}
                           </Typography>
                         </Box>
                       </CardContent>
@@ -476,7 +478,7 @@ const EventAnalysis = ({ data }) => {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Before vs. After Event Impact
+              {t('eventAnalysis.beforeVsAfterEventImpact')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -519,10 +521,10 @@ const EventAnalysis = ({ data }) => {
                             <Divider sx={{ my: 1 }} />
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                               <Typography variant="body2" color="text.secondary">
-                                Before: {data.before.toFixed(1)}%
+                                {t('eventAnalysis.before')}: {data.before.toFixed(1)}%
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                After: {data.after.toFixed(1)}%
+                                {t('eventAnalysis.after')}: {data.after.toFixed(1)}%
                               </Typography>
                               <Box sx={{ 
                                 mt: 0.5,
@@ -540,7 +542,7 @@ const EventAnalysis = ({ data }) => {
                                     fontWeight: 'bold'
                                   }}
                                 >
-                                  {data.change > 0 ? 'Improved by ' : 'Declined by '}
+                                  {data.change > 0 ? t('eventAnalysis.improvedBy') : t('eventAnalysis.declinedBy') }
                                   {Math.abs(data.change)}%
                                 </Typography>
                               </Box>
@@ -561,13 +563,13 @@ const EventAnalysis = ({ data }) => {
                   />
                   <Bar 
                     dataKey="before" 
-                    name="Before Event" 
+                    name={t('eventAnalysis.beforeEvent')} 
                     fill={theme.palette.grey[400]}
                     radius={[4, 0, 0, 4]}
                   />
                   <Bar 
                     dataKey="after" 
-                    name="After Event" 
+                    name={t('eventAnalysis.afterEvent')} 
                     fill={theme.palette.primary.main}
                     radius={[0, 4, 4, 0]}
                   >
@@ -628,7 +630,7 @@ const EventAnalysis = ({ data }) => {
                 borderRadius: 1
               }}>
                 <Typography variant="body2" sx={{ color: theme.palette.success.main }}>
-                  📈 Positive Impact
+                  📈 {t('eventAnalysis.positiveImpact')}
                 </Typography>
               </Box>
               <Box sx={{ 
@@ -640,7 +642,7 @@ const EventAnalysis = ({ data }) => {
                 borderRadius: 1
               }}>
                 <Typography variant="body2" sx={{ color: theme.palette.error.main }}>
-                  📉 Negative Impact
+                  📉 {t('eventAnalysis.negativeImpact')}
                 </Typography>
               </Box>
             </Box>
@@ -651,7 +653,7 @@ const EventAnalysis = ({ data }) => {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom sx={{ mb: 3 }}>
-              Crisis Response & Recovery Analysis
+              {t('eventAnalysis.crisisResponseAnalysis')}
             </Typography>
             {crisisEvents.map((crisis, index) => (
               <Card variant="outlined" key={index} sx={{ mb: 2 }}>
@@ -671,14 +673,14 @@ const EventAnalysis = ({ data }) => {
                           </Typography>
                           <Chip
                             icon={crisis.reputationImpact < 0 ? <TrendingDownIcon /> : <TrendingUpIcon />}
-                            label={`${crisis.reputationImpact < 0 ? '' : '+'}${crisis.reputationImpact}% Impact`}
+                            label={`${crisis.reputationImpact < 0 ? '' : '+'}${crisis.reputationImpact}% ${t('eventAnalysis.impact')}`}
                             color={crisis.reputationImpact < 0 ? 'error' : 'success'}
                             size="small"
                           />
                         </Box>
                         <Chip
                           icon={<CheckCircleIcon />}
-                          label={`${crisis.recoveryRate}% Recovery`}
+                          label={`${crisis.recoveryRate}% ${t('eventAnalysis.recovery')}`}
                           color={crisis.recoveryRate >= 80 ? 'success' : 'warning'}
                           size="small"
                         />
@@ -700,7 +702,7 @@ const EventAnalysis = ({ data }) => {
                           borderRadius: 1
                         }}>
                           <Typography variant="caption" color="text.secondary" display="block">
-                            Initial Impact
+                            {t('eventAnalysis.initialImpact')}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <WarningIcon sx={{ color: theme.palette.error.main, fontSize: 20 }} />
@@ -720,7 +722,7 @@ const EventAnalysis = ({ data }) => {
                           borderRadius: 1
                         }}>
                           <Typography variant="caption" color="text.secondary" display="block">
-                            Recovery Target
+                            {t('eventAnalysis.recoveryTarget')}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <CheckCircleIcon sx={{ color: theme.palette.success.main, fontSize: 20 }} />
@@ -740,7 +742,7 @@ const EventAnalysis = ({ data }) => {
                           borderRadius: 1
                         }}>
                           <Typography variant="caption" color="text.secondary" display="block">
-                            Recovery Time
+                            {t('eventAnalysis.recoveryTime')}
                           </Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <TimelineIcon sx={{ color: theme.palette.info.main, fontSize: 20 }} />
@@ -761,7 +763,7 @@ const EventAnalysis = ({ data }) => {
                               domain={[0, 1]} 
                               tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
                               label={{ 
-                                value: 'Sentiment Score', 
+                                value: t('eventAnalysis.sentimentScore'), 
                                 angle: -90, 
                                 position: 'insideLeft',
                                 style: { textAnchor: 'middle' }
@@ -781,7 +783,7 @@ const EventAnalysis = ({ data }) => {
                                       borderRadius: 1
                                     }}>
                                       <Typography variant="body2" gutterBottom>
-                                        Time: {data.time}
+                                        {t('eventAnalysis.time')}: {data.time}
                                       </Typography>
                                       <Typography 
                                         variant="body2" 
@@ -814,7 +816,7 @@ const EventAnalysis = ({ data }) => {
                               stroke={theme.palette.error.main}
                               strokeDasharray="3 3"
                               label={{ 
-                                value: 'Initial Impact', 
+                                value: t('eventAnalysis.initialImpact'), 
                                 position: 'right',
                                 fill: theme.palette.error.main
                               }}
@@ -824,7 +826,7 @@ const EventAnalysis = ({ data }) => {
                               stroke={theme.palette.success.main}
                               strokeDasharray="3 3"
                               label={{ 
-                                value: 'Recovery Target', 
+                                value: t('eventAnalysis.recoveryTarget'), 
                                 position: 'right',
                                 fill: theme.palette.success.main
                               }}

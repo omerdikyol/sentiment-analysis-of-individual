@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Card, Typography, styled } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -22,7 +23,9 @@ const TrendIndicator = styled(Box)(({ theme, trend }) => ({
   fontWeight: 500,
 }));
 
-const MetricCard = ({ title, value, trend, color = 'primary' }) => {
+const MetricCard = ({ title, value, trend, color = 'primary', translationKey }) => {
+  const { t } = useTranslation();
+  
   const getValueColor = () => {
     switch (color) {
       case 'success':
@@ -36,10 +39,13 @@ const MetricCard = ({ title, value, trend, color = 'primary' }) => {
     }
   };
 
+  // Use the provided translation key if available, otherwise use the title directly
+  const displayTitle = translationKey ? t(translationKey) : t(title);
+
   return (
     <StyledCard>
       <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-        {title}
+        {displayTitle}
       </Typography>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 1 }}>
         <Typography variant="h4" component="div" sx={{ fontWeight: 600, color: getValueColor() }}>

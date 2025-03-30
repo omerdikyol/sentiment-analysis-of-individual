@@ -19,6 +19,7 @@ import {
 import { motion } from 'framer-motion';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -47,6 +48,7 @@ const CountryBarChart = ({ mentionsByCountry }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   useEffect(() => {
     if (mentionsByCountry && mentionsByCountry.length > 0) {
@@ -65,8 +67,8 @@ const CountryBarChart = ({ mentionsByCountry }) => {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">Mentions by Country</Typography>
-          <Typography variant="body2">No data available</Typography>
+          <Typography variant="h6">{t('metrics.mentionsByCountry')}</Typography>
+          <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
       </Card>
     );
@@ -90,17 +92,17 @@ const CountryBarChart = ({ mentionsByCountry }) => {
             {data.country}
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0].color }}>
-            {`Total Mentions: ${data.total.toLocaleString()}`}
+            {`${t('charts.totalMentions')}: ${data.total.toLocaleString()}`}
           </Typography>
           <Box sx={{ mt: 1 }}>
             <Typography variant="body2" sx={{ color: '#4caf50' }}>
-              Positive: {data.positive} ({data.positivePercentage}%)
+              {t('sentiments.positive')}: {data.positive} ({data.positivePercentage}%)
             </Typography>
             <Typography variant="body2" sx={{ color: '#2196f3' }}>
-              Neutral: {data.neutral} ({data.neutralPercentage}%)
+              {t('sentiments.neutral')}: {data.neutral} ({data.neutralPercentage}%)
             </Typography>
             <Typography variant="body2" sx={{ color: '#f44336' }}>
-              Negative: {data.negative} ({data.negativePercentage}%)
+              {t('sentiments.negative')}: {data.negative} ({data.negativePercentage}%)
             </Typography>
           </Box>
         </Box>
@@ -169,7 +171,7 @@ const CountryBarChart = ({ mentionsByCountry }) => {
         <StyledCard onClick={handleCardClick}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Mentions by Country
+              {t('metrics.mentionsByCountry')}
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}
@@ -181,8 +183,8 @@ const CountryBarChart = ({ mentionsByCountry }) => {
       <ChartModal
         open={isModalOpen}
         onClose={handleModalClose}
-        title="Country Distribution - Detailed View"
-        subtitle="Click on any bar to see mentions for that country"
+        title={t('charts.countryDistributionDetailed')}
+        subtitle={t('charts.clickCountryBar')}
       >
         {renderChart('100%', true)}
       </ChartModal>

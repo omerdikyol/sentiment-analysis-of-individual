@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Button, 
   Tooltip, 
@@ -21,6 +22,7 @@ import PdfExportService from '../services/PdfExportService';
  * Button component that triggers PDF export of dashboard elements
  */
 const PDFExportButton = ({ title = 'Dashboard Export' }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState({
     current: 0,
@@ -48,7 +50,7 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
       );
 
       if (!dashboardElements || dashboardElements.length === 0) {
-        throw new Error('No dashboard elements found to export');
+        throw new Error(t('pdfExport.noElementsFound'));
       }
 
       // Initialize progress
@@ -111,11 +113,11 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
       if (result) {
         setSnackbar({
           open: true,
-          message: 'PDF exported successfully!',
+          message: t('pdfExport.successMessage'),
           severity: 'success'
         });
       } else {
-        throw new Error('Failed to export PDF');
+        throw new Error(t('pdfExport.exportFailed'));
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -124,13 +126,13 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
       if (error.message.includes('HTML2CANVAS') || error.message.length > 60) {
         setErrorDialog({
           open: true,
-          message: `Export failed: ${error.message}`
+          message: `${t('pdfExport.exportFailedPrefix')} ${error.message}`
         });
       } else {
         // Show simple error in snackbar
         setSnackbar({
           open: true,
-          message: `Export failed: ${error.message}`,
+          message: `${t('pdfExport.exportFailedPrefix')} ${error.message}`,
           severity: 'error'
         });
       }
@@ -153,7 +155,7 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
 
   return (
     <>
-      <Tooltip title="Export as PDF">
+      <Tooltip title={t('general.exportPDF')}>
         <Button
           variant="contained"
           color="primary"
@@ -167,7 +169,7 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
             boxShadow: 2,
           }}
         >
-          {loading ? 'Exporting...' : 'Export PDF'}
+          {loading ? t('pdfExport.exporting') : t('pdfExport.exportPDF')}
         </Button>
       </Tooltip>
       
@@ -181,12 +183,12 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
         disableBackdropClick
       >
         <DialogTitle id="export-progress-dialog-title">
-          Exporting Dashboard to PDF
+          {t('pdfExport.exportingToPDF')}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ width: '100%', mt: 2 }}>
             <DialogContentText sx={{ mb: 2 }}>
-              Processing dashboard elements... {progress.current} of {progress.total}
+              {t('pdfExport.processingElements', { current: progress.current, total: progress.total })}
             </DialogContentText>
             <LinearProgress 
               variant="determinate" 
@@ -198,7 +200,7 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
               color="text.secondary" 
               sx={{ mt: 1, textAlign: 'center' }}
             >
-              Please wait while we generate your PDF...
+              {t('pdfExport.pleaseWait')}
             </Typography>
           </Box>
         </DialogContent>
@@ -227,12 +229,12 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
         aria-labelledby="error-dialog-title"
       >
         <DialogTitle id="error-dialog-title">
-          PDF Export Failed
+          {t('pdfExport.exportFailedTitle')}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
             <Typography variant="body2" component="p" sx={{ mb: 1 }}>
-              There was an error while generating the PDF:
+              {t('pdfExport.errorWhileGenerating')}
             </Typography>
             <Typography 
               variant="body2" 
@@ -250,7 +252,7 @@ const PDFExportButton = ({ title = 'Dashboard Export' }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseErrorDialog} color="primary" autoFocus>
-            Close
+            {t('general.close')}
           </Button>
         </DialogActions>
       </Dialog>

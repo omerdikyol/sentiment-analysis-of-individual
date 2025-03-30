@@ -23,18 +23,20 @@ import {
   Language as LanguageIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const InfluencerAnalysis = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   // Helper function to get sentiment info based on average sentiment score
   // Keep using score for the gradient classification
   const getSentimentInfo = (sentiment) => {
-    if (sentiment >= 0.7) return { text: 'Very Positive', color: theme.palette.success.dark, icon: '😄' };
-    if (sentiment >= 0.3) return { text: 'Positive', color: theme.palette.success.main, icon: '🙂' };
-    if (sentiment > -0.3) return { text: 'Neutral', color: theme.palette.grey[600], icon: '😐' };
-    if (sentiment > -0.7) return { text: 'Negative', color: theme.palette.error.main, icon: '🙁' };
-    return { text: 'Very Negative', color: theme.palette.error.dark, icon: '😞' };
+    if (sentiment >= 0.7) return { text: t('sentiments.veryPositive'), color: theme.palette.success.dark, icon: '😄' };
+    if (sentiment >= 0.3) return { text: t('sentiments.positive'), color: theme.palette.success.main, icon: '🙂' };
+    if (sentiment > -0.3) return { text: t('sentiments.neutral'), color: theme.palette.grey[600], icon: '😐' };
+    if (sentiment > -0.7) return { text: t('sentiments.negative'), color: theme.palette.error.main, icon: '🙁' };
+    return { text: t('sentiments.veryNegative'), color: theme.palette.error.dark, icon: '😞' };
   };
 
   // Process raw data to identify influencers
@@ -83,7 +85,7 @@ const InfluencerAnalysis = ({ data }) => {
         acc[cleanAuthorName] = {
           name: cleanAuthorName,
           handle: author.startsWith('@') ? author : `@${cleanAuthorName}`,
-          platform: mention.platform || mention.source || 'Unknown',
+          platform: mention.platform || mention.source || t('general.unknown'),
           posts: 0,
           totalSentiment: 0,
           sentiments: [],
@@ -218,7 +220,7 @@ const InfluencerAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Top Influencers
+        {t('influencerAnalysis.topInfluencers')}
       </Typography>
       <Grid container spacing={3}>
         {/* Top Influencers */}
@@ -244,7 +246,7 @@ const InfluencerAnalysis = ({ data }) => {
                     />
                     <Chip
                       icon={<TrendingUpIcon />}
-                      label={`${influencer.posts} Posts`}
+                      label={`${influencer.posts} ${t('influencerAnalysis.posts')}`}
                       size="small"
                       sx={{ 
                         bgcolor: '#2196F3',
@@ -271,7 +273,7 @@ const InfluencerAnalysis = ({ data }) => {
                   </Box>
                   {influencer.topics.length > 0 && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      Topics: {influencer.topics.join(', ')}
+                      {t('influencerAnalysis.topics')}: {influencer.topics.join(', ')}
                     </Typography>
                   )}
                   {influencer.location && (
@@ -299,7 +301,7 @@ const InfluencerAnalysis = ({ data }) => {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Most Viral Content
+              {t('influencerAnalysis.mostViralContent')}
             </Typography>
             <Grid container spacing={2}>
               {viralPosts.map((post, index) => (
@@ -333,7 +335,7 @@ const InfluencerAnalysis = ({ data }) => {
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           {post.likes > 0 && (
-                            <Tooltip title="Likes">
+                            <Tooltip title={t('influencerAnalysis.likes')}>
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <FavoriteIcon color="error" sx={{ fontSize: 16, mr: 0.5 }} />
                                 <Typography variant="body2">{post.likes}</Typography>
@@ -341,7 +343,7 @@ const InfluencerAnalysis = ({ data }) => {
                             </Tooltip>
                           )}
                           {post.retweets > 0 && (
-                            <Tooltip title="Shares">
+                            <Tooltip title={t('influencerAnalysis.shares')}>
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <ShareIcon color="primary" sx={{ fontSize: 16, mr: 0.5 }} />
                                 <Typography variant="body2">{post.retweets}</Typography>
@@ -349,7 +351,7 @@ const InfluencerAnalysis = ({ data }) => {
                             </Tooltip>
                           )}
                           {post.comments > 0 && (
-                            <Tooltip title="Comments">
+                            <Tooltip title={t('influencerAnalysis.comments')}>
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <CommentIcon color="action" sx={{ fontSize: 16, mr: 0.5 }} />
                                 <Typography variant="body2">{post.comments}</Typography>
@@ -369,7 +371,7 @@ const InfluencerAnalysis = ({ data }) => {
                           }} 
                         />
                         <Typography variant="body2" color="text.secondary">
-                          Virality Score: {post.viralityScore.toFixed(1)}
+                          {t('influencerAnalysis.viralityScore')}: {post.viralityScore.toFixed(1)}
                         </Typography>
                       </Box>
                     </CardContent>

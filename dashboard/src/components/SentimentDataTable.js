@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Paper,
@@ -38,6 +39,7 @@ import {
 import Papa from 'papaparse';
 
 const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter = null, initialDateFilter = null, initialCountryFilter = null, initialTextFilter = null }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -134,7 +136,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
 
   // Helper function to format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'Unknown';
+    if (!dateString) return t('general.unknown');
     
     try {
       const date = new Date(dateString);
@@ -283,13 +285,13 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
     <Box sx={{ width: '100%' }}>
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: 500 }}>
-          Sentiment Data {filteredData.length > 0 && `(${filteredData.length} records)`}
+          {t('sentimentTable.title')} {filteredData.length > 0 && `(${filteredData.length} ${t('sentimentTable.records')})`}
         </Typography>
         
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           {(sentimentFilter || sourceFilter || dateFilter || countryFilter || textFilter) && (
             <Chip 
-              label="Clear all filters"
+              label={t('sentimentTable.clearAllFilters')}
               color="default"
               onDelete={clearFilters}
               size="small"
@@ -299,7 +301,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           
           {sentimentFilter && (
             <Chip 
-              label={`${sentimentFilter.charAt(0).toUpperCase() + sentimentFilter.slice(1)} sentiment`}
+              label={`${t(`sentiments.${sentimentFilter}`)}`}
               color={sentimentFilter === 'positive' ? 'success' : sentimentFilter === 'negative' ? 'error' : 'primary'}
               onDelete={clearSentimentFilter}
               size="small"
@@ -309,7 +311,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           
           {sourceFilter && (
             <Chip 
-              label={`Source: ${sourceFilter}`}
+              label={`${t('sentimentTable.source')}: ${sourceFilter}`}
               color="info"
               onDelete={clearSourceFilter}
               size="small"
@@ -320,8 +322,8 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           {dateFilter && (
             <Chip 
               label={typeof dateFilter === 'string' 
-                ? `Date: ${dateFilter}` 
-                : `Date: ${dateFilter.start} - ${dateFilter.end}`}
+                ? `${t('sentimentTable.date')}: ${dateFilter}` 
+                : `${t('sentimentTable.dateRange')}: ${dateFilter.start} - ${dateFilter.end}`}
               color="warning"
               onDelete={clearDateFilter}
               size="small"
@@ -331,7 +333,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           
           {countryFilter && (
             <Chip 
-              label={`Country: ${countryFilter}`}
+              label={`${t('sentimentTable.country')}: ${countryFilter}`}
               color="success"
               onDelete={clearCountryFilter}
               size="small"
@@ -341,7 +343,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           
           {textFilter && (
             <Chip 
-              label={`Contains: ${textFilter}`}
+              label={`${t('sentimentTable.contains')}: ${textFilter}`}
               color="default"
               onDelete={clearTextFilter}
               size="small"
@@ -351,7 +353,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           
           <TextField
             size="small"
-            placeholder="Search..."
+            placeholder={t('sentimentTable.search')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -377,13 +379,13 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           <Table stickyHeader aria-label="sentiment data table">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Source</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Platform</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Sentiment</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Content</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Author</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Location</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.date')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.source')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.platform')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.sentiment')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.content')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.author')}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>{t('sentimentTable.location')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -429,14 +431,14 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
                           </Typography>
                         </TableCell>
                         <TableCell>{row.author}</TableCell>
-                        <TableCell>{row.location || 'Unknown Location'}</TableCell>
+                        <TableCell>{row.location || t('sentimentTable.unknownLocation')}</TableCell>
                       </TableRow>
                     );
                   })
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                    No data found. Please check the CSV file format or try adjusting the filters.
+                    {t('sentimentTable.noDataFound')}
                   </TableCell>
                 </TableRow>
               )}
@@ -451,6 +453,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+          labelRowsPerPage={t('sentimentTable.rowsPerPage')}
         />
       </Paper>
 
@@ -470,7 +473,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
               borderBottom: '1px solid #e0e0e0',
               pb: 2
             }}>
-              <Typography variant="h6">Sentiment Data Details</Typography>
+              <Typography variant="h6">{t('sentimentTable.detailsTitle')}</Typography>
               <IconButton onClick={handleCloseDialog} size="small">
                 <CloseIcon />
               </IconButton>
@@ -506,7 +509,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
                           }} 
                         />
                         <Typography variant="body2" color="text.secondary">
-                          Sentiment Score: {selectedRow.sentimentScore.toFixed(2)}
+                          {t('sentimentTable.sentimentScore')}: {selectedRow.sentimentScore.toFixed(2)}
                         </Typography>
                       </Box>
                     </Box>
@@ -527,13 +530,13 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <CalendarIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2">
-                      <strong>Date:</strong> {selectedRow.date}
+                      <strong>{t('sentimentTable.date')}:</strong> {selectedRow.date}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <SourceIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2">
-                      <strong>Source:</strong> {selectedRow.source}
+                      <strong>{t('sentimentTable.source')}:</strong> {selectedRow.source}
                     </Typography>
                   </Box>
                 </Grid>
@@ -542,19 +545,19 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <LanguageIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2">
-                      <strong>Platform:</strong> {selectedRow.platform}
+                      <strong>{t('sentimentTable.platform')}:</strong> {selectedRow.platform}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2">
-                      <strong>Author:</strong> {selectedRow.author}
+                      <strong>{t('sentimentTable.author')}:</strong> {selectedRow.author}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <LocationIcon sx={{ mr: 1, color: 'text.secondary' }} />
                     <Typography variant="body2">
-                      <strong>Location:</strong> {selectedRow.location}
+                      <strong>{t('sentimentTable.location')}:</strong> {selectedRow.location}
                     </Typography>
                   </Box>
                 </Grid>
@@ -563,7 +566,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle1" gutterBottom>
-                    Additional Information
+                    {t('sentimentTable.additionalInfo')}
                   </Typography>
                   <Grid container spacing={2}>
                     {Object.entries(selectedRow.originalData)
@@ -596,11 +599,11 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
                   rel="noopener noreferrer"
                   color="primary"
                 >
-                  View Original Source
+                  {t('sentimentTable.viewOriginalSource')}
                 </Button>
               )}
               <Button onClick={handleCloseDialog} color="primary" variant="contained">
-                Close
+                {t('general.close')}
               </Button>
             </DialogActions>
           </>

@@ -21,9 +21,11 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 const PlatformSentiment = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const getPlatformIcon = (platform) => {
     const platformLower = platform.toLowerCase();
@@ -164,7 +166,7 @@ const PlatformSentiment = ({ data }) => {
           // Add to "Other Sources"
           if (!acc.other) {
             acc.other = {
-              platform: 'Other Sources',
+              platform: t('platformSentiment.otherSources'),
               positive: 0,
               neutral: 0,
               negative: 0,
@@ -236,7 +238,7 @@ const PlatformSentiment = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Platform-Specific Sentiment Analysis
+        {t('platformSentiment.title')}
       </Typography>
       <Grid container spacing={3}>
         {platformStats.map((platform) => (
@@ -245,12 +247,12 @@ const PlatformSentiment = ({ data }) => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
                   {getPlatformIcon(platform.platform)}
-                  <Tooltip title={platform.sources ? `Including: ${platform.sources.join(', ')}` : ''}>
+                  <Tooltip title={platform.sources ? `${t('platformSentiment.including')}: ${platform.sources.join(', ')}` : ''}>
                     <Typography variant="h6" component="div">
                       {platform.platform}
                       {platform.sources && (
                         <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                          ({platform.sources.length} sources)
+                          ({platform.sources.length} {t('platformSentiment.sources')})
                         </Typography>
                       )}
                     </Typography>
@@ -260,7 +262,7 @@ const PlatformSentiment = ({ data }) => {
                 <Stack spacing={1.5}>
                   <Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Positive ({Math.round(platform.positivePercent)}%)
+                      {t('sentiments.positive')} ({Math.round(platform.positivePercent)}%)
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -278,7 +280,7 @@ const PlatformSentiment = ({ data }) => {
 
                   <Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Neutral ({Math.round(platform.neutralPercent)}%)
+                      {t('sentiments.neutral')} ({Math.round(platform.neutralPercent)}%)
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -296,7 +298,7 @@ const PlatformSentiment = ({ data }) => {
 
                   <Box>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Negative ({Math.round(platform.negativePercent)}%)
+                      {t('sentiments.negative')} ({Math.round(platform.negativePercent)}%)
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -317,11 +319,11 @@ const PlatformSentiment = ({ data }) => {
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">
-                    Total: {platform.total}
+                    {t('platformSentiment.total')}: {platform.total}
                   </Typography>
                   {platform.engagement > 0 && (
                     <Typography variant="body2" color="text.secondary">
-                      Engagement: {platform.engagement.toLocaleString()}
+                      {t('platformSentiment.engagement')}: {platform.engagement.toLocaleString()}
                     </Typography>
                   )}
                 </Box>

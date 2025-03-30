@@ -34,6 +34,7 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 // Fallback colors in case theme is not available
 const fallbackColors = {
@@ -68,6 +69,7 @@ const fallbackColors = {
 };
 
 const AutoSummary = ({ data }) => {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState({
@@ -143,14 +145,21 @@ const AutoSummary = ({ data }) => {
         // Generate overall summary
         let sentimentTrend;
         if (averageSentiment > 0.1) {
-          sentimentTrend = "positive";
+          sentimentTrend = t('analysis.positive');
         } else if (averageSentiment < -0.1) {
-          sentimentTrend = "negative";
+          sentimentTrend = t('analysis.negative');
         } else {
-          sentimentTrend = "mixed";
+          sentimentTrend = t('analysis.mixed');
         }
         
-        summaries.overallSummary = `Analysis of ${data.rawData.length} content items reveals an overall ${sentimentTrend} sentiment trend with an average score of ${averageSentiment.toFixed(2)}. The sentiment distribution shows ${positivePercentage}% positive, ${neutralPercentage}% neutral, and ${negativePercentage}% negative sentiment across all sources and platforms.`;
+        summaries.overallSummary = t('autoSummary.overallSummary', {
+          count: data.rawData.length,
+          trend: sentimentTrend,
+          score: averageSentiment.toFixed(2),
+          positive: positivePercentage,
+          neutral: neutralPercentage,
+          negative: negativePercentage
+        });
         
         // Extract common themes and topics using word frequency
         const wordFrequency = {};
@@ -262,15 +271,24 @@ const AutoSummary = ({ data }) => {
           
           if (lastDay && previousDay) {
             const sentimentChange = lastDay.averageSentiment - previousDay.averageSentiment;
-            const changeDescription = Math.abs(sentimentChange) < 0.1 
-              ? "remains stable" 
-              : sentimentChange > 0 
-                ? "has improved" 
-                : "has declined";
+            
+            let changeDescription;
+            if (Math.abs(sentimentChange) < 0.1) {
+              changeDescription = t('autoSummary.trends.stable');
+            } else if (sentimentChange > 0) {
+              changeDescription = t('autoSummary.trends.improved');
+            } else {
+              changeDescription = t('autoSummary.trends.declined');
+            }
+            
+            const changeCapitalized = changeDescription.charAt(0).toUpperCase() + changeDescription.slice(1);
             
             summaries.recentChanges.push({
-              title: `Recent Sentiment ${changeDescription.charAt(0).toUpperCase() + changeDescription.slice(1)}`,
-              description: `Sentiment ${changeDescription} by ${Math.abs(sentimentChange).toFixed(2)} points compared to the previous period.`,
+              title: t('autoSummary.recentChanges.title', { change: changeCapitalized }),
+              description: t('autoSummary.recentChanges.description', {
+                change: changeDescription,
+                points: Math.abs(sentimentChange).toFixed(2)
+              }),
               trend: sentimentChange > 0.1 ? "up" : sentimentChange < -0.1 ? "down" : "flat"
             });
           }
@@ -316,16 +334,22 @@ const AutoSummary = ({ data }) => {
           
           if (bestPlatform.averageSentiment > 0.1) {
             summaries.keyTrends.push({
-              title: `${bestPlatform.platform} Shows Most Positive Sentiment`,
-              description: `Content on ${bestPlatform.platform} demonstrates the highest average sentiment (${bestPlatform.averageSentiment.toFixed(2)}) across all platforms analyzed.`,
+              title: t('autoSummary.platforms.mostPositive', { platform: bestPlatform.platform }),
+              description: t('autoSummary.platforms.positiveDescription', {
+                platform: bestPlatform.platform,
+                score: bestPlatform.averageSentiment.toFixed(2)
+              }),
               trend: "up"
             });
           }
           
           if (worstPlatform.averageSentiment < -0.1) {
             summaries.keyTrends.push({
-              title: `${worstPlatform.platform} Shows Most Negative Sentiment`,
-              description: `Content on ${worstPlatform.platform} demonstrates the lowest average sentiment (${worstPlatform.averageSentiment.toFixed(2)}) across all platforms analyzed.`,
+              title: t('autoSummary.platforms.mostNegative', { platform: worstPlatform.platform }),
+              description: t('autoSummary.platforms.negativeDescription', {
+                platform: worstPlatform.platform,
+                score: worstPlatform.averageSentiment.toFixed(2)
+              }),
               trend: "down"
             });
           }
@@ -333,15 +357,25 @@ const AutoSummary = ({ data }) => {
         
         // Generate key trends from top themes
         topWords.slice(0, 5).forEach(([word, stats]) => {
-          const sentimentDescription = stats.averageSentiment > 0.2 
-            ? "positive" 
-            : stats.averageSentiment < -0.2 
-              ? "negative" 
-              : "neutral";
+          let sentimentDescription;
+          if (stats.averageSentiment > 0.2) {
+            sentimentDescription = t('analysis.positive');
+          } else if (stats.averageSentiment < -0.2) {
+            sentimentDescription = t('analysis.negative');
+          } else {
+            sentimentDescription = t('analysis.neutral');
+          }
+          
+          const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1);
           
           summaries.keyTrends.push({
-            title: `High Frequency of "${word.charAt(0).toUpperCase() + word.slice(1)}" Mentions`,
-            description: `The term "${word}" appears ${stats.count} times with predominantly ${sentimentDescription} sentiment (${stats.averageSentiment.toFixed(2)}).`,
+            title: t('autoSummary.keyTrends.highFrequency', { word: capitalizedWord }),
+            description: t('autoSummary.keyTrends.frequencyDescription', {
+              word,
+              count: stats.count,
+              sentiment: sentimentDescription,
+              score: stats.averageSentiment.toFixed(2)
+            }),
             trend: stats.averageSentiment > 0.2 
               ? "up" 
               : stats.averageSentiment < -0.2 
@@ -356,7 +390,11 @@ const AutoSummary = ({ data }) => {
             term: word,
             sentimentScore: stats.averageSentiment.toFixed(2),
             frequency: stats.count,
-            description: `The term "${word}" is associated with positive sentiment in ${stats.positiveCount} out of ${stats.count} mentions.`
+            description: t('autoSummary.themes.positiveAssociation', {
+              word,
+              positive: stats.positiveCount,
+              total: stats.count
+            })
           });
         });
         
@@ -366,7 +404,11 @@ const AutoSummary = ({ data }) => {
             term: word,
             sentimentScore: stats.averageSentiment.toFixed(2),
             frequency: stats.count,
-            description: `The term "${word}" is associated with negative sentiment in ${stats.negativeCount} out of ${stats.count} mentions.`
+            description: t('autoSummary.themes.negativeAssociation', {
+              word,
+              negative: stats.negativeCount,
+              total: stats.count
+            })
           });
         });
         
@@ -382,16 +424,16 @@ const AutoSummary = ({ data }) => {
           summaries.insightsAndRecommendations.push(
             generateInsight(
               "strength",
-              "Strong Positive Sentiment Overall",
-              `The high percentage of positive content (${positivePercentage}%) indicates a favorable perception. Capitalize on this positive momentum in future communications.`
+              t('autoSummary.insights.strongPositive'),
+              t('autoSummary.insights.strongPositiveDesc', { percentage: positivePercentage })
             )
           );
         } else if (negativePercentage > 40) {
           summaries.insightsAndRecommendations.push(
             generateInsight(
               "concern",
-              "Significant Negative Sentiment Detected",
-              `The elevated negative sentiment (${negativePercentage}%) suggests areas for improvement. Address the negative themes identified in this analysis.`
+              t('autoSummary.insights.significantNegative'),
+              t('autoSummary.insights.significantNegativeDesc', { percentage: negativePercentage })
             )
           );
         }
@@ -411,8 +453,8 @@ const AutoSummary = ({ data }) => {
             summaries.insightsAndRecommendations.push(
               generateInsight(
                 "opportunity",
-                "Platform Sentiment Discrepancy",
-                `There's a significant difference in sentiment across platforms, with ${platformDifference.platform} showing the largest variance. Consider platform-specific content strategies to address these differences.`
+                t('autoSummary.insights.platformDiscrepancy'),
+                t('autoSummary.insights.platformDiscrepancyDesc', { platform: platformDifference.platform })
               )
             );
           }
@@ -424,8 +466,11 @@ const AutoSummary = ({ data }) => {
           summaries.insightsAndRecommendations.push(
             generateInsight(
               "strength",
-              `Strong Association with "${topPositive[0]}"`,
-              `The term "${topPositive[0]}" consistently generates positive sentiment (${topPositive[1].averageSentiment.toFixed(2)}). Consider emphasizing this theme in future communications.`
+              t('autoSummary.insights.strongTermAssociation', { term: topPositive[0] }),
+              t('autoSummary.insights.strongTermDesc', { 
+                term: topPositive[0], 
+                score: topPositive[1].averageSentiment.toFixed(2) 
+              })
             )
           );
         }
@@ -435,8 +480,11 @@ const AutoSummary = ({ data }) => {
           summaries.insightsAndRecommendations.push(
             generateInsight(
               "concern",
-              `Negative Association with "${topNegative[0]}"`,
-              `The term "${topNegative[0]}" consistently generates negative sentiment (${topNegative[1].averageSentiment.toFixed(2)}). Consider addressing concerns related to this theme.`
+              t('autoSummary.insights.negativeTermAssociation', { term: topNegative[0] }),
+              t('autoSummary.insights.negativeTermDesc', { 
+                term: topNegative[0], 
+                score: topNegative[1].averageSentiment.toFixed(2) 
+              })
             )
           );
         }
@@ -447,23 +495,31 @@ const AutoSummary = ({ data }) => {
           const recentTrend = recentDays[recentDays.length - 1].averageSentiment - recentDays[0].averageSentiment;
           
           if (Math.abs(recentTrend) > 0.15) {
+            const trendType = recentTrend > 0 ? "opportunity" : "concern";
+            const trendDirection = recentTrend > 0 
+              ? t('autoSummary.trends.improving') 
+              : t('autoSummary.trends.declining');
+            
+            const actionDescription = recentTrend > 0 
+              ? t('autoSummary.trends.positiveAction')
+              : t('autoSummary.trends.negativeAction');
+            
             summaries.insightsAndRecommendations.push(
               generateInsight(
-                recentTrend > 0 ? "opportunity" : "concern",
-                `${recentTrend > 0 ? "Improving" : "Declining"} Sentiment Trend`,
-                `Recent data shows a ${recentTrend > 0 ? "positive" : "negative"} sentiment trend over the last few days. ${
-                  recentTrend > 0 
-                  ? "Identify the successful elements contributing to this improvement for future strategies." 
-                  : "Consider immediate corrective actions to address this decline."
-                }`
+                trendType,
+                t('autoSummary.insights.sentimentTrend', { direction: trendDirection }),
+                t('autoSummary.insights.sentimentTrendDesc', { 
+                  direction: recentTrend > 0 ? t('sentiments.positive') : t('sentiments.negative'),
+                  action: actionDescription
+                })
               )
             );
           } else {
             summaries.insightsAndRecommendations.push(
               generateInsight(
                 "insight",
-                "Stable Sentiment Trend",
-                "Sentiment has remained relatively stable over the recent period. This stability provides a solid foundation for consistent messaging."
+                t('autoSummary.insights.stableTrend'),
+                t('autoSummary.insights.stableTrendDesc')
               )
             );
           }
@@ -479,7 +535,7 @@ const AutoSummary = ({ data }) => {
       setSummaryData(summaries);
       setLoading(false);
     }, 1000);
-  }, [data]);
+  }, [data, t]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -516,11 +572,11 @@ const AutoSummary = ({ data }) => {
   if (loading) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>Generating AI Summary...</Typography>
+        <Typography variant="h6" gutterBottom>{t('autoSummary.generating')}</Typography>
         <Box sx={{ width: '100%', mt: 4 }}>
           <LinearProgress />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Analyzing {data?.rawData?.length || 0} data points for insights
+            {t('autoSummary.analyzing', { count: data?.rawData?.length || 0 })}
           </Typography>
         </Box>
       </Box>
@@ -547,7 +603,7 @@ const AutoSummary = ({ data }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <AutoAwesomeIcon sx={{ mr: 1, color: getColor('primary.main') }} />
-            <Typography variant="h6">AI-Generated Sentiment Summary</Typography>
+            <Typography variant="h6">{t('autoSummary.title')}</Typography>
           </Box>
           <IconButton onClick={handleRefresh} size="small" disabled={refreshing}>
             {refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
@@ -570,7 +626,7 @@ const AutoSummary = ({ data }) => {
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
               <TimelineIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              Key Trends
+              {t('autoSummary.sections.keyTrends')}
             </Typography>
             <List>
               {summaryData.keyTrends.map((trend, index) => (
@@ -606,7 +662,7 @@ const AutoSummary = ({ data }) => {
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
               <LightbulbIcon sx={{ verticalAlign: 'middle', mr: 1 }} />
-              Insights & Recommendations
+              {t('autoSummary.sections.insightsRecommendations')}
             </Typography>
             <List>
               {summaryData.insightsAndRecommendations.map((insight, index) => (
@@ -644,7 +700,7 @@ const AutoSummary = ({ data }) => {
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
               <ThumbUpIcon sx={{ mr: 1, color: getColor('success.main') }} />
-              Top Positive Themes
+              {t('autoSummary.sections.positiveThemes')}
             </Typography>
             <Grid container spacing={1}>
               {summaryData.topPositiveThemes.slice(0, 6).map((theme, index) => (
@@ -680,7 +736,7 @@ const AutoSummary = ({ data }) => {
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
               <ThumbDownIcon sx={{ mr: 1, color: getColor('error.main') }} />
-              Top Negative Themes
+              {t('autoSummary.sections.negativeThemes')}
             </Typography>
             <Grid container spacing={1}>
               {summaryData.topNegativeThemes.slice(0, 6).map((theme, index) => (
@@ -717,7 +773,7 @@ const AutoSummary = ({ data }) => {
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle1" gutterBottom>
-                Recent Changes
+                {t('autoSummary.sections.recentChanges')}
               </Typography>
               <Grid container spacing={2}>
                 {summaryData.recentChanges.map((change, index) => (

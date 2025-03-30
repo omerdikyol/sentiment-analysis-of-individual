@@ -24,12 +24,16 @@
     "date-fns": "^2.30.0",
     "framer-motion": "^12.5.0",
     "html2canvas": "^1.4.1",
+    "i18next": "^23.16.8",
+    "i18next-browser-languagedetector": "^8.0.4",
+    "i18next-http-backend": "^3.0.2",
     "jspdf": "^3.0.1",
     "papaparse": "^5.5.2",
     "react": "^18.2.0",
     "react-countup": "^6.5.3",
     "react-dom": "^18.2.0",
     "react-force-graph-2d": "^1.26.3",
+    "react-i18next": "^13.5.0",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.11.2",
     "react-scripts": "5.0.1",
@@ -42,9 +46,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "copy-csv": "mkdir -p public && cp -f ../data/processed/latest.csv public/processed_data.csv && cp -f ../data/processed/processed_data_20250323_155124.csv public/processed_data_old.csv",
-    "prestart": "npm run copy-csv",
-    "prebuild": "npm run copy-csv"
+    "copy-locales": "mkdir -p build/locales && cp -r public/locales/* build/locales/",
+    "postbuild": "npm run copy-locales"
   },
   "eslintConfig": {
     "extends": [

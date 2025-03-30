@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -26,6 +27,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   useEffect(() => {
     if (sentimentByDate && sentimentByDate.length > 0) {
@@ -67,8 +69,8 @@ const SentimentLineChart = ({ sentimentByDate }) => {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">Sentiment Over Time</Typography>
-          <Typography variant="body2">No data available</Typography>
+          <Typography variant="h6">{t('charts.sentimentOverTime')}</Typography>
+          <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
       </Card>
     );
@@ -93,18 +95,18 @@ const SentimentLineChart = ({ sentimentByDate }) => {
             {label}
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'rgba(54, 162, 235, 1)' }}>
-            {`Average Sentiment: ${(payload[0].value)}%`}
+            {`${t('charts.averageSentiment')}: ${(payload[0].value)}%`}
           </Typography>
           {dataPoint && (
             <Box sx={{ mt: 1 }}>
               <Typography variant="body2" sx={{ color: 'rgba(75, 192, 192, 1)' }}>
-                Positive: {dataPoint.positive}
+                {t('sentiments.positive')}: {dataPoint.positive}
               </Typography>
               <Typography variant="body2" sx={{ color: '#2196f3' }}>
-                Neutral: {dataPoint.neutral || 0}
+                {t('sentiments.neutral')}: {dataPoint.neutral || 0}
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255, 99, 132, 1)' }}>
-                Negative: {dataPoint.negative}
+                {t('sentiments.negative')}: {dataPoint.negative}
               </Typography>
             </Box>
           )}
@@ -145,13 +147,19 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           }}
           cursor={clickable ? { stroke: '#ccc', strokeWidth: 2 } : undefined}
         />
-        <Legend />
+        <Legend formatter={(value) => {
+          if (value === 'positive') return t('sentiments.positive');
+          if (value === 'negative') return t('sentiments.negative');
+          if (value === 'neutral') return t('sentiments.neutral');
+          return value;
+        }} />
         <Line
           type="monotone"
           dataKey="positive"
           stroke="#4caf50"
           strokeWidth={2}
           dot={{ r: 3 }}
+          name="positive"
           activeDot={clickable ? { 
             r: 6, 
             strokeWidth: 2, 
@@ -171,6 +179,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           stroke="#f44336"
           strokeWidth={2}
           dot={{ r: 3 }}
+          name="negative"
           activeDot={clickable ? { 
             r: 6, 
             strokeWidth: 2, 
@@ -190,6 +199,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           stroke="#9e9e9e"
           strokeWidth={2}
           dot={{ r: 3 }}
+          name="neutral"
           activeDot={clickable ? { 
             r: 6, 
             strokeWidth: 2, 
@@ -217,7 +227,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
         <StyledCard onClick={handleCardClick}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Sentiment Trends
+              {t('charts.sentimentTrends')}
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}
@@ -229,8 +239,8 @@ const SentimentLineChart = ({ sentimentByDate }) => {
       <ChartModal
         open={isModalOpen}
         onClose={handleModalClose}
-        title="Sentiment Trends - Detailed View"
-        subtitle="Click on any data point to filter by date and sentiment type"
+        title={t('charts.sentimentTrendsDetailed')}
+        subtitle={t('charts.clickDataPointSentiment')}
       >
         {renderChart('100%', true)}
       </ChartModal>

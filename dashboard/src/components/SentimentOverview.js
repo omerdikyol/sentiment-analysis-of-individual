@@ -3,24 +3,26 @@ import { Box, Typography, useTheme } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const SentimentOverview = ({ data }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const sentimentData = [
     {
-      name: 'Positive',
+      name: t('sentiments.positive'),
       value: Number(data?.metrics?.positivePercentage || 0),
       color: theme.palette.success.main,
     },
     {
-      name: 'Neutral',
+      name: t('sentiments.neutral'),
       value: Number(data?.metrics?.neutralPercentage || 0),
       color: theme.palette.grey[400],
     },
     {
-      name: 'Negative',
+      name: t('sentiments.negative'),
       value: Number(data?.metrics?.negativePercentage || 0),
       color: theme.palette.error.main,
     },
@@ -84,7 +86,7 @@ const SentimentOverview = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Sentiment Overview
+        {t('analysis.sentimentAnalysis')}
       </Typography>
       <Box sx={{ width: '100%', height: 300, position: 'relative' }}>
         <ResponsiveContainer>

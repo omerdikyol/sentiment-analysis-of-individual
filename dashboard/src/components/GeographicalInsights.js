@@ -21,10 +21,12 @@ import {
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Define colors for the charts
   const COLORS = [
@@ -47,15 +49,15 @@ const GeographicalInsights = ({ data }) => {
   };
 
   const SOURCE_COLORS = {
-    'Social Media': '#2196F3', // blue
-    'News': '#4CAF50',        // green
-    'TV': '#FF9800',          // orange
-    'Other': '#9C27B0'        // purple
+    [t('geographicalInsights.sourceTypes.socialMedia')]: '#2196F3', // blue
+    [t('geographicalInsights.sourceTypes.news')]: '#4CAF50',        // green
+    [t('geographicalInsights.sourceTypes.tv')]: '#FF9800',          // orange
+    [t('geographicalInsights.sourceTypes.other')]: '#9C27B0'        // purple
   };
 
   // Helper function to categorize sources
   const categorizeSource = (source) => {
-    if (!source) return 'Other';
+    if (!source) return t('geographicalInsights.sourceTypes.other');
     
     const sourceLower = source.toLowerCase().trim();
     
@@ -161,7 +163,7 @@ const GeographicalInsights = ({ data }) => {
     if (checkExactMatch(sourceLower, socialMediaPlatforms.patterns) ||
         checkDomainPatterns(sourceLower, socialMediaPlatforms.domains) ||
         sourceLower.includes('share') || sourceLower.includes('follow')) {
-      return 'Social Media';
+      return t('geographicalInsights.sourceTypes.socialMedia');
     }
 
     // News checks
@@ -169,7 +171,7 @@ const GeographicalInsights = ({ data }) => {
         checkDomainPatterns(sourceLower, newsPlatforms.domains) ||
         checkPartialMatch(sourceLower, newsPlatforms.patterns) ||
         sourceLower.match(/\b(news|press)\b/)) {
-      return 'News';
+      return t('geographicalInsights.sourceTypes.news');
     }
 
     // TV/Broadcast checks
@@ -177,7 +179,7 @@ const GeographicalInsights = ({ data }) => {
         checkDomainPatterns(sourceLower, tvPlatforms.domains) ||
         checkPartialMatch(sourceLower, tvPlatforms.patterns) ||
         sourceLower.match(/\b(tv|television|broadcast)\b/)) {
-      return 'TV';
+      return t('geographicalInsights.sourceTypes.tv');
     }
 
     // Additional checks for URLs and common patterns
@@ -185,20 +187,20 @@ const GeographicalInsights = ({ data }) => {
         sourceLower.includes('media') ||
         sourceLower.match(/\.(com|org|net|edu)\/news/) ||
         sourceLower.match(/\/(news|press|media)\//)) {
-      return 'News';
+      return t('geographicalInsights.sourceTypes.news');
     }
 
     // Check for common website patterns that indicate news/media
     if (sourceLower.match(/\b(article|story|coverage|report)\b/)) {
-      return 'News';
+      return t('geographicalInsights.sourceTypes.news');
     }
 
     // Final check for any remaining media-related terms
     if (sourceLower.match(/\b(media|press|publication|broadcast)\b/)) {
-      return 'News';
+      return t('geographicalInsights.sourceTypes.news');
     }
 
-    return 'Other';
+    return t('geographicalInsights.sourceTypes.other');
   };
 
   // Process raw data to get country statistics
@@ -207,18 +209,18 @@ const GeographicalInsights = ({ data }) => {
 
     // Define topics and their keywords (same as ThemeAnalysis)
     const topicDefinitions = {
-      'Politics': ['government', 'policy', 'election', 'minister', 'political', 'parliament'],
-      'Economy': ['economy', 'business', 'market', 'trade', 'financial', 'investment'],
-      'Sports': ['sports', 'football', 'tournament', 'championship', 'athlete', 'game'],
-      'Diplomacy': ['diplomatic', 'relations', 'international', 'embassy', 'foreign'],
-      'Technology': ['technology', 'digital', 'innovation', 'tech', 'AI', 'software'],
-      'Culture': ['culture', 'art', 'music', 'festival', 'heritage', 'tradition'],
-      'Education': ['education', 'school', 'university', 'student', 'academic', 'research'],
-      'Healthcare': ['health', 'medical', 'hospital', 'healthcare', 'doctor', 'patient']
+      [t('geographicalInsights.topics.politics')]: ['government', 'policy', 'election', 'minister', 'political', 'parliament'],
+      [t('geographicalInsights.topics.economy')]: ['economy', 'business', 'market', 'trade', 'financial', 'investment'],
+      [t('geographicalInsights.topics.sports')]: ['sports', 'football', 'tournament', 'championship', 'athlete', 'game'],
+      [t('geographicalInsights.topics.diplomacy')]: ['diplomatic', 'relations', 'international', 'embassy', 'foreign'],
+      [t('geographicalInsights.topics.technology')]: ['technology', 'digital', 'innovation', 'tech', 'AI', 'software'],
+      [t('geographicalInsights.topics.culture')]: ['culture', 'art', 'music', 'festival', 'heritage', 'tradition'],
+      [t('geographicalInsights.topics.education')]: ['education', 'school', 'university', 'student', 'academic', 'research'],
+      [t('geographicalInsights.topics.healthcare')]: ['health', 'medical', 'hospital', 'healthcare', 'doctor', 'patient']
     };
 
     const countryStats = rawData.reduce((acc, mention) => {
-      const country = mention.country || mention.location || 'Unknown';
+      const country = mention.country || mention.location || t('general.unknown');
       if (!acc[country]) {
         acc[country] = {
           topics: Object.keys(topicDefinitions).reduce((topics, topic) => {
@@ -308,7 +310,7 @@ const GeographicalInsights = ({ data }) => {
 
   // Format data for sentiment by country chart
   const sentimentByCountry = Object.entries(countryData)
-    .filter(([country]) => country !== 'Unknown')
+    .filter(([country]) => country !== t('general.unknown'))
     .map(([country, data]) => ({
       country,
       positive: (data.positive / data.total) * 100,
@@ -321,15 +323,15 @@ const GeographicalInsights = ({ data }) => {
 
   // Format data for source distribution with improved sorting
   const sourceDistribution = Object.entries(countryData)
-    .filter(([country]) => country !== 'Unknown')
+    .filter(([country]) => country !== t('general.unknown'))
     .map(([country, data]) => {
       const total = data.total || 1;
       return {
         country,
-        'Social Media': Math.round(((data.sources['Social Media']?.total || 0) / total) * 100),
-        'News': Math.round(((data.sources['News']?.total || 0) / total) * 100),
-        'TV': Math.round(((data.sources['TV']?.total || 0) / total) * 100),
-        'Other': Math.round(((data.sources['Other']?.total || 0) / total) * 100),
+        [t('geographicalInsights.sourceTypes.socialMedia')]: Math.round(((data.sources[t('geographicalInsights.sourceTypes.socialMedia')]?.total || 0) / total) * 100),
+        [t('geographicalInsights.sourceTypes.news')]: Math.round(((data.sources[t('geographicalInsights.sourceTypes.news')]?.total || 0) / total) * 100),
+        [t('geographicalInsights.sourceTypes.tv')]: Math.round(((data.sources[t('geographicalInsights.sourceTypes.tv')]?.total || 0) / total) * 100),
+        [t('geographicalInsights.sourceTypes.other')]: Math.round(((data.sources[t('geographicalInsights.sourceTypes.other')]?.total || 0) / total) * 100),
         total: total,
         engagement: data.engagement
       };
@@ -342,28 +344,28 @@ const GeographicalInsights = ({ data }) => {
   // Format data for media sentiment chart
   const mediaSentimentData = [
     {
-      name: 'Social Media',
+      name: t('geographicalInsights.sourceTypes.socialMedia'),
       positive: 35,
       neutral: 45,
       negative: 20,
       total: 100
     },
     {
-      name: 'News',
+      name: t('geographicalInsights.sourceTypes.news'),
       positive: 30,
       neutral: 50,
       negative: 20,
       total: 100
     },
     {
-      name: 'TV',
+      name: t('geographicalInsights.sourceTypes.tv'),
       positive: 40,
       neutral: 40,
       negative: 20,
       total: 100
     },
     {
-      name: 'Other',
+      name: t('geographicalInsights.sourceTypes.other'),
       positive: 25,
       neutral: 55,
       negative: 20,
@@ -388,16 +390,16 @@ const GeographicalInsights = ({ data }) => {
             {data.country}
           </Typography>
           <Typography variant="body2">
-            Total Mentions: {data.total}
+            {t('geographicalInsights.totalMentions')}: {data.total}
           </Typography>
           <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.positive }}>
-            Positive: {data.positive.toFixed(1)}%
+            {t('sentiments.positive')}: {data.positive.toFixed(1)}%
           </Typography>
           <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.neutral }}>
-            Neutral: {data.neutral.toFixed(1)}%
+            {t('sentiments.neutral')}: {data.neutral.toFixed(1)}%
           </Typography>
           <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.negative }}>
-            Negative: {data.negative.toFixed(1)}%
+            {t('sentiments.negative')}: {data.negative.toFixed(1)}%
           </Typography>
         </Box>
       );
@@ -431,7 +433,7 @@ const GeographicalInsights = ({ data }) => {
             </Typography>
           ))}
           <Typography variant="body2" sx={{ mt: 1 }}>
-            Total Mentions: {data.total}
+            {t('geographicalInsights.totalMentions')}: {data.total}
           </Typography>
         </Box>
       );
@@ -482,7 +484,7 @@ const GeographicalInsights = ({ data }) => {
                       }}
                     >
                       <Typography variant="body2">
-                        {`${payload[0].name}: ${payload[0].value} mentions`}
+                        {`${payload[0].name}: ${payload[0].value} ${t('geographicalInsights.mentions')}`}
                       </Typography>
                     </Box>
                   );
@@ -532,14 +534,14 @@ const GeographicalInsights = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Geographical Distribution & Impact
+        {t('geographicalInsights.title')}
       </Typography>
       <Grid container spacing={3}>
         {/* Sentiment by Country */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Sentiment by Country
+              {t('geographicalInsights.sentimentByCountry')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -574,7 +576,7 @@ const GeographicalInsights = ({ data }) => {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Source Distribution by Country
+              {t('geographicalInsights.sourceDistributionByCountry')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -594,30 +596,30 @@ const GeographicalInsights = ({ data }) => {
                   <Tooltip content={<SourceTooltip />} />
                   <Legend />
                   <Bar
-                    dataKey="Social Media"
+                    dataKey={t('geographicalInsights.sourceTypes.socialMedia')}
                     stackId="a"
-                    fill={SOURCE_COLORS['Social Media']}
+                    fill={SOURCE_COLORS[t('geographicalInsights.sourceTypes.socialMedia')]}
                     cursor="pointer"
                     onClick={handleCountryClick}
                   />
                   <Bar
-                    dataKey="News"
+                    dataKey={t('geographicalInsights.sourceTypes.news')}
                     stackId="a"
-                    fill={SOURCE_COLORS['News']}
+                    fill={SOURCE_COLORS[t('geographicalInsights.sourceTypes.news')]}
                     cursor="pointer"
                     onClick={handleCountryClick}
                   />
                   <Bar
-                    dataKey="TV"
+                    dataKey={t('geographicalInsights.sourceTypes.tv')}
                     stackId="a"
-                    fill={SOURCE_COLORS['TV']}
+                    fill={SOURCE_COLORS[t('geographicalInsights.sourceTypes.tv')]}
                     cursor="pointer"
                     onClick={handleCountryClick}
                   />
                   <Bar
-                    dataKey="Other"
+                    dataKey={t('geographicalInsights.sourceTypes.other')}
                     stackId="a"
-                    fill={SOURCE_COLORS['Other']}
+                    fill={SOURCE_COLORS[t('geographicalInsights.sourceTypes.other')]}
                     cursor="pointer"
                     onClick={handleCountryClick}
                   />
@@ -637,11 +639,11 @@ const GeographicalInsights = ({ data }) => {
             }}
           >
             <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem' }}>
-              Top Topics by Country
+              {t('geographicalInsights.topTopicsByCountry')}
             </Typography>
             <Grid container spacing={2} sx={{ flexWrap: 'nowrap', overflowX: 'auto', pb: 2 }}>
               {Object.keys(countryData)
-                .filter(country => country !== 'Unknown')  // Filter out Unknown country
+                .filter(country => country !== t('general.unknown'))  // Filter out Unknown country
                 .map((country) => (
                 <Grid item xs={12} sm={6} md={3} key={country} sx={{ flex: '0 0 auto' }}>
                   <Paper

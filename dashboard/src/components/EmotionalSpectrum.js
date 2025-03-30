@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -48,6 +49,7 @@ import {
 
 const EmotionalSpectrum = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [emotionData, setEmotionData] = useState({
     emotions: {},
@@ -387,8 +389,8 @@ const EmotionalSpectrum = ({ data }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <PsychologyIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
-            <Typography variant="h6">Emotional Spectrum Analysis</Typography>
-            <Tooltip title="This analysis identifies specific emotions beyond just positive/negative sentiment, such as joy, sadness, fear, anger, surprise, anticipation, trust, and disgust">
+            <Typography variant="h6">{t('emotionalSpectrum.title')}</Typography>
+            <Tooltip title={t('emotionalSpectrum.infoTooltip')}>
               <IconButton size="small">
                 <InfoIcon fontSize="small" />
               </IconButton>
@@ -396,26 +398,26 @@ const EmotionalSpectrum = ({ data }) => {
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Time Range</InputLabel>
+              <InputLabel>{t('filters.timeRange')}</InputLabel>
               <Select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                label="Time Range"
+                label={t('filters.timeRange')}
               >
-                <MenuItem value="all">All Time</MenuItem>
-                <MenuItem value="week">Past Week</MenuItem>
-                <MenuItem value="month">Past Month</MenuItem>
-                <MenuItem value="quarter">Past Quarter</MenuItem>
+                <MenuItem value="all">{t('filters.allTime')}</MenuItem>
+                <MenuItem value="week">{t('emotionalSpectrum.pastWeek')}</MenuItem>
+                <MenuItem value="month">{t('emotionalSpectrum.pastMonth')}</MenuItem>
+                <MenuItem value="quarter">{t('emotionalSpectrum.pastQuarter')}</MenuItem>
               </Select>
             </FormControl>
             <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Platform</InputLabel>
+              <InputLabel>{t('filters.platform')}</InputLabel>
               <Select
                 value={platform}
                 onChange={(e) => setPlatform(e.target.value)}
-                label="Platform"
+                label={t('filters.platform')}
               >
-                <MenuItem value="all">All Platforms</MenuItem>
+                <MenuItem value="all">{t('filters.allPlatforms')}</MenuItem>
                 {availablePlatforms.map(p => (
                   <MenuItem key={p} value={p}>{p}</MenuItem>
                 ))}
@@ -428,7 +430,7 @@ const EmotionalSpectrum = ({ data }) => {
           {/* Emotion Distribution Pie Chart */}
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
-              Emotion Distribution
+              {t('emotionalSpectrum.emotionDistribution')}
             </Typography>
             <Box sx={{ height: 350 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -442,7 +444,7 @@ const EmotionalSpectrum = ({ data }) => {
                     outerRadius={120}
                     onClick={handleEmotionClick}
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${t(`emotions.${name.toLowerCase()}`)} ${(percent * 100).toFixed(0)}%`}
                   >
                     {emotionData.emotionFrequency.map((entry, index) => (
                       <Cell 
@@ -462,16 +464,16 @@ const EmotionalSpectrum = ({ data }) => {
           {/* Emotion Intensity Radar Chart */}
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
-              Emotion Intensity
+              {t('emotionalSpectrum.emotionIntensity')}
             </Typography>
             <Box sx={{ height: 350 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart outerRadius={120} data={emotionData.emotionIntensity}>
                   <PolarGrid />
-                  <PolarAngleAxis dataKey="emotion" />
+                  <PolarAngleAxis dataKey="emotion" tickFormatter={(value) => t(`emotions.${value.toLowerCase()}`)} />
                   <PolarRadiusAxis />
                   <Radar
-                    name="Intensity"
+                    name={t('emotionalSpectrum.intensity')}
                     dataKey="intensity"
                     stroke={theme.palette.primary.main}
                     fill={theme.palette.primary.main}
@@ -487,10 +489,10 @@ const EmotionalSpectrum = ({ data }) => {
           <Grid item xs={12}>
             <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
               <TimelineIcon sx={{ mr: 1 }} />
-              Emotion Over Time
+              {t('emotionalSpectrum.emotionOverTime')}
               {focusedEmotion && (
                 <Chip 
-                  label={focusedEmotion.charAt(0).toUpperCase() + focusedEmotion.slice(1)} 
+                  label={t(`emotions.${focusedEmotion}`)} 
                   size="small" 
                   sx={{ ml: 2, backgroundColor: emotionColors[focusedEmotion], color: '#fff' }}
                   onDelete={() => setFocusedEmotion(null)}
@@ -513,7 +515,7 @@ const EmotionalSpectrum = ({ data }) => {
                   />
                   <YAxis />
                   <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Legend formatter={(value) => t(`emotions.${value}`)} />
                   {focusedEmotion ? (
                     <Line
                       type="monotone"
@@ -521,6 +523,7 @@ const EmotionalSpectrum = ({ data }) => {
                       stroke={emotionColors[focusedEmotion]}
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
+                      name={t(`emotions.${focusedEmotion}`)}
                     />
                   ) : (
                     Object.keys(emotionalCategories).map((emotion) => (
@@ -530,6 +533,7 @@ const EmotionalSpectrum = ({ data }) => {
                         dataKey={emotion}
                         stroke={emotionColors[emotion]}
                         strokeWidth={1.5}
+                        name={t(`emotions.${emotion}`)}
                       />
                     ))
                   )}
@@ -541,7 +545,7 @@ const EmotionalSpectrum = ({ data }) => {
           {/* Emotion By Platform */}
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
-              Emotional Expression by Platform
+              {t('emotionalSpectrum.emotionalExpressionByPlatform')}
             </Typography>
             <Box sx={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -554,14 +558,14 @@ const EmotionalSpectrum = ({ data }) => {
                   <XAxis type="number" />
                   <YAxis dataKey="platform" type="category" width={80} />
                   <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend />
+                  <Legend formatter={(value) => t(`emotions.${value}`)} />
                   {(focusedEmotion ? [focusedEmotion] : Object.keys(emotionalCategories)).map((emotion) => (
                     <Bar 
                       key={emotion} 
                       dataKey={emotion} 
                       stackId="a" 
                       fill={emotionColors[emotion]} 
-                      name={emotion.charAt(0).toUpperCase() + emotion.slice(1)}
+                      name={t(`emotions.${emotion}`)}
                     />
                   ))}
                 </BarChart>
@@ -573,7 +577,7 @@ const EmotionalSpectrum = ({ data }) => {
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
               <TextFieldsIcon sx={{ mr: 1 }} />
-              Top {focusedEmotion ? `${focusedEmotion.charAt(0).toUpperCase() + focusedEmotion.slice(1)}` : 'Emotional'} Content
+              {focusedEmotion ? t('emotionalSpectrum.topEmotionContent', { emotion: t(`emotions.${focusedEmotion}`) }) : t('emotionalSpectrum.topEmotionalContent')}
             </Typography>
             <Box sx={{ height: 300, overflowY: 'auto' }}>
               {filteredContent.map((item, index) => (
@@ -582,7 +586,7 @@ const EmotionalSpectrum = ({ data }) => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Chip 
-                          label={item.dominantEmotion.charAt(0).toUpperCase() + item.dominantEmotion.slice(1)} 
+                          label={t(`emotions.${item.dominantEmotion}`)} 
                           size="small" 
                           sx={{ 
                             mr: 1, 
@@ -596,7 +600,7 @@ const EmotionalSpectrum = ({ data }) => {
                         </Typography>
                       </Box>
                       <Chip 
-                        label={`Score: ${item.emotionScore.toFixed(1)}`} 
+                        label={t('emotionalSpectrum.score', { value: item.emotionScore.toFixed(1) })} 
                         size="small" 
                         variant="outlined"
                         sx={{ bgcolor: 'background.paper' }}
@@ -616,7 +620,9 @@ const EmotionalSpectrum = ({ data }) => {
               {filteredContent.length === 0 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                   <Typography color="text.secondary">
-                    No content found with {focusedEmotion ? `${focusedEmotion} emotion` : 'significant emotions'}
+                    {focusedEmotion 
+                      ? t('emotionalSpectrum.noContentWithEmotion', { emotion: t(`emotions.${focusedEmotion}`) })
+                      : t('emotionalSpectrum.noContentWithSignificantEmotions')}
                   </Typography>
                 </Box>
               )}

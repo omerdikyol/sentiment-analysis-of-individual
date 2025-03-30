@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -20,6 +21,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   useEffect(() => {
     if (mentionsByDate && mentionsByDate.length > 0) {
@@ -101,8 +103,8 @@ const MentionLineChart = ({ mentionsByDate }) => {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">Mentions Over Time</Typography>
-          <Typography variant="body2">No data available</Typography>
+          <Typography variant="h6">{t('charts.mentionsOverTime')}</Typography>
+          <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
       </Card>
     );
@@ -118,7 +120,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
         <StyledCard onClick={handleCardClick}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Mentions Over Time
+              {t('charts.mentionsOverTime')}
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}
@@ -130,8 +132,8 @@ const MentionLineChart = ({ mentionsByDate }) => {
       <ChartModal
         open={isModalOpen}
         onClose={handleModalClose}
-        title="Mentions Over Time - Detailed View"
-        subtitle="Click on any data point to see mentions for that date"
+        title={t('charts.mentionsOverTimeDetailed')}
+        subtitle={t('charts.clickDataPoint')}
       >
         {renderChart('100%', true)}
       </ChartModal>

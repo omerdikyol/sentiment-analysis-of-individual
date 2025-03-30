@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   Table,
@@ -14,6 +15,7 @@ import {
 } from '@mui/material';
 
 const SentimentData = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,7 +56,7 @@ const SentimentData = () => {
   if (error) {
     return (
       <Box p={3}>
-        <Typography color="error">Error: {error}</Typography>
+        <Typography color="error">{t('sentimentDataDisplay.error')}: {error}</Typography>
       </Box>
     );
   }
@@ -62,10 +64,10 @@ const SentimentData = () => {
   return (
     <Box p={3}>
       <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6">Latest Sentiment Data</Typography>
+        <Typography variant="h6">{t('sentimentDataDisplay.title')}</Typography>
         {lastUpdate && (
           <Typography variant="body2" color="textSecondary">
-            Last updated: {new Date(lastUpdate).toLocaleString()}
+            {t('sentimentDataDisplay.lastUpdated')}: {new Date(lastUpdate).toLocaleString()}
           </Typography>
         )}
       </Box>
@@ -73,12 +75,12 @@ const SentimentData = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Source</TableCell>
-              <TableCell>Platform</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Text</TableCell>
-              <TableCell>Sentiment</TableCell>
-              <TableCell>Score</TableCell>
+              <TableCell>{t('sentimentDataDisplay.source')}</TableCell>
+              <TableCell>{t('sentimentDataDisplay.platform')}</TableCell>
+              <TableCell>{t('sentimentDataDisplay.date')}</TableCell>
+              <TableCell>{t('sentimentDataDisplay.text')}</TableCell>
+              <TableCell>{t('sentimentDataDisplay.sentiment')}</TableCell>
+              <TableCell>{t('sentimentDataDisplay.score')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

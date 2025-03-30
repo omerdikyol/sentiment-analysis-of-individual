@@ -27,10 +27,12 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import InfoIcon from '@mui/icons-material/Info';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const SentimentBySource = ({ data }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [minMentions, setMinMentions] = useState(5);
 
   // Process raw data to get sentiment distribution by source
@@ -45,7 +47,7 @@ const SentimentBySource = ({ data }) => {
     // Group data by source
     const sourceStats = data.rawData.reduce((acc, post) => {
       // Get source name
-      const source = post.source || post.platform || 'Unknown';
+      const source = post.source || post.platform || t('general.unknown');
       
       // Get sentiment value for average calculation
       let sentiment = null;
@@ -166,7 +168,7 @@ const SentimentBySource = ({ data }) => {
 
     console.log("Final processed data:", results);
     return results;
-  }, [data, minMentions]);
+  }, [data, minMentions, t]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -210,10 +212,10 @@ const SentimentBySource = ({ data }) => {
                   borderTop: `1px solid ${theme.palette.divider}`
                 }}
               >
-                Average Sentiment: {data.avgSentiment}
+                {t('charts.averageSentiment')}: {data.avgSentiment}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Total Mentions: {data.total}
+                {t('charts.totalMentions')}: {data.total}
               </Typography>
             </Stack>
           </CardContent>
@@ -240,18 +242,18 @@ const SentimentBySource = ({ data }) => {
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" component="h2">
-              Sentiment Distribution by Source
-              <Tooltip title="Shows the distribution of positive, neutral, and negative sentiments across different sources">
+              {t('charts.sentimentBySource')}
+              <Tooltip title={t('charts.sentimentBySourceTooltip')}>
                 <IconButton size="small" sx={{ ml: 1 }}>
                   <InfoIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Typography>
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Min. Mentions</InputLabel>
+              <InputLabel>{t('filters.minMentions')}</InputLabel>
               <Select
                 value={minMentions}
-                label="Min. Mentions"
+                label={t('filters.minMentions')}
                 onChange={(e) => setMinMentions(e.target.value)}
               >
                 <MenuItem value={1}>≥ 1</MenuItem>
@@ -299,7 +301,7 @@ const SentimentBySource = ({ data }) => {
                     dataKey="positive"
                     stackId="a"
                     fill={theme.palette.success.main}
-                    name="Positive"
+                    name={t('sentiments.positive')}
                     onClick={handleSourceClick}
                     style={{ cursor: 'pointer' }}
                   />
@@ -307,7 +309,7 @@ const SentimentBySource = ({ data }) => {
                     dataKey="neutral"
                     stackId="a"
                     fill={theme.palette.grey[400]}
-                    name="Neutral"
+                    name={t('sentiments.neutral')}
                     onClick={handleSourceClick}
                     style={{ cursor: 'pointer' }}
                   />
@@ -315,7 +317,7 @@ const SentimentBySource = ({ data }) => {
                     dataKey="negative"
                     stackId="a"
                     fill={theme.palette.error.main}
-                    name="Negative"
+                    name={t('sentiments.negative')}
                     onClick={handleSourceClick}
                     style={{ cursor: 'pointer' }}
                   />
@@ -323,7 +325,7 @@ const SentimentBySource = ({ data }) => {
                     type="monotone"
                     dataKey="avgSentiment"
                     stroke={theme.palette.info.main}
-                    name="Avg. Sentiment"
+                    name={t('charts.avgSentiment')}
                     strokeWidth={2}
                     dot={{ fill: theme.palette.info.main, r: 3 }}
                     activeDot={{ r: 5 }}
@@ -334,10 +336,10 @@ const SentimentBySource = ({ data }) => {
           ) : (
             <Card sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
-                No Data Available
+                {t('general.noData')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Try adjusting the minimum mentions filter or check if data is properly loaded.
+                {t('charts.tryAdjustingFilter')}
               </Typography>
             </Card>
           )}

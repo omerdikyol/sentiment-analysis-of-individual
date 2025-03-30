@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Box, 
   Typography, 
@@ -55,6 +56,7 @@ import {
 import ComparisonService from '../services/ComparisonService';
 
 function ComparisonReport() {
+  const { t } = useTranslation();
   const [comparison, setComparison] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -74,7 +76,7 @@ function ComparisonReport() {
       setComparison(report);
     } catch (err) {
       console.error('Error loading comparison data:', err);
-      setError('Failed to load comparison data. Please check that both CSV files exist and are accessible.');
+      setError(t('comparisonReport.errorLoading'));
     } finally {
       setLoading(false);
     }
@@ -109,17 +111,17 @@ function ComparisonReport() {
     
     return [
       {
-        name: 'Positive',
+        name: t('sentiments.positive'),
         old: parseFloat(comparison.sentimentDistribution.old.positive.percentage),
         new: parseFloat(comparison.sentimentDistribution.new.positive.percentage),
       },
       {
-        name: 'Neutral',
+        name: t('sentiments.neutral'),
         old: parseFloat(comparison.sentimentDistribution.old.neutral.percentage),
         new: parseFloat(comparison.sentimentDistribution.new.neutral.percentage),
       },
       {
-        name: 'Negative',
+        name: t('sentiments.negative'),
         old: parseFloat(comparison.sentimentDistribution.old.negative.percentage),
         new: parseFloat(comparison.sentimentDistribution.new.negative.percentage),
       }
@@ -199,7 +201,7 @@ function ComparisonReport() {
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
         <CircularProgress />
         <Typography variant="h6" sx={{ mt: 2 }}>
-          Loading comparison data...
+          {t('comparisonReport.loading')}
         </Typography>
       </Box>
     );
@@ -216,7 +218,7 @@ function ComparisonReport() {
             onClick={loadComparisonData}
             startIcon={<Refresh />}
           >
-            Retry
+            {t('general.retry')}
           </Button>
         </Box>
       </Box>
@@ -226,7 +228,7 @@ function ComparisonReport() {
   if (!comparison) {
     return (
       <Box sx={{ mt: 4, mx: 2 }}>
-        <Alert severity="warning">No comparison data available.</Alert>
+        <Alert severity="warning">{t('comparisonReport.noDataAvailable')}</Alert>
       </Box>
     );
   }
@@ -235,7 +237,7 @@ function ComparisonReport() {
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1">
-          Sentiment Analysis Comparison Report
+          {t('comparisonReport.title')}
         </Typography>
         
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -244,14 +246,17 @@ function ComparisonReport() {
             startIcon={<Refresh />}
             onClick={loadComparisonData}
           >
-            Refresh Data
+            {t('comparisonReport.refreshData')}
           </Button>
         </Box>
       </Box>
 
       <Box sx={{ mb: 3 }}>
         <Alert severity="info">
-          Comparing <strong>Previous Dataset</strong> with <strong>New Dataset</strong>
+          {t('comparisonReport.comparingDatasets', { 
+            previous: t('comparisonReport.previousDataset'), 
+            new: t('comparisonReport.newDataset')
+          })}
         </Alert>
       </Box>
 
@@ -259,14 +264,14 @@ function ComparisonReport() {
         {/* Dataset Overview */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
-            Dataset Overview
+            {t('comparisonReport.datasetOverview')}
           </Typography>
           <Grid container spacing={3}>
             <Grid item xs={12} md={3}>
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Old Dataset Entries
+                    {t('comparisonReport.oldDatasetEntries')}
                   </Typography>
                   <Typography variant="h4">
                     {comparison.datasetInfo.oldDatasetCount.toLocaleString()}
@@ -278,7 +283,7 @@ function ComparisonReport() {
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    New Dataset Entries
+                    {t('comparisonReport.newDatasetEntries')}
                   </Typography>
                   <Typography variant="h4">
                     {comparison.datasetInfo.newDatasetCount.toLocaleString()}
@@ -290,7 +295,7 @@ function ComparisonReport() {
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Entry Difference
+                    {t('comparisonReport.entryDifference')}
                   </Typography>
                   <Typography 
                     variant="h4" 
@@ -311,7 +316,7 @@ function ComparisonReport() {
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Percentage Change
+                    {t('comparisonReport.percentageChange')}
                   </Typography>
                   <Typography 
                     variant="h4" 
@@ -333,14 +338,14 @@ function ComparisonReport() {
         {/* Sentiment Comparison */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
-            Sentiment Analysis
+            {t('comparisonReport.sentimentAnalysis')}
           </Typography>
           <Grid container spacing={3}>
             <Grid item xs={12} md={4}>
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Old Dataset Average Sentiment (from labels)
+                    {t('comparisonReport.oldDatasetAverageSentiment')}
                   </Typography>
                   <Typography 
                     variant="h4" 
@@ -361,7 +366,7 @@ function ComparisonReport() {
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    New Dataset Average Sentiment (from labels)
+                    {t('comparisonReport.newDatasetAverageSentiment')}
                   </Typography>
                   <Typography 
                     variant="h4" 
@@ -382,7 +387,7 @@ function ComparisonReport() {
               <Card>
                 <CardContent>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Sentiment Trend
+                    {t('comparisonReport.sentimentTrend')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Typography 
@@ -397,7 +402,7 @@ function ComparisonReport() {
                     </Typography>
                     {getTrendIcon(comparison.sentimentComparison.difference)}
                     <Chip 
-                      label={comparison.sentimentComparison.trend} 
+                      label={t(`comparisonReport.trend.${comparison.sentimentComparison.trend.toLowerCase()}`)} 
                       color={
                         comparison.sentimentComparison.trend === 'Improved' 
                           ? 'success' 
@@ -416,10 +421,10 @@ function ComparisonReport() {
 
           <Box sx={{ mt: 4, height: 300 }}>
             <Typography variant="h6" gutterBottom>
-              Sentiment Label Distribution Comparison
+              {t('comparisonReport.sentimentLabelDistribution')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Based on positive, neutral, and negative sentiment labels
+              {t('comparisonReport.basedOnSentimentLabels')}
             </Typography>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -431,8 +436,8 @@ function ComparisonReport() {
                 <YAxis tickFormatter={(value) => `${value}%`} />
                 <RechartsTooltip formatter={(value) => `${value}%`} />
                 <Legend />
-                <Bar dataKey="old" name="Old Dataset" fill="#8884d8" />
-                <Bar dataKey="new" name="New Dataset" fill="#82ca9d" />
+                <Bar dataKey="old" name={t('comparisonReport.oldDataset')} fill="#8884d8" />
+                <Bar dataKey="new" name={t('comparisonReport.newDataset')} fill="#82ca9d" />
               </BarChart>
             </ResponsiveContainer>
           </Box>
@@ -441,9 +446,9 @@ function ComparisonReport() {
         {/* Tabs for Platform and Country Analysis */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Tabs value={tabIndex} onChange={handleTabChange} sx={{ mb: 2 }}>
-            <Tab label="Platform Analysis" />
-            <Tab label="Country Analysis" />
-            <Tab label="New Entries" />
+            <Tab label={t('comparisonReport.tabs.platformAnalysis')} />
+            <Tab label={t('comparisonReport.tabs.countryAnalysis')} />
+            <Tab label={t('comparisonReport.tabs.newEntries')} />
           </Tabs>
 
           {/* Platform Analysis Tab */}
@@ -451,23 +456,23 @@ function ComparisonReport() {
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">
-                  Platform Distribution Changes
+                  {t('comparisonReport.platformDistributionChanges')}
                 </Typography>
                 <FormControl sx={{ minWidth: 150 }} size="small">
-                  <InputLabel id="platform-filter-label">Filter Platform</InputLabel>
+                  <InputLabel id="platform-filter-label">{t('comparisonReport.filterPlatform')}</InputLabel>
                   <Select
                     labelId="platform-filter-label"
                     id="platform-filter"
                     value={platformFilter}
-                    label="Filter Platform"
+                    label={t('comparisonReport.filterPlatform')}
                     onChange={handlePlatformFilterChange}
                   >
-                    <MenuItem value="all">All Platforms</MenuItem>
+                    <MenuItem value="all">{t('filters.allPlatforms')}</MenuItem>
                     <MenuItem value="twitter">Twitter</MenuItem>
                     <MenuItem value="facebook">Facebook</MenuItem>
                     <MenuItem value="linkedin">LinkedIn</MenuItem>
                     <MenuItem value="instagram">Instagram</MenuItem>
-                    <MenuItem value="news">News Sources</MenuItem>
+                    <MenuItem value="news">{t('platforms.news')}</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -482,12 +487,12 @@ function ComparisonReport() {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={150} />
                     <RechartsTooltip 
-                      formatter={(value, name) => [value, name === 'percentChange' ? 'Percent Change' : name === 'old' ? 'Old Dataset' : 'New Dataset']}
-                      labelFormatter={(label) => `Platform: ${label}`}
+                      formatter={(value, name) => [value, name === 'percentChange' ? t('comparisonReport.percentChange') : name === 'old' ? t('comparisonReport.oldDataset') : t('comparisonReport.newDataset')]}
+                      labelFormatter={(label) => `${t('filters.platform')}: ${label}`}
                     />
                     <Legend />
-                    <Bar dataKey="old" name="Old Dataset" fill="#8884d8" />
-                    <Bar dataKey="new" name="New Dataset" fill="#82ca9d" />
+                    <Bar dataKey="old" name={t('comparisonReport.oldDataset')} fill="#8884d8" />
+                    <Bar dataKey="new" name={t('comparisonReport.newDataset')} fill="#82ca9d" />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -496,11 +501,11 @@ function ComparisonReport() {
                 <Table aria-label="platform comparison table">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Platform</TableCell>
-                      <TableCell align="right">Old Count</TableCell>
-                      <TableCell align="right">New Count</TableCell>
-                      <TableCell align="right">Difference</TableCell>
-                      <TableCell align="right">Change %</TableCell>
+                      <TableCell>{t('filters.platform')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.oldCount')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.newCount')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.difference')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.change')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -548,22 +553,22 @@ function ComparisonReport() {
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h5">
-                  Country Distribution Changes
+                  {t('comparisonReport.countryDistributionChanges')}
                 </Typography>
                 <FormControl sx={{ minWidth: 150 }} size="small">
-                  <InputLabel id="country-filter-label">Filter Country</InputLabel>
+                  <InputLabel id="country-filter-label">{t('comparisonReport.filterCountry')}</InputLabel>
                   <Select
                     labelId="country-filter-label"
                     id="country-filter"
                     value={countryFilter}
-                    label="Filter Country"
+                    label={t('comparisonReport.filterCountry')}
                     onChange={handleCountryFilterChange}
                   >
-                    <MenuItem value="all">All Countries</MenuItem>
+                    <MenuItem value="all">{t('filters.allCountries')}</MenuItem>
                     <MenuItem value="qatar">Qatar</MenuItem>
-                    <MenuItem value="gb">Great Britain (GB)</MenuItem>
-                    <MenuItem value="uk">United Kingdom (UK)</MenuItem>
-                    <MenuItem value="us">United States (US)</MenuItem>
+                    <MenuItem value="gb">{t('comparisonReport.countries.gb')}</MenuItem>
+                    <MenuItem value="uk">{t('comparisonReport.countries.uk')}</MenuItem>
+                    <MenuItem value="us">{t('comparisonReport.countries.us')}</MenuItem>
                     <MenuItem value="uae">UAE</MenuItem>
                   </Select>
                 </FormControl>
@@ -579,12 +584,12 @@ function ComparisonReport() {
                     <XAxis type="number" />
                     <YAxis dataKey="name" type="category" width={150} />
                     <RechartsTooltip 
-                      formatter={(value, name) => [value, name === 'percentChange' ? 'Percent Change' : name === 'old' ? 'Old Dataset' : 'New Dataset']}
-                      labelFormatter={(label) => `Country: ${label}`}
+                      formatter={(value, name) => [value, name === 'percentChange' ? t('comparisonReport.percentChange') : name === 'old' ? t('comparisonReport.oldDataset') : t('comparisonReport.newDataset')]}
+                      labelFormatter={(label) => `${t('filters.country')}: ${label}`}
                     />
                     <Legend />
-                    <Bar dataKey="old" name="Old Dataset" fill="#8884d8" />
-                    <Bar dataKey="new" name="New Dataset" fill="#82ca9d" />
+                    <Bar dataKey="old" name={t('comparisonReport.oldDataset')} fill="#8884d8" />
+                    <Bar dataKey="new" name={t('comparisonReport.newDataset')} fill="#82ca9d" />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -593,11 +598,11 @@ function ComparisonReport() {
                 <Table aria-label="country comparison table">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Country</TableCell>
-                      <TableCell align="right">Old Count</TableCell>
-                      <TableCell align="right">New Count</TableCell>
-                      <TableCell align="right">Difference</TableCell>
-                      <TableCell align="right">Change %</TableCell>
+                      <TableCell>{t('filters.country')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.oldCount')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.newCount')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.difference')}</TableCell>
+                      <TableCell align="right">{t('comparisonReport.change')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -639,15 +644,17 @@ function ComparisonReport() {
           {tabIndex === 2 && (
             <Box>
               <Typography variant="h5" gutterBottom>
-                New Entries Analysis
+                {t('comparisonReport.newEntriesAnalysis')}
               </Typography>
               
               <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                 <Typography variant="body2" color="text.secondary">
-                  Showing {comparison.newEntries.length} new entries 
-                  {comparison.newEntries.length === 100 ? ' (limited to 100)' : ''}
+                  {t('comparisonReport.showingNewEntries', { 
+                    count: comparison.newEntries.length,
+                    limited: comparison.newEntries.length === 100 ? t('comparisonReport.limitedTo100') : ''
+                  })}
                 </Typography>
-                <Tooltip title="These are entries found in the new dataset that don't exist in the old dataset, based on ID matching">
+                <Tooltip title={t('comparisonReport.newEntriesInfo')}>
                   <IconButton size="small">
                     <Info fontSize="small" />
                   </IconButton>
@@ -660,11 +667,11 @@ function ComparisonReport() {
                     <TableHead>
                       <TableRow>
                         <TableCell>ID</TableCell>
-                        <TableCell>Text</TableCell>
-                        <TableCell>Date</TableCell>
-                        <TableCell>Source</TableCell>
-                        <TableCell>Platform</TableCell>
-                        <TableCell align="right">Sentiment Label</TableCell>
+                        <TableCell>{t('sentimentTable.content')}</TableCell>
+                        <TableCell>{t('table.date')}</TableCell>
+                        <TableCell>{t('sentimentTable.source')}</TableCell>
+                        <TableCell>{t('filters.platform')}</TableCell>
+                        <TableCell align="right">{t('filters.sentiment')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -695,7 +702,7 @@ function ComparisonReport() {
                   </Table>
                 </TableContainer>
               ) : (
-                <Alert severity="info">No new entries found in the dataset.</Alert>
+                <Alert severity="info">{t('comparisonReport.noNewEntries')}</Alert>
               )}
             </Box>
           )}

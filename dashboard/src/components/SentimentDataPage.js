@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -14,6 +15,7 @@ import SentimentDataTable from './SentimentDataTable';
 
 const SentimentDataPage = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   const sentimentFilter = location.state?.sentimentFilter || null;
   const sourceFilter = location.state?.sourceFilter || null;
   const dateFilter = location.state?.dateFilter || null;
@@ -32,14 +34,14 @@ const SentimentDataPage = () => {
   
   // Determine the active filter for header display
   const getActiveFilterText = () => {
-    if (sentimentFilter) return `${sentimentFilter} sentiment`;
-    if (sourceFilter) return `source: ${sourceFilter}`;
+    if (sentimentFilter) return `${t(`sentiments.${sentimentFilter}`).toLowerCase()} ${t('sentimentData.sentiment')}`;
+    if (sourceFilter) return `${t('sentimentData.source')}: ${sourceFilter}`;
     if (dateFilter) {
-      if (typeof dateFilter === 'string') return `date: ${dateFilter}`;
-      return `date range: ${dateFilter.start} - ${dateFilter.end}`;
+      if (typeof dateFilter === 'string') return `${t('sentimentData.date')}: ${dateFilter}`;
+      return `${t('sentimentData.dateRange')}: ${dateFilter.start} - ${dateFilter.end}`;
     }
-    if (countryFilter) return `country: ${countryFilter}`;
-    if (textFilter) return `containing: ${textFilter}`;
+    if (countryFilter) return `${t('sentimentData.country')}: ${countryFilter}`;
+    if (textFilter) return `${t('sentimentData.containing')}: ${textFilter}`;
     return null;
   };
   
@@ -59,16 +61,16 @@ const SentimentDataPage = () => {
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
-        Sentiment Data Analysis
+        {t('sentimentData.title')}
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Comprehensive view of sentiment data across various sources, platforms, and time periods.
+        {t('sentimentData.description')}
       </Typography>
       
       {activeFilterText && (
         <Box sx={{ mb: 3 }}>
           <Chip 
-            label={`Filtered by ${activeFilterText}`}
+            label={`${t('sentimentData.filteredBy')} ${activeFilterText}`}
             color={getFilterColor()}
             onDelete={() => window.location.href = '/sentiment-data'}
             sx={{ fontWeight: 500 }}
@@ -81,11 +83,10 @@ const SentimentDataPage = () => {
           <Card sx={{ height: '100%', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <CardContent>
               <Typography variant="h6" component="div" gutterBottom>
-                Data Overview
+                {t('sentimentData.dataOverviewTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                This table displays sentiment analysis data from various sources including news papers, TV channels, and social media platforms.
-                The sentiment is categorized as positive, negative, or neutral based on content analysis.
+                {t('sentimentData.dataOverviewText')}
               </Typography>
             </CardContent>
           </Card>
@@ -94,12 +95,10 @@ const SentimentDataPage = () => {
           <Card sx={{ height: '100%', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <CardContent>
               <Typography variant="h6" component="div" gutterBottom>
-                Usage Guide
+                {t('sentimentData.usageGuideTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Use the search bar to filter data by content, author, source, or platform.
-                Click on column headers to sort the data.
-                Adjust rows per page using the pagination controls at the bottom.
+                {t('sentimentData.usageGuideText')}
               </Typography>
             </CardContent>
           </Card>
@@ -108,11 +107,10 @@ const SentimentDataPage = () => {
           <Card sx={{ height: '100%', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
             <CardContent>
               <Typography variant="h6" component="div" gutterBottom>
-                Data Source
+                {t('sentimentData.dataSourceTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                This dashboard integrates sentiment analysis results from multiple platforms and sources including social media, news outlets, and online publications.
-                The data is continuously monitored and updated to provide the most current sentiment insights.
+                {t('sentimentData.dataSourceText')}
               </Typography>
             </CardContent>
           </Card>

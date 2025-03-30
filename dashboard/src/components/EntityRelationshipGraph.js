@@ -31,10 +31,12 @@ import {
 import { motion } from 'framer-motion';
 import ForceGraph2D from 'react-force-graph-2d';
 import { scaleLinear } from 'd3-scale';
+import { useTranslation } from 'react-i18next';
 
 const EntityRelationshipGraph = ({ data }) => {
   const theme = useTheme();
   const graphRef = useRef();
+  const { t } = useTranslation();
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [highlightNodes, setHighlightNodes] = useState(new Set());
@@ -322,25 +324,25 @@ const EntityRelationshipGraph = ({ data }) => {
     >
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h6">Entity Relationship Network</Typography>
+          <Typography variant="h6">{t('entityRelationship.title')}</Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Entity Type</InputLabel>
+              <InputLabel>{t('entityRelationship.entityType')}</InputLabel>
               <Select
                 value={entityFilter}
                 onChange={(e) => setEntityFilter(e.target.value)}
-                label="Entity Type"
+                label={t('entityRelationship.entityType')}
               >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="person">People</MenuItem>
-                <MenuItem value="organization">Organizations</MenuItem>
-                <MenuItem value="location">Locations</MenuItem>
-                <MenuItem value="event">Events</MenuItem>
+                <MenuItem value="all">{t('entityRelationship.allTypes')}</MenuItem>
+                <MenuItem value="person">{t('entityRelationship.people')}</MenuItem>
+                <MenuItem value="organization">{t('entityRelationship.organizations')}</MenuItem>
+                <MenuItem value="location">{t('entityRelationship.locations')}</MenuItem>
+                <MenuItem value="event">{t('entityRelationship.events')}</MenuItem>
               </Select>
             </FormControl>
             <Box sx={{ width: 120, display: 'flex', alignItems: 'center' }}>
               <Typography variant="body2" sx={{ mr: 1, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                Min:
+                {t('entityRelationship.min')}:
               </Typography>
               <Slider
                 value={threshold}
@@ -360,7 +362,7 @@ const EntityRelationshipGraph = ({ data }) => {
                   size="small"
                 />
               }
-              label={<Typography variant="caption">Limit Links</Typography>}
+              label={<Typography variant="caption">{t('entityRelationship.limitLinks')}</Typography>}
               sx={{ mx: 0, my: 0 }}
             />
             <IconButton onClick={handleZoomIn} size="small">
@@ -380,7 +382,7 @@ const EntityRelationshipGraph = ({ data }) => {
             <ForceGraph2D
               ref={graphRef}
               graphData={filteredGraphData}
-              nodeLabel={node => `${node.name} (${node.val} mentions)`}
+              nodeLabel={node => `${node.name} (${node.val} ${t('entityRelationship.mentions')})`}
               nodeColor={node => {
                 // Use color by entity type instead of sentiment for better visual distinction
                 const baseColor = getEntityColor(node.type);
@@ -461,7 +463,7 @@ const EntityRelationshipGraph = ({ data }) => {
           ) : (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
               <Typography variant="body1" color="text.secondary">
-                No entities found with the current filter settings. Try decreasing the threshold.
+                {t('entityRelationship.noEntitiesFound')}
               </Typography>
             </Box>
           )}
@@ -471,25 +473,25 @@ const EntityRelationshipGraph = ({ data }) => {
           <Chip 
             size="small" 
             icon={<CategoryIcon sx={{ fontSize: '0.875rem !important' }} />} 
-            label="People" 
+            label={t('entityRelationship.people')}
             sx={{ backgroundColor: getEntityColor('person'), color: 'white', fontSize: '0.7rem' }} 
           />
           <Chip 
             size="small" 
             icon={<CategoryIcon sx={{ fontSize: '0.875rem !important' }} />} 
-            label="Organizations" 
+            label={t('entityRelationship.organizations')}
             sx={{ backgroundColor: getEntityColor('organization'), color: 'white', fontSize: '0.7rem' }} 
           />
           <Chip 
             size="small" 
             icon={<CategoryIcon sx={{ fontSize: '0.875rem !important' }} />} 
-            label="Locations" 
+            label={t('entityRelationship.locations')}
             sx={{ backgroundColor: getEntityColor('location'), color: 'white', fontSize: '0.7rem' }} 
           />
           <Chip 
             size="small" 
             icon={<CategoryIcon sx={{ fontSize: '0.875rem !important' }} />} 
-            label="Events" 
+            label={t('entityRelationship.events')}
             sx={{ backgroundColor: getEntityColor('event'), color: 'white', fontSize: '0.7rem' }} 
           />
         </Box>
@@ -501,22 +503,22 @@ const EntityRelationshipGraph = ({ data }) => {
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Type: {selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1)}
+                    {t('entityRelationship.type')}: {t(`entityRelationship.entityTypes.${selectedNode.type}`)}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Mentions: {selectedNode.val}
+                    {t('entityRelationship.mentions')}: {selectedNode.val}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Connected to: {highlightNodes.size} entities
+                    {t('entityRelationship.connectedTo')}: {highlightNodes.size} {t('entityRelationship.entities')}
                   </Typography>
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Typography variant="caption" color="text.secondary" mr={1}>Sentiment:</Typography>
+                  <Typography variant="caption" color="text.secondary" mr={1}>{t('entityRelationship.sentiment')}:</Typography>
                   <Box
                     sx={{
                       width: 60,

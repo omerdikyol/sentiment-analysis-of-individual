@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -61,6 +62,7 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   
   useEffect(() => {
     if (mentionsByPlatform && mentionsByPlatform.length > 0) {
@@ -103,8 +105,8 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">Platform Distribution</Typography>
-          <Typography variant="body2">No data available</Typography>
+          <Typography variant="h6">{t('charts.platformDistribution')}</Typography>
+          <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
       </Card>
     );
@@ -123,10 +125,10 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
           }}
         >
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            {label === 'unknown' ? 'Unknown' : label}
+            {label === 'unknown' ? t('general.unknown') : label}
           </Typography>
           <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0].color }}>
-            {`Mentions: ${payload[0].value.toLocaleString()}`}
+            {`${t('charts.mentions')}: ${payload[0].value.toLocaleString()}`}
           </Typography>
         </Box>
       );
@@ -175,7 +177,7 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
         <StyledCard onClick={handleCardClick}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Platform Distribution
+              {t('charts.platformDistribution')}
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}
@@ -187,8 +189,8 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
       <ChartModal
         open={isModalOpen}
         onClose={handleModalClose}
-        title="Platform Distribution - Detailed View"
-        subtitle="Click on any bar to see mentions for that platform"
+        title={t('charts.platformDistributionDetailed')}
+        subtitle={t('charts.clickPlatformBar')}
       >
         {renderChart('100%', true)}
       </ChartModal>

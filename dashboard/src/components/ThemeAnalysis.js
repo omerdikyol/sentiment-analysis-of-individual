@@ -15,9 +15,11 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 const ThemeAnalysis = ({ data }) => {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const COLORS = [
     '#4CAF50', // green
@@ -35,7 +37,7 @@ const ThemeAnalysis = ({ data }) => {
   if (!data?.rawData) {
     return (
       <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography variant="h6">No data available</Typography>
+        <Typography variant="h6">{t('general.noData')}</Typography>
       </Box>
     );
   }
@@ -154,14 +156,14 @@ const ThemeAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        Theme Analysis
+        {t('themeAnalysis.title')}
       </Typography>
       <Grid container spacing={3}>
         {/* Topic Distribution */}
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Topic Distribution
+              {t('themeAnalysis.topicDistribution')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -187,10 +189,10 @@ const ThemeAnalysis = ({ data }) => {
                               {data.name}
                             </Typography>
                             <Typography variant="body2">
-                              Mentions: {data.value}
+                              {t('themeAnalysis.mentions')}: {data.value}
                             </Typography>
                             <Typography variant="body2">
-                              Sentiment: {(data.sentiment * 100).toFixed(1)}%
+                              {t('themeAnalysis.sentiment')}: {(data.sentiment * 100).toFixed(1)}%
                             </Typography>
                           </Box>
                         );
@@ -201,7 +203,7 @@ const ThemeAnalysis = ({ data }) => {
                   <Legend />
                   <Bar 
                     dataKey="value" 
-                    name="Mentions" 
+                    name={t('themeAnalysis.mentions')} 
                     fill={theme.palette.info.main}
                   />
                 </BarChart>
@@ -214,7 +216,7 @@ const ThemeAnalysis = ({ data }) => {
         <Grid item xs={12} md={6}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Top Hashtags
+              {t('themeAnalysis.topHashtags')}
             </Typography>
             <Box sx={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
@@ -253,10 +255,10 @@ const ThemeAnalysis = ({ data }) => {
                               {data.name}
                             </Typography>
                             <Typography variant="body2">
-                              Count: {data.value}
+                              {t('themeAnalysis.count')}: {data.value}
                             </Typography>
                             <Typography variant="body2">
-                              Engagement: {data.engagement}
+                              {t('themeAnalysis.engagement')}: {data.engagement}
                             </Typography>
                           </Box>
                         );
@@ -275,7 +277,7 @@ const ThemeAnalysis = ({ data }) => {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
-              Key Quotes & Frequently Used Phrases
+              {t('themeAnalysis.keyPhrases')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
               {topPhrases.map((phrase, index) => (
