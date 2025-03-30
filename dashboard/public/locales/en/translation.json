@@ -440,7 +440,7 @@
     "errorLoading": "Failed to load comparison data. Please check that both CSV files exist and are accessible.",
     "noDataAvailable": "No comparison data available.",
     "refreshData": "Refresh Data",
-    "comparingDatasets": "Comparing <strong>{{previous}}</strong> with <strong>{{new}}</strong>",
+    "comparingDatasets": "Comparing {{previous}} with {{new}}",
     "previousDataset": "Previous Dataset",
     "newDataset": "New Dataset",
     "datasetOverview": "Dataset Overview",

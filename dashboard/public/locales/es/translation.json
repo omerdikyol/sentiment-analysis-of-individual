@@ -440,7 +440,7 @@
     "errorLoading": "Error al cargar los datos de comparación. Verifique que ambos archivos CSV existan y sean accesibles.",
     "noDataAvailable": "No hay datos de comparación disponibles.",
     "refreshData": "Actualizar Datos",
-    "comparingDatasets": "Comparando <strong>{{previous}}</strong> con <strong>{{new}}</strong>",
+    "comparingDatasets": "Comparando {{previous}} con {{new}}",
     "previousDataset": "Conjunto de Datos Anterior",
     "newDataset": "Conjunto de Datos Nuevo",
     "datasetOverview": "Resumen de Conjuntos de Datos",
