@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box, styled, Tooltip, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled, Tooltip as MUITooltip, IconButton } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import { motion } from 'framer-motion';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Area, AreaChart
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
@@ -72,11 +72,11 @@ const SentimentLineChart = ({ sentimentByDate }) => {
         <CardContent>
           <Typography variant="h6">
             {t('charts.sentimentOverTime')}
-            <Tooltip title={t('charts.sentimentOverTimeTooltip')}>
+            <MUITooltip title={t('charts.sentimentOverTimeTooltip')}>
               <IconButton size="small" sx={{ ml: 1 }}>
                 <InfoIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
+            </MUITooltip>
           </Typography>
           <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
@@ -86,40 +86,45 @@ const SentimentLineChart = ({ sentimentByDate }) => {
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Find the data point that matches the label
-      const dataPoint = animatedData.find(item => item.formattedDate === label);
-      
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            p: 2,
-            border: '1px solid #ccc',
-            borderRadius: 1,
-            boxShadow: 3
-          }}
-        >
-          <Typography variant="subtitle2" color="textSecondary">
-            {label}
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'rgba(54, 162, 235, 1)' }}>
-            {`${t('charts.averageSentiment')}: ${(payload[0].value)}%`}
-          </Typography>
-          {dataPoint && (
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="body2" sx={{ color: 'rgba(75, 192, 192, 1)' }}>
-                {t('sentiments.positive')}: {dataPoint.positive}
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#2196f3' }}>
-                {t('sentiments.neutral')}: {dataPoint.neutral || 0}
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 99, 132, 1)' }}>
-                {t('sentiments.negative')}: {dataPoint.negative}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      );
+      try {
+        // Find the data point that matches the label
+        const dataPoint = animatedData.find(item => item.formattedDate === label);
+        
+        return (
+          <Box
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              p: 2,
+              border: '1px solid #ccc',
+              borderRadius: 1,
+              boxShadow: 3
+            }}
+          >
+            <Typography variant="subtitle2" color="textSecondary">
+              {label}
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'rgba(54, 162, 235, 1)' }}>
+              {t('charts.averageSentiment')}: {payload[0]?.payload?.avgScorePercent || '0'}%
+            </Typography>
+            {dataPoint && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ color: '#4caf50' }}>
+                  {t('sentiments.positive')}: {dataPoint.positive || 0}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                  {t('sentiments.neutral')}: {dataPoint.neutral || 0}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#f44336' }}>
+                  {t('sentiments.negative')}: {dataPoint.negative || 0}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        );
+      } catch (error) {
+        console.error('Error in CustomTooltip:', error);
+        return null;
+      }
     }
     return null;
   };
@@ -127,13 +132,13 @@ const SentimentLineChart = ({ sentimentByDate }) => {
   // Prepare the data for visualization
   const chartData = animatedData.map(item => ({
     ...item,
-    avgScorePercent: (item.avgScore * 100).toFixed(1)
+    avgScorePercent: item.avgScore ? (item.avgScore * 100).toFixed(1) : "0"
   }));
 
   const renderChart = (containerHeight = '100%', clickable = false) => (
     <ResponsiveContainer width="100%" height={containerHeight}>
       <LineChart
-        data={animatedData}
+        data={chartData}
         margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
         onClick={clickable ? handleDataPointClick : undefined}
       >
@@ -147,13 +152,9 @@ const SentimentLineChart = ({ sentimentByDate }) => {
         />
         <YAxis tick={{ fontSize: 12 }} />
         <Tooltip
-          contentStyle={{
-            backgroundColor: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          }}
-          cursor={clickable ? { stroke: '#ccc', strokeWidth: 2 } : undefined}
+          content={<CustomTooltip />}
+          wrapperStyle={{ zIndex: 1000 }}
+          cursor={{ strokeDasharray: '3 3', stroke: '#ccc', strokeWidth: 1 }}
         />
         <Legend formatter={(value) => {
           if (value === 'positive') return t('sentiments.positive');
@@ -236,11 +237,11 @@ const SentimentLineChart = ({ sentimentByDate }) => {
           <CardContent>
             <Typography variant="h6" gutterBottom>
               {t('charts.sentimentOverTime')}
-              <Tooltip title={t('charts.sentimentOverTimeTooltip')}>
+              <MUITooltip title={t('charts.sentimentOverTimeTooltip')}>
                 <IconButton size="small" sx={{ ml: 1 }}>
                   <InfoIcon fontSize="small" />
                 </IconButton>
-              </Tooltip>
+              </MUITooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

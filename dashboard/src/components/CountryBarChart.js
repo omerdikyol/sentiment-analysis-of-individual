@@ -6,7 +6,7 @@ import {
   Box, 
   styled,
   useTheme,
-  Tooltip,
+  Tooltip as MUITooltip,
   IconButton
 } from '@mui/material';
 import { 
@@ -15,7 +15,8 @@ import {
   Bar, 
   XAxis, 
   YAxis, 
-  CartesianGrid, 
+  CartesianGrid,
+  Tooltip,
   Cell 
 } from 'recharts';
 import { motion } from 'framer-motion';
@@ -79,37 +80,43 @@ const CountryBarChart = ({ mentionsByCountry }) => {
   
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            p: 2,
-            border: 'none',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            {data.country}
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0].color }}>
-            {`${t('charts.totalMentions')}: ${data.total.toLocaleString()}`}
-          </Typography>
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="body2" sx={{ color: '#4caf50' }}>
-              {t('sentiments.positive')}: {data.positive} ({data.positivePercentage}%)
+      try {
+        const data = payload[0]?.payload;
+        if (!data) return null;
+        
+        return (
+          <Box
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              p: 2,
+              border: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+              {data.country}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#2196f3' }}>
-              {t('sentiments.neutral')}: {data.neutral} ({data.neutralPercentage}%)
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0]?.color || '#333' }}>
+              {`${t('charts.totalMentions')}: ${(data.total || 0).toLocaleString()}`}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#f44336' }}>
-              {t('sentiments.negative')}: {data.negative} ({data.negativePercentage}%)
-            </Typography>
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ color: '#4caf50' }}>
+                {t('sentiments.positive')}: {data.positive || 0} ({data.positivePercentage || 0}%)
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                {t('sentiments.neutral')}: {data.neutral || 0} ({data.neutralPercentage || 0}%)
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#f44336' }}>
+                {t('sentiments.negative')}: {data.negative || 0} ({data.negativePercentage || 0}%)
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-      );
+        );
+      } catch (error) {
+        console.error('Error in CustomTooltip:', error);
+        return null;
+      }
     }
     return null;
   };
@@ -149,7 +156,12 @@ const CountryBarChart = ({ mentionsByCountry }) => {
           tick={{ fontSize: 12 }}
         />
         <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip content={CustomTooltip} />
+        <Tooltip 
+          content={<CustomTooltip />} 
+          wrapperStyle={{ zIndex: 1000, outline: 'none' }}
+          cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+          isAnimationActive={true}
+        />
         <Bar 
           dataKey="total" 
           radius={[4, 4, 0, 0]}
@@ -175,11 +187,11 @@ const CountryBarChart = ({ mentionsByCountry }) => {
           <CardContent>
             <Typography variant="h6" gutterBottom>
               {t('metrics.mentionsByCountry')}
-              <Tooltip title={t('charts.countryBarChartTooltip')}>
+              <MUITooltip title={t('charts.countryBarChartTooltip')}>
                 <IconButton size="small" sx={{ ml: 1 }}>
                   <InfoIcon fontSize="small" />
                 </IconButton>
-              </Tooltip>
+              </MUITooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

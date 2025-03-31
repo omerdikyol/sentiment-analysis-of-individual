@@ -27,7 +27,8 @@
     "unknown": "Inconnu",
     "close": "Fermer",
     "export": "Exporter",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "mentions": "Mentions"
   },
   "metrics": {
     "totalMentions": "Mentions Totales",

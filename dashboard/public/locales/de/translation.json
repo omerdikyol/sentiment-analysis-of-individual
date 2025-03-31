@@ -27,7 +27,8 @@
     "unknown": "Unbekannt",
     "close": "Schließen",
     "export": "Exportieren",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "mentions": "Erwähnungen"
   },
   "metrics": {
     "totalMentions": "Gesamte Erwähnungen",

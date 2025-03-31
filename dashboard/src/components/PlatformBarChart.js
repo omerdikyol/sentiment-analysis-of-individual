@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box, styled, Tooltip, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled, Tooltip as MUITooltip, IconButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
-  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer
+  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
@@ -108,11 +108,11 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
         <CardContent>
           <Typography variant="h6" gutterBottom>
             {t('metrics.mentionsByPlatform')}
-            <Tooltip title={t('charts.platformBarChartTooltip')}>
+            <MUITooltip title={t('charts.platformBarChartTooltip')}>
               <IconButton size="small" sx={{ ml: 1 }}>
                 <InfoIcon fontSize="small" />
               </IconButton>
-            </Tooltip>
+            </MUITooltip>
           </Typography>
           <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
@@ -122,24 +122,29 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            p: 2,
-            border: 'none',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            {label === 'unknown' ? t('general.unknown') : label}
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0].color }}>
-            {`${t('charts.mentions')}: ${payload[0].value.toLocaleString()}`}
-          </Typography>
-        </Box>
-      );
+      try {
+        return (
+          <Box
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              p: 2,
+              border: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+              {label === 'unknown' ? t('general.unknown') : label}
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', color: payload[0]?.color || '#333' }}>
+              {`${t('charts.mentions')}: ${(payload[0]?.value || 0).toLocaleString()}`}
+            </Typography>
+          </Box>
+        );
+      } catch (error) {
+        console.error('Error in CustomTooltip:', error);
+        return null;
+      }
     }
     return null;
   };
@@ -160,7 +165,12 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
           tick={{ fontSize: 12 }}
         />
         <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip content={CustomTooltip} />
+        <Tooltip 
+          content={<CustomTooltip />} 
+          wrapperStyle={{ zIndex: 1000, outline: 'none' }}
+          cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+          isAnimationActive={true}
+        />
         <Bar 
           dataKey="count" 
           radius={[4, 4, 0, 0]}
@@ -186,11 +196,11 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
           <CardContent>
             <Typography variant="h6" gutterBottom>
               {t('metrics.mentionsByPlatform')}
-              <Tooltip title={t('charts.platformBarChartTooltip')}>
+              <MUITooltip title={t('charts.platformBarChartTooltip')}>
                 <IconButton size="small" sx={{ ml: 1 }}>
                   <InfoIcon fontSize="small" />
                 </IconButton>
-              </Tooltip>
+              </MUITooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

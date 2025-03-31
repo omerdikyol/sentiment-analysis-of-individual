@@ -27,7 +27,8 @@
     "unknown": "غير معروف",
     "close": "إغلاق",
     "export": "تصدير",
-    "retry": "إعادة تجريبية"
+    "retry": "إعادة تجريبية",
+    "mentions": "إشارات"
 },
 "metrics": {
     "totalMentions": "إجمالي الإشارات",

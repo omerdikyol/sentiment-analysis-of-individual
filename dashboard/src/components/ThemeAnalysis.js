@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme, Chip, Tooltip, IconButton } from '@mui/material';
+import { Box, Typography, Paper, Grid, useTheme, Chip, Tooltip as MUITooltip, IconButton } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -11,7 +11,7 @@ import {
   PieChart,
   Pie,
   Cell,
-  Tooltip as RechartsTooltip,
+  Tooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
@@ -128,6 +128,7 @@ const ThemeAnalysis = ({ data }) => {
   const topTopics = Object.values(topicData)
     .map(topic => ({
       ...topic,
+      displayName: t(`geographicalInsights.topics.${topic.name.toLowerCase()}`),
       sentiment: topic.value > 0 ? topic.sentiment / topic.value : 0,
     }))
     .sort((a, b) => b.value - a.value)
@@ -158,11 +159,11 @@ const ThemeAnalysis = ({ data }) => {
     >
       <Typography variant="h6" gutterBottom>
         {t('themeAnalysis.title')}
-        <Tooltip title={t('charts.themeAnalysisTooltip')}>
+        <MUITooltip title={t('charts.themeAnalysisTooltip')}>
           <IconButton size="small" sx={{ ml: 1 }}>
             <InfoIcon fontSize="small" />
           </IconButton>
-        </Tooltip>
+        </MUITooltip>
       </Typography>
       <Grid container spacing={3}>
         {/* Topic Distribution */}
@@ -175,33 +176,43 @@ const ThemeAnalysis = ({ data }) => {
               <ResponsiveContainer>
                 <BarChart data={topTopics}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
+                  <XAxis dataKey="displayName" angle={-45} textAnchor="end" height={60} />
                   <YAxis />
                   <Tooltip
+                    wrapperStyle={{ zIndex: 1000, outline: 'none' }}
+                    cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <Box
-                            sx={{
-                              bgcolor: 'background.paper',
-                              p: 1.5,
-                              border: 1,
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Typography variant="body2" gutterBottom>
-                              {data.name}
-                            </Typography>
-                            <Typography variant="body2">
-                              {t('themeAnalysis.mentions')}: {data.value}
-                            </Typography>
-                            <Typography variant="body2">
-                              {t('themeAnalysis.sentiment')}: {(data.sentiment * 100).toFixed(1)}%
-                            </Typography>
-                          </Box>
-                        );
+                        try {
+                          const data = payload[0]?.payload;
+                          if (!data) return null;
+                          
+                          return (
+                            <Box
+                              sx={{
+                                bgcolor: 'background.paper',
+                                p: 1.5,
+                                border: 1,
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                                boxShadow: 2,
+                              }}
+                            >
+                              <Typography variant="body2" gutterBottom>
+                                {data.displayName}
+                              </Typography>
+                              <Typography variant="body2">
+                                {t('themeAnalysis.mentions')}: {data.value || 0}
+                              </Typography>
+                              <Typography variant="body2">
+                                {t('themeAnalysis.sentiment')}: {((data.sentiment || 0) * 100).toFixed(1)}%
+                              </Typography>
+                            </Box>
+                          );
+                        } catch (error) {
+                          console.error('Error in topic tooltip:', error);
+                          return null;
+                        }
                       }
                       return null;
                     }}
@@ -244,30 +255,39 @@ const ThemeAnalysis = ({ data }) => {
                     ))}
                   </Pie>
                   <Tooltip
+                    wrapperStyle={{ zIndex: 1000, outline: 'none' }}
                     content={({ active, payload }) => {
                       if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <Box
-                            sx={{
-                              bgcolor: 'background.paper',
-                              p: 1.5,
-                              border: 1,
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Typography variant="body2" gutterBottom>
-                              {data.name}
-                            </Typography>
-                            <Typography variant="body2">
-                              {t('themeAnalysis.count')}: {data.value}
-                            </Typography>
-                            <Typography variant="body2">
-                              {t('themeAnalysis.engagement')}: {data.engagement}
-                            </Typography>
-                          </Box>
-                        );
+                        try {
+                          const data = payload[0]?.payload;
+                          if (!data) return null;
+                          
+                          return (
+                            <Box
+                              sx={{
+                                bgcolor: 'background.paper',
+                                p: 1.5,
+                                border: 1,
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                                boxShadow: 2,
+                              }}
+                            >
+                              <Typography variant="body2" gutterBottom>
+                                {data.name || ''}
+                              </Typography>
+                              <Typography variant="body2">
+                                {t('themeAnalysis.count')}: {data.value || 0}
+                              </Typography>
+                              <Typography variant="body2">
+                                {t('themeAnalysis.engagement')}: {data.engagement || 0}
+                              </Typography>
+                            </Box>
+                          );
+                        } catch (error) {
+                          console.error('Error in hashtag tooltip:', error);
+                          return null;
+                        }
                       }
                       return null;
                     }}

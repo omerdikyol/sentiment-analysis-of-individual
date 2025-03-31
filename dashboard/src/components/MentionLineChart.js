@@ -49,9 +49,10 @@ const MentionLineChart = ({ mentionsByDate }) => {
   const handleDataPointClick = (data) => {
     if (data && data.activePayload && data.activePayload.length > 0) {
       const clickedData = data.activePayload[0].payload;
+      const formattedDate = new Date(clickedData.date).toLocaleDateString();
       navigate('/sentiment-data', { 
         state: { 
-          dateFilter: clickedData.date 
+          dateFilter: formattedDate 
         } 
       });
     }
@@ -86,6 +87,8 @@ const MentionLineChart = ({ mentionsByDate }) => {
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           }}
           cursor={clickable ? { stroke: '#ccc', strokeWidth: 2 } : undefined}
+          formatter={(value) => [value, t('general.mentions')]}
+          labelFormatter={(label) => new Date(label).toLocaleDateString()}
         />
         <Area
           type="monotone"

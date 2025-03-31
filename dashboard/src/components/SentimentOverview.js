@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography, useTheme, Tooltip, IconButton, Paper } from '@mui/material';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Box, Typography, useTheme, Tooltip as MUITooltip, IconButton, Paper } from '@mui/material';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -36,46 +36,51 @@ const SentimentOverview = ({ data }) => {
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const value = Number(payload[0].value);
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 1.5,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-            minWidth: 120,
-            boxShadow: 2,
-            '& .MuiTypography-root': {
-              whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }
-          }}
-        >
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: payload[0].payload.color,
-              fontWeight: 'medium'
+      try {
+        const value = Number(payload[0]?.value || 0);
+        return (
+          <Box
+            sx={{
+              backgroundColor: 'background.paper',
+              p: 1.5,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              minWidth: 120,
+              boxShadow: 2,
+              '& .MuiTypography-root': {
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }
             }}
           >
-            <Box 
-              component="span" 
+            <Typography 
+              variant="body2" 
               sx={{ 
-                width: 8, 
-                height: 8, 
-                borderRadius: '50%', 
-                backgroundColor: payload[0].payload.color,
-                display: 'inline-block'
-              }} 
-            />
-            {`${payload[0].name}: ${isNaN(value) ? '0.0' : value.toFixed(1)}%`}
-          </Typography>
-        </Box>
-      );
+                color: payload[0]?.payload?.color || '#000',
+                fontWeight: 'medium'
+              }}
+            >
+              <Box 
+                component="span" 
+                sx={{ 
+                  width: 8, 
+                  height: 8, 
+                  borderRadius: '50%', 
+                  backgroundColor: payload[0]?.payload?.color || '#000',
+                  display: 'inline-block'
+                }} 
+              />
+              {`${payload[0]?.name || ''}: ${isNaN(value) ? '0.0' : value.toFixed(1)}%`}
+            </Typography>
+          </Box>
+        );
+      } catch (error) {
+        console.error('Error in CustomTooltip:', error);
+        return null;
+      }
     }
     return null;
   };
@@ -89,11 +94,11 @@ const SentimentOverview = ({ data }) => {
       <Paper elevation={0} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6" gutterBottom>
           {t('analysis.sentimentAnalysis')}
-          <Tooltip title={t('charts.sentimentOverTimeTooltip')}>
+          <MUITooltip title={t('charts.sentimentOverTimeTooltip')}>
             <IconButton size="small" sx={{ ml: 1 }}>
               <InfoIcon fontSize="small" />
             </IconButton>
-          </Tooltip>
+          </MUITooltip>
         </Typography>
         <Box sx={{ width: '100%', height: 300, position: 'relative' }}>
           <ResponsiveContainer>
@@ -120,7 +125,9 @@ const SentimentOverview = ({ data }) => {
               </Pie>
               <Tooltip 
                 content={<CustomTooltip />}
-                wrapperStyle={{ outline: 'none' }}
+                wrapperStyle={{ outline: 'none', zIndex: 1000 }}
+                cursor={false}
+                isAnimationActive={true}
               />
             </PieChart>
           </ResponsiveContainer>

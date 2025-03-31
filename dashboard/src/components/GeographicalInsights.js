@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme, Tooltip, IconButton } from '@mui/material';
+import { Box, Typography, Paper, Grid, useTheme, Tooltip as MUITooltip, IconButton } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -16,7 +16,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Tooltip as RechartsTooltip,
+  Tooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
@@ -376,68 +376,84 @@ const GeographicalInsights = ({ data }) => {
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 2,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="subtitle2" gutterBottom>
-            {data.country}
-          </Typography>
-          <Typography variant="body2">
-            {t('geographicalInsights.totalMentions')}: {data.total}
-          </Typography>
-          <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.positive }}>
-            {t('sentiments.positive')}: {data.positive.toFixed(1)}%
-          </Typography>
-          <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.neutral }}>
-            {t('sentiments.neutral')}: {data.neutral.toFixed(1)}%
-          </Typography>
-          <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.negative }}>
-            {t('sentiments.negative')}: {data.negative.toFixed(1)}%
-          </Typography>
-        </Box>
-      );
+      try {
+        const data = payload[0]?.payload;
+        if (!data) return null;
+        
+        return (
+          <Box
+            sx={{
+              backgroundColor: 'background.paper',
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              boxShadow: 2,
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              {data.country || ''}
+            </Typography>
+            <Typography variant="body2">
+              {t('geographicalInsights.totalMentions')}: {data.total || 0}
+            </Typography>
+            <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.positive }}>
+              {t('sentiments.positive')}: {(data.positive || 0).toFixed(1)}%
+            </Typography>
+            <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.neutral }}>
+              {t('sentiments.neutral')}: {(data.neutral || 0).toFixed(1)}%
+            </Typography>
+            <Typography variant="body2" sx={{ color: SENTIMENT_COLORS.negative }}>
+              {t('sentiments.negative')}: {(data.negative || 0).toFixed(1)}%
+            </Typography>
+          </Box>
+        );
+      } catch (error) {
+        console.error('Error in CustomTooltip:', error);
+        return null;
+      }
     }
     return null;
   };
 
   const SourceTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <Box
-          sx={{
-            backgroundColor: 'background.paper',
-            p: 2,
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="subtitle2" gutterBottom>
-            {data.country}
-          </Typography>
-          {payload.map((entry, index) => (
-            <Typography 
-              key={index} 
-              variant="body2" 
-              sx={{ color: entry.color }}
-            >
-              {`${entry.name}: ${entry.value}%`}
+      try {
+        const data = payload[0]?.payload;
+        if (!data) return null;
+        
+        return (
+          <Box
+            sx={{
+              backgroundColor: 'background.paper',
+              p: 2,
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 1,
+              boxShadow: 2,
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              {data.country || ''}
             </Typography>
-          ))}
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            {t('geographicalInsights.totalMentions')}: {data.total}
-          </Typography>
-        </Box>
-      );
+            {payload.map((entry, index) => (
+              <Typography 
+                key={index} 
+                variant="body2" 
+                sx={{ color: entry.color || '#333' }}
+              >
+                {`${entry.name || ''}: ${entry.value || 0}%`}
+              </Typography>
+            ))}
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {t('geographicalInsights.totalMentions')}: {data.total || 0}
+            </Typography>
+          </Box>
+        );
+      } catch (error) {
+        console.error('Error in SourceTooltip:', error);
+        return null;
+      }
     }
     return null;
   };
@@ -471,27 +487,37 @@ const GeographicalInsights = ({ data }) => {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip
+            <Tooltip 
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
-                  return (
-                    <Box
-                      sx={{
-                        bgcolor: 'background.paper',
-                        p: 1.5,
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {`${payload[0].name}: ${payload[0].value} ${t('geographicalInsights.mentions')}`}
-                      </Typography>
-                    </Box>
-                  );
+                  try {
+                    const data = payload[0]?.payload;
+                    if (!data) return null;
+                    
+                    return (
+                      <Box
+                        sx={{
+                          bgcolor: 'background.paper',
+                          p: 1.5,
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          boxShadow: 2,
+                        }}
+                      >
+                        <Typography variant="body2">
+                          {`${payload[0].name || ''}: ${payload[0].value || 0} ${t('geographicalInsights.mentions')}`}
+                        </Typography>
+                      </Box>
+                    );
+                  } catch (error) {
+                    console.error('Error in topic tooltip:', error);
+                    return null;
+                  }
                 }
                 return null;
               }}
+              wrapperStyle={{ zIndex: 1000, outline: 'none' }}
             />
             <Legend
               layout="vertical"
@@ -537,11 +563,11 @@ const GeographicalInsights = ({ data }) => {
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom>
           {t('geographicalInsights.title')}
-          <Tooltip title={t('charts.geographicalDistributionTooltip')}>
+          <MUITooltip title={t('charts.geographicalDistributionTooltip')}>
             <IconButton size="small" sx={{ ml: 1 }}>
               <InfoIcon fontSize="small" />
             </IconButton>
-          </Tooltip>
+          </MUITooltip>
         </Typography>
       </Box>
       <Grid container spacing={3}>
@@ -572,7 +598,10 @@ const GeographicalInsights = ({ data }) => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip content={<CustomTooltip />} />
+                  <Tooltip 
+                    content={<CustomTooltip />} 
+                    wrapperStyle={{ zIndex: 1000, outline: 'none' }}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -601,7 +630,7 @@ const GeographicalInsights = ({ data }) => {
                     tick={{ fontSize: 12 }}
                     width={35}
                   />
-                  <Tooltip content={<SourceTooltip />} />
+                  <Tooltip content={<SourceTooltip />} wrapperStyle={{ zIndex: 1000, outline: 'none' }} />
                   <Legend />
                   <Bar
                     dataKey={t('geographicalInsights.sourceTypes.socialMedia')}
