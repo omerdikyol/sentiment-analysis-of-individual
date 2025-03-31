@@ -8,6 +8,7 @@ export const LANGUAGES = [
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
 ];
 
 export const LanguageProvider = ({ children }) => {

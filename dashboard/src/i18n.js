@@ -13,7 +13,7 @@ i18n
   // Initialize i18next
   .init({
     fallbackLng: 'en',
-    supportedLngs: ['en', 'fr', 'es', 'de'],
+    supportedLngs: ['en', 'fr', 'es', 'de', 'ar'],
     debug: process.env.NODE_ENV === 'development',
     interpolation: {
       escapeValue: false, // React already escapes values
