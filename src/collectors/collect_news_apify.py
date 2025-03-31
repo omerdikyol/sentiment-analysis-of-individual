@@ -90,6 +90,10 @@ def collect_news_apify(output_file=None, language="US:en"):
                             country = "uk"
                         elif domain.endswith(".ae"):
                             country = "uae"
+                        elif domain.endswith(".ng"):
+                            country = "nigeria"
+                        elif domain.endswith(".in"):
+                            country = "india"
                     
                     # Append to data collection
                     all_data.append({

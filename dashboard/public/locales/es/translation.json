@@ -477,7 +477,9 @@
     "countries": {
       "gb": "Gran Bretaña (GB)",
       "uk": "Reino Unido (UK)",
-      "us": "Estados Unidos (US)"
+      "us": "Estados Unidos (US)",
+      "ng": "Nigeria (NG)",
+      "in": "India (IN)"
     },
     "newEntriesAnalysis": "Análisis de Nuevas Entradas",
     "showingNewEntries": "Mostrando {{count}} nuevas entradas {{limited}}",

@@ -67,7 +67,7 @@ class NewsAPICollector:
             return []
             
         articles = []
-        countries = ['qa', 'us', 'gb', 'ae']  # NewsData.io uses lowercase country codes
+        countries = ['qa', 'us', 'gb', 'ae', 'ng', 'in']  # NewsData.io uses lowercase country codes, added Nigeria and India
         
         try:
             url = "https://newsdata.io/api/1/news"
@@ -100,7 +100,9 @@ class NewsAPICollector:
                                 'qa': 'Qatar',
                                 'us': 'US',
                                 'gb': 'UK',
-                                'ae': 'UAE'
+                                'ae': 'UAE',
+                                'ng': 'Nigeria',
+                                'in': 'India'
                             }.get(country_code, 'Unknown')
                             
                             articles.append({
@@ -145,7 +147,7 @@ class NewsAPICollector:
             thirty_days_ago = int((datetime.now() - timedelta(days=30)).timestamp())
             
             # Define countries to search
-            countries = ['QA', 'US', 'GB', 'AE']  # GB is used for UK in ISO format
+            countries = ['QA', 'US', 'GB', 'AE', 'NG', 'IN']  # Added Nigeria and India, GB is used for UK in ISO format
             
             all_results = []
             
@@ -206,7 +208,9 @@ class NewsAPICollector:
                 'QA': 'Qatar',
                 'US': 'US',
                 'GB': 'UK',
-                'AE': 'UAE'
+                'AE': 'UAE',
+                'NG': 'Nigeria',
+                'IN': 'India'
             }
             
             for post in all_results:
@@ -259,7 +263,7 @@ class NewsAPICollector:
             return []
             
         articles = []
-        countries = ['qa', 'us', 'gb', 'ae']  # Mediastack uses lowercase country codes
+        countries = ['qa', 'us', 'gb', 'ae', 'ng', 'in']  # Mediastack uses lowercase country codes, added Nigeria and India
         
         try:
             url = "http://api.mediastack.com/v1/news"
@@ -305,7 +309,9 @@ class NewsAPICollector:
                             'qa': 'Qatar',
                             'us': 'US',
                             'gb': 'UK',
-                            'ae': 'UAE'
+                            'ae': 'UAE',
+                            'ng': 'Nigeria',
+                            'in': 'India'
                         }.get(country_code, 'Unknown')
                         
                         articles.append({
@@ -340,7 +346,7 @@ class NewsAPICollector:
             return []
             
         articles = []
-        countries = ['QA', 'US', 'GB', 'AE']  # GNews uses uppercase country codes
+        countries = ['QA', 'US', 'GB', 'AE', 'NG', 'IN']  # GNews uses uppercase country codes, added Nigeria and India
         
         try:
             url = "https://gnews.io/api/v4/search"
@@ -374,7 +380,9 @@ class NewsAPICollector:
                             'QA': 'Qatar',
                             'US': 'US',
                             'GB': 'UK',
-                            'AE': 'UAE'
+                            'AE': 'UAE',
+                            'NG': 'Nigeria',
+                            'IN': 'India'
                         }.get(country_code, 'Unknown')
                         
                         articles.append({
@@ -409,7 +417,7 @@ class NewsAPICollector:
             return []
             
         articles = []
-        countries = ['QA', 'US', 'GB', 'AE']  # WorldNewsAPI uses uppercase country codes
+        countries = ['QA', 'US', 'GB', 'AE', 'NG', 'IN']  # WorldNewsAPI uses uppercase country codes, added Nigeria and India
         
         try:
             url = "https://api.worldnewsapi.com/search-news"
@@ -444,7 +452,9 @@ class NewsAPICollector:
                             'QA': 'Qatar',
                             'US': 'US',
                             'GB': 'UK',
-                            'AE': 'UAE'
+                            'AE': 'UAE',
+                            'NG': 'Nigeria',
+                            'IN': 'India'
                         }.get(country_code, 'Unknown')
                         
                         articles.append({
@@ -479,7 +489,7 @@ class NewsAPICollector:
             return []
             
         articles = []
-        countries = ['qa', 'us', 'gb', 'ae']  # APITube uses lowercase country codes
+        countries = ['qa', 'us', 'gb', 'ae', 'ng', 'in']  # APITube uses lowercase country codes, added Nigeria and India
         
         try:
             url = "https://api.apitube.io/v1/news/articles"
@@ -513,7 +523,9 @@ class NewsAPICollector:
                             'qa': 'Qatar',
                             'us': 'US',
                             'gb': 'UK',
-                            'ae': 'UAE'
+                            'ae': 'UAE',
+                            'ng': 'Nigeria',
+                            'in': 'India'
                         }.get(country_code, 'Unknown')
                         
                         articles.append({
@@ -584,10 +596,30 @@ class NewsAPICollector:
                 "thepeninsulaqatar.qa", "qatargazette.com", "qatarchronicle.com"
             ]
             
+            # Add Nigeria news sources
+            nigeria_sources = [
+                "punchng.com", "vanguardngr.com", "thenationonlineng.net", "dailytrust.com",
+                "thisdaylive.com", "guardian.ng", "channelstv.com", "tribuneonlineng.com",
+                "leadership.ng", "premiumtimesng.com", "sunnewsonline.com", "businessday.ng",
+                "dailypost.ng", "legit.ng", "saharareporters.com", "nairametrics.com",
+                "blueprint.ng", "thecable.ng", "independent.ng", "nannews.ng"
+            ]
+            
+            # Add India news sources
+            india_sources = [
+                "timesofindia.indiatimes.com", "indianexpress.com", "hindustantimes.com", "ndtv.com",
+                "thehindu.com", "livemint.com", "news18.com", "economictimes.indiatimes.com",
+                "financialexpress.com", "outlookindia.com", "business-standard.com", "dnaindia.com",
+                "telegraphindia.com", "deccanherald.com", "republicworld.com", "firstpost.com",
+                "theprint.in", "scroll.in", "indiatoday.in", "thequint.com", "zeenews.india.com"
+            ]
+            
             # TV-specific domains for source type identification
             tv_domains = [
                 "bbc.co.uk", "sky.com", "itv.com", "channel4.com",  # UK TV
-                "cnn.com", "abcnews.go.com", "nbcnews.com", "cbsnews.com", "msnbc.com", "foxnews.com", "pbs.org"  # US TV
+                "cnn.com", "abcnews.go.com", "nbcnews.com", "cbsnews.com", "msnbc.com", "foxnews.com", "pbs.org",  # US TV
+                "ndtv.com", "news18.com", "republicworld.com", "zeenews.india.com",  # India TV
+                "channelstv.com"  # Nigeria TV
             ]
             
             # Calculate date range (28 days ago to now)
@@ -596,7 +628,7 @@ class NewsAPICollector:
             from_date = days_ago_28.strftime("%Y-%m-%d")
             
             # Combine all sources
-            all_sources = ",".join(uk_sources + us_sources + uae_sources + qatar_sources)
+            all_sources = ",".join(uk_sources + us_sources + uae_sources + qatar_sources + nigeria_sources + india_sources)
             
             logger.info(f"\nFetching articles for query: '{query}'")
             logger.info(f"Date range: from {from_date} to {today.strftime('%Y-%m-%d')}")
@@ -628,7 +660,9 @@ class NewsAPICollector:
                     country = "UK" if any(uk in domain for uk in uk_sources) else \
                              "US" if any(us in domain for us in us_sources) else \
                              "UAE" if any(uae in domain for uae in uae_sources) else \
-                             "Qatar" if any(qatar in domain for qatar in qatar_sources) else "Unknown"
+                             "Qatar" if any(qatar in domain for qatar in qatar_sources) else \
+                             "Nigeria" if any(ng in domain for ng in nigeria_sources) else \
+                             "India" if any(ind in domain for ind in india_sources) else "Unknown"
                     
                     # Determine source type (Television or News)
                     source_type = "Television" if domain in tv_domains else "News"

@@ -30,12 +30,12 @@ const GeographicalInsights = ({ data }) => {
 
   // Define colors for the charts
   const COLORS = [
-    '#2196F3', // blue
-    '#4CAF50', // green
-    '#FF9800', // orange
-    '#E91E63', // pink
-    '#9C27B0', // purple
-    '#00BCD4', // cyan
+    '#2196F3', // blue - Qatar
+    '#4CAF50', // green - UAE
+    '#FF9800', // orange - US
+    '#E91E63', // pink - UK
+    '#9C27B0', // purple - Nigeria
+    '#00BCD4', // cyan - India
     '#FFEB3B', // yellow
     '#FF5722', // deep orange
     '#3F51B5', // indigo

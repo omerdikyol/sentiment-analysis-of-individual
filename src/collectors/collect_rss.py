@@ -145,6 +145,21 @@ class RSSFeedCollector:
             "https://rss.app/feeds/SGYMbetbJ8RyDPtL.xml",  # Twitter trending topics
             "https://www.reddit.com/r/worldnews/.rss",
             "https://www.reddit.com/r/geopolitics/.rss"
+
+            # India News
+            "https://www.thehindu.com/news/national/rss.xml",
+            "https://www.thehindu.com/news/international/rss.xml",
+            "https://www.thehindu.com/news/business/rss.xml",
+            "https://www.thehindu.com/news/sports/rss.xml",
+            "https://www.thehindu.com/news/entertainment/rss.xml",
+            
+            # Nigeria News
+            "https://www.vanguardngr.com/rss/all.xml",
+            "https://www.thisdaylive.com/rss/all.xml",
+            "https://www.premiumtimesng.com/rss/all.xml",
+            "https://www.dailytrust.com/rss/all.xml",
+            "https://www.nairametrics.com/rss/all.xml",
+            
         ]
 
     def _clean_text(self, text: str) -> str:

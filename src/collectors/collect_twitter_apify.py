@@ -122,7 +122,10 @@ def collect_twitter_apify(output_file=None, max_items=200, query_type="Latest", 
                         country = "us"
                     elif user_location and any(country in user_location.lower() for country in ["uk", "united kingdom"]):
                         country = "uk"
-                    
+                    elif user_location and any(country in user_location.lower() for country in ["nigeria"]):
+                        country = "nigeria"
+                    elif user_location and any(country in user_location.lower() for country in ["india"]):
+                        country = "india"
                     # Append to data collection
                     all_data.append({
                         "source": "X",

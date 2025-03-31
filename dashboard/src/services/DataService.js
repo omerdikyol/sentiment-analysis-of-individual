@@ -344,6 +344,8 @@ class DataService {
     const usKeywords = ['us', 'usa', 'united states', 'america', 'american', 'washington', 'new york', 'california', 'trump'];
     const ukKeywords = ['uk', 'united kingdom', 'britain', 'british', 'london', 'england', 'scotland', 'wales'];
     const uaeKeywords = ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah', 'ajman', 'emirates'];
+    const nigeriaKeywords = ['nigeria', 'nigerian', 'lagos', 'abuja', 'kano', 'ibadan', 'port harcourt', 'benin city', 'calabar', 'naija'];
+    const indiaKeywords = ['india', 'indian', 'delhi', 'mumbai', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'ahmedabad', 'pune', 'modi'];
     
     data.forEach(item => {
       // Use text content to determine country if available
@@ -374,6 +376,14 @@ class DataService {
       else if (usKeywords.some(keyword => text.includes(keyword))) {
         item.country = 'US';
       }
+      // Check for Nigeria content
+      else if (nigeriaKeywords.some(keyword => text.includes(keyword))) {
+        item.country = 'Nigeria';
+      }
+      // Check for India content
+      else if (indiaKeywords.some(keyword => text.includes(keyword))) {
+        item.country = 'India';
+      }
       // Default if no match
       else {
         // Use source to guess if possible
@@ -397,6 +407,24 @@ class DataService {
         ].some(s => source.includes(s) || platform.includes(s))) {
           item.country = 'UAE';
         }
+        else if ([
+          'punch', 'vanguard', 'thisday', 'the nation', 'daily trust',
+          'guardian.ng', 'channels tv', 'tribune', 'leadership.ng',
+          'premium times', 'the sun', 'business day', 'daily post',
+          'legit.ng', 'sahara reporters', 'nairametrics', 'blueprint',
+          'the cable', 'independent.ng', 'nannews'
+        ].some(s => source.includes(s) || platform.includes(s))) {
+          item.country = 'Nigeria';
+        }
+        else if ([
+          'times of india', 'indian express', 'hindustan times', 'ndtv',
+          'the hindu', 'mint', 'news18', 'economic times', 'financial express',
+          'outlook india', 'business standard', 'dna india', 'telegraph india',
+          'deccan herald', 'republic world', 'firstpost', 'the print',
+          'scroll.in', 'india today', 'the quint', 'zee news'
+        ].some(s => source.includes(s) || platform.includes(s))) {
+          item.country = 'India';
+        }
         else {
           // If still no match, make an educated guess based on domain if URL exists
           const url = item.url || '';
@@ -413,6 +441,14 @@ class DataService {
           else if (url.includes('.ae') || url.includes('emirates') || url.includes('dubai') ||
                    url.includes('gulfnews') || url.includes('khaleejtimes')) {
             item.country = 'UAE';
+          }
+          else if (url.includes('.ng') || url.includes('nigeria') || url.includes('naija') ||
+                  url.includes('lagos') || url.includes('abuja')) {
+            item.country = 'Nigeria';
+          }
+          else if (url.includes('.in') || url.includes('india') || url.includes('delhi') ||
+                  url.includes('mumbai') || url.includes('bangalore')) {
+            item.country = 'India';
           }
           else {
             // Default to Qatar since this is a Qatar-focused dataset
@@ -571,7 +607,7 @@ class DataService {
   }
 
   getAvailableCountries(data) {
-    const countries = ['Qatar', 'UAE', 'US', 'UK'];
+    const countries = ['Qatar', 'UAE', 'US', 'UK', 'Nigeria', 'India'];
     return countries.sort();
   }
   
@@ -580,7 +616,9 @@ class DataService {
       'US': { total: 0, positive: 0, neutral: 0, negative: 0 },
       'UK': { total: 0, positive: 0, neutral: 0, negative: 0 },
       'Qatar': { total: 0, positive: 0, neutral: 0, negative: 0 },
-      'UAE': { total: 0, positive: 0, neutral: 0, negative: 0 }
+      'UAE': { total: 0, positive: 0, neutral: 0, negative: 0 },
+      'Nigeria': { total: 0, positive: 0, neutral: 0, negative: 0 },
+      'India': { total: 0, positive: 0, neutral: 0, negative: 0 }
     };
     
     data.forEach(item => {
@@ -598,6 +636,8 @@ class DataService {
         'uk': 'UK',
         'uae': 'UAE',
         'qatar': 'Qatar',
+        'nigeria': 'Nigeria',
+        'india': 'India',
         'Qatar': 'Qatar'  // Add this to ensure both cases map to the same
       };
       

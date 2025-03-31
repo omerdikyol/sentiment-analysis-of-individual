@@ -36,7 +36,7 @@ def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last
     networks = ["web"]
     
     # Languages to search in
-    languages = ["en", "ar"]  # English and Arabic
+    languages = ["en", "ar", "in", "ng"]  # English, Arabic, India, Nigeria
     
     # Try each query variation from the query_variations module
     for query in query_variations:
