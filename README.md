@@ -138,6 +138,38 @@ Main dependencies include:
 - Add tests in `tests/`
 - Update dashboard components in `dashboard/src/components/`
 
+## Email Configuration
+
+### Using Proton Mail
+
+The system supports both Proton Mail and Gmail for sending email notifications. To configure Proton Mail:
+
+1. Create a Proton Mail account if you don't already have one.
+2. Set up the following in your `config/.env` file:
+
+```
+EMAIL_PROVIDER=protonmail
+SMTP_SERVER=smtp.protonmail.ch
+SMTP_PORT=587
+SMTP_USERNAME=your-protonmail-address@protonmail.com
+SMTP_PASSWORD=your-protonmail-password
+SENDER_EMAIL=your-protonmail-address@protonmail.com
+```
+
+3. For Proton Mail, make sure you have enabled SMTP/IMAP access in your Proton Mail account settings.
+4. You may need to generate an app-specific password for SMTP access.
+
+To test your Proton Mail configuration, use the API endpoint:
+
+```
+POST /email/protonmail-test
+{
+  "recipient": "test@example.com"
+}
+```
+
+You can also switch between Gmail and Proton Mail through the dashboard's email configuration section.
+
 ## License
 
 MIT License 

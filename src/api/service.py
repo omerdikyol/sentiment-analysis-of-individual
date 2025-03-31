@@ -147,6 +147,7 @@ class ScheduleConfig(BaseModel):
     monthly_day: int = Field(1, ge=1, le=28)
 
 class EmailConfig(BaseModel):
+    provider: str = "protonmail"
     recipients: List[EmailStr] = []
     notifyOnCollection: bool = False
     notifyOnProcessing: bool = False
@@ -177,10 +178,11 @@ async def send_email(request: EmailNotificationRequest):
 async def get_email_config():
     """Get the current email notification configuration"""
     try:
-        from utils.mail_config import get_email_recipients, is_email_notification_enabled
+        from utils.mail_config import get_email_recipients, is_email_notification_enabled, get_email_provider
         from utils.mail_config import NOTIFY_ON_COLLECTION, NOTIFY_ON_PROCESSING, NOTIFY_ON_ANALYSIS
         
         config = {
+            "provider": get_email_provider(),
             "recipients": get_email_recipients(),
             "enabled": is_email_notification_enabled(),
             "notifyOnCollection": NOTIFY_ON_COLLECTION,
@@ -199,53 +201,84 @@ async def update_email_config(config: EmailConfig):
         import os
         from pathlib import Path
         from dotenv import load_dotenv, set_key
-        
-        # Get the path to the .env file
-        project_root = Path(__file__).parent.parent.parent
-        config_path = project_root / "config" / ".env"
+
+        env_path = Path("config/.env")
         
         # Load current .env file
-        load_dotenv(config_path)
+        load_dotenv(env_path)
         
-        # Update the configuration in the .env file
-        set_key(str(config_path), "EMAIL_RECIPIENTS", ",".join(config.recipients))
-        set_key(str(config_path), "EMAIL_NOTIFICATION_ENABLED", str(config.enabled).lower())
-        set_key(str(config_path), "NOTIFY_ON_COLLECTION", str(config.notifyOnCollection).lower())
-        set_key(str(config_path), "NOTIFY_ON_PROCESSING", str(config.notifyOnProcessing).lower())
-        set_key(str(config_path), "NOTIFY_ON_ANALYSIS", str(config.notifyOnAnalysis).lower())
+        # Update the values
+        set_key(env_path, "EMAIL_PROVIDER", config.provider)
+        set_key(env_path, "EMAIL_RECIPIENTS", ",".join(config.recipients))
+        set_key(env_path, "EMAIL_NOTIFICATION_ENABLED", str(config.enabled).lower())
+        set_key(env_path, "NOTIFY_ON_COLLECTION", str(config.notifyOnCollection).lower())
+        set_key(env_path, "NOTIFY_ON_PROCESSING", str(config.notifyOnProcessing).lower())
+        set_key(env_path, "NOTIFY_ON_ANALYSIS", str(config.notifyOnAnalysis).lower())
         
-        # Reload the config module
-        from importlib import reload
-        from utils import mail_config
-        reload(mail_config)
+        # Set correct SMTP server based on provider
+        if config.provider.lower() == "protonmail":
+            set_key(env_path, "SMTP_SERVER", "smtp.protonmail.ch")
+        elif config.provider.lower() == "gmail":
+            set_key(env_path, "SMTP_SERVER", "smtp.gmail.com")
+        
+        # Refresh mail sender with new settings
+        mail_sender.email_provider = config.provider.lower()
+        mail_sender.smtp_server = os.getenv("SMTP_SERVER", "smtp.protonmail.ch" if config.provider.lower() == "protonmail" else "smtp.gmail.com")
         
         return {"status": "success", "message": "Email configuration updated successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update email configuration: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/email/test")
 async def send_test_email(request: TestEmailRequest):
     """Send a test email to verify configuration"""
     try:
-        subject = "Test Email from Sentiment Analysis System"
-        message = """
-        <h2>Test Email</h2>
-        <p>This is a test email from your Sentiment Analysis System to verify that email notifications are working correctly.</p>
-        <p>If you received this email, your email notification configuration is working properly.</p>
-        """
-        
-        success = mail_sender.send_report_email(
-            [request.recipient],
-            subject,
-            message
+        success = mail_sender.send_email(
+            request.recipient,
+            "Test Email from Sentiment Analysis System",
+            "This is a test email to verify that your email configuration is working correctly."
         )
-        
         if success:
             return {"status": "success", "message": "Test email sent successfully"}
         else:
             raise HTTPException(status_code=500, detail="Failed to send test email")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/email/protonmail-test")
+async def test_protonmail_connection(request: TestEmailRequest):
+    """Test specifically the ProtonMail connection"""
+    try:
+        # Force ProtonMail configuration for this test
+        original_provider = mail_sender.email_provider
+        original_server = mail_sender.smtp_server
+        original_port = mail_sender.smtp_port
+        
+        # Temporarily switch to ProtonMail settings
+        mail_sender.email_provider = "protonmail"
+        mail_sender.smtp_server = "smtp.protonmail.ch"
+        mail_sender.smtp_port = 587
+        
+        try:
+            success = mail_sender.send_email(
+                request.recipient,
+                "ProtonMail Test from Sentiment Analysis System",
+                "This is a test email sent via ProtonMail to verify your configuration."
+            )
+            
+            if success:
+                return {"status": "success", "message": "ProtonMail test successful"}
+            else:
+                raise HTTPException(status_code=500, detail="Failed to send email via ProtonMail")
+                
+        finally:
+            # Restore original settings
+            mail_sender.email_provider = original_provider
+            mail_sender.smtp_server = original_server
+            mail_sender.smtp_port = original_port
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ProtonMail test failed: {str(e)}")
 
 @app.post("/email/send-report")
 async def send_report_email(request: ReportEmailRequest):

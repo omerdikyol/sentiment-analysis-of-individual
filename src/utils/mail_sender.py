@@ -15,12 +15,23 @@ logger = logging.getLogger(__name__)
 class MailSender:
     """
     Utility class for sending emails from the sentiment analysis system.
+    Supports Proton Mail and other SMTP providers.
     """
     
     def __init__(self):
         """Initialize email configuration from environment variables."""
-        self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        # Get email provider type from environment
+        self.email_provider = os.getenv("EMAIL_PROVIDER", "gmail").lower()
+        
+        # Set default SMTP settings based on provider
+        if self.email_provider == "protonmail":
+            self.smtp_server = os.getenv("SMTP_SERVER", "smtp.protonmail.ch")
+            self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        else:
+            # Default to Gmail settings
+            self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+            self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
+            
         self.smtp_username = os.getenv("SMTP_USERNAME", "")
         self.smtp_password = os.getenv("SMTP_PASSWORD", "")
         self.sender_email = os.getenv("SENDER_EMAIL", self.smtp_username)
@@ -75,7 +86,7 @@ class MailSender:
                     except Exception as e:
                         logger.error(f"Failed to attach file {file_path}: {str(e)}")
             
-            # Send email
+            # Send email - handle both ProtonMail and other providers
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.smtp_username, self.smtp_password)
