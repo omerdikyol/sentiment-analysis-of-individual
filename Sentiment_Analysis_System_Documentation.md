@@ -704,3 +704,223 @@ The flexible architecture adapts to your specific business needs, while the inte
 With its intuitive dashboard, comprehensive data access, and robust monitoring, the system offers both immediate tactical insights and deep strategic intelligence for understanding sentiment trends, brand perception, and emerging topics.
 
 By implementing this solution, your business gains valuable intelligence to inform product development, marketing strategies, crisis management, competitive analysis, and customer experience improvements.
+
+## Part A: Architecture and High Level Design
+
+### Project Structure Overview
+
+The sentiment analysis system follows a modular architecture organized into the following components:
+
+```
+sentiment-analysis/
+├── src/                      # Source code
+│   ├── agent/               # Agent core functionality
+│   ├── collectors/          # Data collection modules
+│   ├── processing/          # Data processing and analysis
+│   ├── api/                 # API service
+│   └── utils/               # Utility functions
+├── data/                    # Data storage
+│   ├── raw/                # Raw collected data
+│   ├── processed/          # Processed data
+│   └── metrics/            # System metrics and history
+├── config/                 # Configuration files
+│   ├── default_config.json # Default system configuration
+│   ├── llm_config.json     # LLM configuration
+│   ├── .env                # Environment variables
+│   └── .env.example        # Example environment configuration
+├── logs/                   # System logs
+│   └── archive/           # Archived logs
+├── models/                # ML models
+│   └── sentiment/        # Sentiment analysis models
+├── tests/                 # Test files
+├── dashboard/            # React dashboard
+│   ├── src/              # Dashboard source code
+│   ├── public/           # Public assets
+│   └── build/            # Production build
+└── requirements.txt      # Python dependencies
+```
+
+### Key Architectural Components
+
+1. **Agent Core (src/agent/)**
+   - Acts as the central intelligence hub described earlier
+   - Coordinates all system activities
+   - Handles scheduling and task management
+   - Maintains system state and configuration
+
+2. **Data Collectors (src/collectors/)**
+   - Implements the data collection network
+   - Modular design with separate collectors for each source (X, News, Instagram, LinkedIn, etc.)
+   - Handles API authentication and rate limiting
+   - Standardizes data from different sources
+
+3. **Data Processing (src/processing/)**
+   - Implements the analysis engine
+   - Cleans and normalizes collected data
+   - Performs sentiment analysis using advanced NLP models
+   - Generates insights and identifies trends
+
+4. **API Service (src/api/)**
+   - Implements the communication system
+   - Provides RESTful endpoints for accessing system data and functionality
+   - Includes WebSocket support for real-time updates
+   - Manages authentication and access control
+
+5. **Dashboard (dashboard/)**
+   - Implements the interactive dashboard
+   - Built with React for a responsive user experience
+   - Visualizes sentiment data and insights
+   - Provides user interface for system configuration
+
+### System Integration
+
+The components communicate through well-defined interfaces:
+
+1. **Data Flow**
+   - Collectors → Raw Data Storage → Processing Engine → Processed Data Storage → API → Dashboard
+
+2. **Control Flow**
+   - Dashboard → API → Agent Core → (Collectors, Processing Engine)
+
+3. **Configuration Flow**
+   - Config Files → Agent Core → All Components
+
+### Feature Highlights
+
+- **Multi-source data collection** from various social media and news platforms
+- **Real-time sentiment analysis** using advanced NLP models
+- **Automated data processing** with configurable workflows
+- **Interactive dashboard** with real-time updates via WebSockets
+- **Historical data comparison** with visualization reports
+- **System health monitoring** and automated notifications
+- **Configurable data retention** and processing intervals
+
+### Recent Enhancements
+
+- **Comparison Report Feature**: New dashboard capability to analyze differences between two CSV datasets, including:
+  - Dataset overview statistics
+  - Sentiment analysis comparison
+  - Platform distribution visualization
+  - Geographical distribution tracking
+  - New entries identification
+
+## Part B: Installation Instructions
+
+### Prerequisites
+
+- Python 3.8+ installed
+- Node.js 14+ and npm installed
+- Git for cloning the repository
+- Internet connection for downloading dependencies
+
+### Setup Process
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/sentiment-analysis.git
+   cd sentiment-analysis
+   ```
+
+2. **Create and activate a virtual environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Install dashboard dependencies**:
+   ```bash
+   cd dashboard && npm install
+   cd ..
+   ```
+
+5. **Configure the system**:
+   - Copy the example environment file:
+     ```bash
+     cp config/.env.example config/.env
+     ```
+   - Edit `config/.env` and add your API keys and credentials
+   - Adjust settings in `config/default_config.json` if needed
+
+### Running the System
+
+1. **Start the Agent Core**:
+   ```bash
+   python -m src.agent.core
+   ```
+
+2. **Start the API Service**:
+   ```bash
+   python -m src.api.service
+   ```
+
+3. **Start the Dashboard**:
+   ```bash
+   cd dashboard && npm start
+   ```
+   This will open the dashboard in your browser at http://localhost:3000
+
+### Configuration Options
+
+The system can be configured through `config/default_config.json`:
+
+```json
+{
+    "collection_interval_minutes": 30,
+    "processing_interval_minutes": 60,
+    "data_retention_days": 30,
+    "monitoring": {
+        "min_data_points": 100,
+        "max_duplicate_ratio": 0.2,
+        "sentiment_threshold": 0.7
+    },
+    "sources": {
+        "x": true,
+        "news": true,
+        "instagram": true,
+        "linkedin": true,
+        "mention": true,
+        "social_searcher": true
+    }
+}
+```
+
+### Key Environment Variables
+
+Required variables in `.env`:
+- API credentials for each data source
+- Database connection settings
+- SMTP configuration for notifications
+- LLM API keys and settings
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. Check the logs in the `logs/` directory
+2. Verify your API credentials in the `.env` file
+3. Ensure all dependencies are installed correctly
+4. Check system requirements (Python/Node.js versions)
+5. Verify network connectivity for API access
+
+### Updating the System
+
+To update to the latest version:
+
+1. Pull the latest changes:
+   ```bash
+   git pull
+   ```
+
+2. Update dependencies:
+   ```bash
+   pip install -r requirements.txt
+   cd dashboard && npm install
+   cd ..
+   ```
+
+3. Restart all services
