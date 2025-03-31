@@ -389,12 +389,14 @@ const EmotionalSpectrum = ({ data }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <PsychologyIcon sx={{ mr: 1, color: theme.palette.secondary.main }} />
-            <Typography variant="h6">{t('emotionalSpectrum.title')}</Typography>
-            <Tooltip title={t('emotionalSpectrum.infoTooltip')}>
-              <IconButton size="small">
-                <InfoIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <Typography variant="h6">
+              {t('emotionalSpectrum.title')}
+              <Tooltip title={t('charts.emotionalSpectrumTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>

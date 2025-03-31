@@ -1,12 +1,11 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Grid, useTheme, Tooltip, IconButton } from '@mui/material';
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   Legend,
   Cell,
@@ -17,11 +16,13 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  Tooltip as RechartsTooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
 
 const GeographicalInsights = ({ data }) => {
   const theme = useTheme();
@@ -533,9 +534,16 @@ const GeographicalInsights = ({ data }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Typography variant="h6" gutterBottom>
-        {t('geographicalInsights.title')}
-      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          {t('geographicalInsights.title')}
+          <Tooltip title={t('charts.geographicalDistributionTooltip')}>
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+      </Box>
       <Grid container spacing={3}>
         {/* Sentiment by Country */}
         <Grid item xs={12} md={6}>

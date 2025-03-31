@@ -4,7 +4,10 @@ import {
   CardContent, 
   Typography, 
   Box, 
-  styled
+  styled,
+  useTheme,
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import { 
   ResponsiveContainer, 
@@ -13,13 +16,13 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   Cell 
 } from 'recharts';
 import { motion } from 'framer-motion';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -172,6 +175,11 @@ const CountryBarChart = ({ mentionsByCountry }) => {
           <CardContent>
             <Typography variant="h6" gutterBottom>
               {t('metrics.mentionsByCountry')}
+              <Tooltip title={t('charts.countryBarChartTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

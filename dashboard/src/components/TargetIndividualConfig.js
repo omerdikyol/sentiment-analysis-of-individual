@@ -16,9 +16,11 @@ import {
   Typography,
   Grid,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon, Edit as EditIcon } from '@mui/icons-material';
+import InfoIcon from '@mui/icons-material/Info';
 import DataService from '../services/DataService';
 import { useTranslation } from 'react-i18next';
 
@@ -129,8 +131,16 @@ const TargetIndividualConfig = () => {
   return (
     <Card elevation={3}>
       <CardHeader 
-        title={t('target.title')} 
-        subheader={t('target.subtitle')}
+        title={
+          <Typography variant="h5" component="h1" gutterBottom>
+            {t('target.title')}
+            <Tooltip title={t('target.subtitle')}>
+              <IconButton size="small" sx={{ ml: 1 }}>
+                <InfoIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Typography>
+        }
       />
       <Divider />
       <CardContent>

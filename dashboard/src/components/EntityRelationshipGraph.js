@@ -27,6 +27,7 @@ import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
   Category as CategoryIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import ForceGraph2D from 'react-force-graph-2d';
@@ -324,7 +325,14 @@ const EntityRelationshipGraph = ({ data }) => {
     >
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h6">{t('entityRelationship.title')}</Typography>
+          <Typography variant="h6" gutterBottom>
+            {t('entityRelationship.title')}
+            <Tooltip title={t('charts.entityRelationshipTooltip')}>
+              <IconButton size="small" sx={{ ml: 1 }}>
+                <InfoIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <FormControl variant="outlined" size="small" sx={{ minWidth: 120 }}>
               <InputLabel>{t('entityRelationship.entityType')}</InputLabel>

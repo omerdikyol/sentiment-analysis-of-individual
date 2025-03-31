@@ -17,6 +17,7 @@ import {
   SentimentDissatisfied as SadnessIcon,
   Favorite as TrustIcon,
   Event as EventIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import {
@@ -198,6 +199,11 @@ const EmotionalAnalysis = ({ data }) => {
     >
       <Typography variant="h6" gutterBottom>
         {t('emotionalAnalysis.title')}
+        <Tooltip title={t('charts.emotionalAnalysisTooltip')}>
+          <IconButton size="small" sx={{ ml: 1 }}>
+            <InfoIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Typography>
       <Grid container spacing={3}>
         {/* Emotion Distribution */}

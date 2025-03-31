@@ -1,9 +1,10 @@
 import React from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Box, Typography, useTheme, Tooltip, IconButton, Paper } from '@mui/material';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
 
 const SentimentOverview = ({ data }) => {
   const theme = useTheme();
@@ -85,79 +86,86 @@ const SentimentOverview = ({ data }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Typography variant="h6" gutterBottom>
-        {t('analysis.sentimentAnalysis')}
-      </Typography>
-      <Box sx={{ width: '100%', height: 300, position: 'relative' }}>
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie
-              data={sentimentData}
-              cx="50%"
-              cy="40%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-              onClick={handleSentimentClick}
-              // Make the chart segments interactive
-              style={{ cursor: 'pointer' }}
-            >
-              {sentimentData.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={entry.color}
-                  strokeWidth={1}
-                />
-              ))}
-            </Pie>
-            <Tooltip 
-              content={<CustomTooltip />}
-              wrapperStyle={{ outline: 'none' }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 3,
-            mt: 2,
-            position: 'absolute',
-            bottom: 20,
-            left: 0,
-            right: 0,
-          }}
-        >
-          {sentimentData.map((item) => (
-            <Box
-              key={item.name}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                cursor: 'pointer',
-                '&:hover': {
-                  textDecoration: 'underline'
-                }
-              }}
-              onClick={() => handleSentimentClick(item)}
-            >
-              <Box
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: item.color,
-                }}
+      <Paper elevation={0} sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          {t('analysis.sentimentAnalysis')}
+          <Tooltip title={t('charts.sentimentOverTimeTooltip')}>
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+        <Box sx={{ width: '100%', height: 300, position: 'relative' }}>
+          <ResponsiveContainer>
+            <PieChart>
+              <Pie
+                data={sentimentData}
+                cx="50%"
+                cy="40%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey="value"
+                onClick={handleSentimentClick}
+                // Make the chart segments interactive
+                style={{ cursor: 'pointer' }}
+              >
+                {sentimentData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.color}
+                    strokeWidth={1}
+                  />
+                ))}
+              </Pie>
+              <Tooltip 
+                content={<CustomTooltip />}
+                wrapperStyle={{ outline: 'none' }}
               />
-              <Typography variant="body2">
-                {`${item.name}: ${isNaN(item.value) ? '0.0' : item.value.toFixed(1)}%`}
-              </Typography>
-            </Box>
-          ))}
+            </PieChart>
+          </ResponsiveContainer>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 3,
+              mt: 2,
+              position: 'absolute',
+              bottom: 20,
+              left: 0,
+              right: 0,
+            }}
+          >
+            {sentimentData.map((item) => (
+              <Box
+                key={item.name}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'underline'
+                  }
+                }}
+                onClick={() => handleSentimentClick(item)}
+              >
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    backgroundColor: item.color,
+                  }}
+                />
+                <Typography variant="body2">
+                  {`${item.name}: ${isNaN(item.value) ? '0.0' : item.value.toFixed(1)}%`}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
         </Box>
-      </Box>
+      </Paper>
     </motion.div>
   );
 };

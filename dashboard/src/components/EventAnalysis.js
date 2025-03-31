@@ -20,6 +20,7 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   Message as MessageIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import {
@@ -339,9 +340,16 @@ const EventAnalysis = ({ data }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Typography variant="h6" gutterBottom>
-        {t('eventAnalysis.title')}
-      </Typography>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6">
+          {t('eventAnalysis.title')}
+          <Tooltip title={t('charts.eventAnalysisTooltip')}>
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+      </Box>
 
       {noEventsFound ? (
         <Paper elevation={0} sx={{ p: 4, textAlign: 'center' }}>
@@ -645,7 +653,7 @@ const EventAnalysis = ({ data }) => {
                   borderRadius: 1
                 }}>
                   <Typography variant="body2" sx={{ color: theme.palette.success.main }}>
-                    �� {t('eventAnalysis.positiveImpact')}
+                    📈 {t('eventAnalysis.positiveImpact')}
                   </Typography>
                 </Box>
                 <Box sx={{ 

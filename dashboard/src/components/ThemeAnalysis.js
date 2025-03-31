@@ -1,21 +1,22 @@
 import React from 'react';
-import { Box, Typography, Paper, Grid, useTheme, Chip } from '@mui/material';
+import { Box, Typography, Paper, Grid, useTheme, Chip, Tooltip, IconButton } from '@mui/material';
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   Legend,
   PieChart,
   Pie,
   Cell,
+  Tooltip as RechartsTooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
 
 const ThemeAnalysis = ({ data }) => {
   const theme = useTheme();
@@ -157,6 +158,11 @@ const ThemeAnalysis = ({ data }) => {
     >
       <Typography variant="h6" gutterBottom>
         {t('themeAnalysis.title')}
+        <Tooltip title={t('charts.themeAnalysisTooltip')}>
+          <IconButton size="small" sx={{ ml: 1 }}>
+            <InfoIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Typography>
       <Grid container spacing={3}>
         {/* Topic Distribution */}

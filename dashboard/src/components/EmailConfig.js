@@ -17,13 +17,15 @@ import {
   Snackbar,
   Alert,
   Chip,
-  Grid
+  Grid,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Mail as MailIcon,
-  Save as SaveIcon
+  Save as SaveIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -146,8 +148,13 @@ const EmailConfig = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
+        <Typography variant="h5" component="h1" gutterBottom>
           {t('emailConfig.title')}
+          <Tooltip title={t('emailConfig.notificationSettings')}>
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Typography>
         
         <Paper sx={{ p: 3, mb: 4 }}>

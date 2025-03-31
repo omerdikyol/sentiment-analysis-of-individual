@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box, styled } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled, Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { motion } from 'framer-motion';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
@@ -77,7 +78,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
           height={60}
         />
         <YAxis />
-        <Tooltip
+        <RechartsTooltip
           contentStyle={{
             backgroundColor: '#fff',
             border: 'none',
@@ -121,6 +122,11 @@ const MentionLineChart = ({ mentionsByDate }) => {
           <CardContent>
             <Typography variant="h6" gutterBottom>
               {t('charts.mentionsOverTime')}
+              <Tooltip title={t('charts.mentionsOverTimeTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

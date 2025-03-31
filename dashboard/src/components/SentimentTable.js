@@ -37,7 +37,8 @@ import {
   Launch as LaunchIcon,
   CalendarToday as CalendarIcon,
   Language as LanguageIcon,
-  LocationOn as LocationIcon
+  LocationOn as LocationIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -667,24 +668,16 @@ const SentimentTable = ({ data, title = "Sentiment Analysis", type = 'top' }) =>
         }}
       >
         <CardContent>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              mb: 2,
-              display: 'flex',
-              alignItems: 'center',
-              fontWeight: 'bold'
-            }}
-          >
-            {title === "Sentiment Analysis" ? defaultTitle : title}
-            <motion.div
-              animate={{ rotate: [0, 5, 0, -5, 0] }}
-              transition={{ repeat: Infinity, duration: 5, repeatDelay: 3 }}
-              style={{ display: 'inline-block', marginLeft: '8px' }}
-            >
-              {title.includes('Highest') || type === 'top' ? '🔝' : '🔻'}
-            </motion.div>
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              {title === "Sentiment Analysis" ? defaultTitle : title}
+              <Tooltip title={t('charts.sentimentDataTableTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Typography>
+          </Box>
           <StyledTableContainer>
             <Table stickyHeader>
               <TableHead>

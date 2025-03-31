@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box, styled } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled, Tooltip, IconButton } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
 import { motion } from 'framer-motion';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Area, AreaChart
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
@@ -69,7 +70,14 @@ const SentimentLineChart = ({ sentimentByDate }) => {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">{t('charts.sentimentOverTime')}</Typography>
+          <Typography variant="h6">
+            {t('charts.sentimentOverTime')}
+            <Tooltip title={t('charts.sentimentOverTimeTooltip')}>
+              <IconButton size="small" sx={{ ml: 1 }}>
+                <InfoIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Typography>
           <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
       </Card>
@@ -227,7 +235,12 @@ const SentimentLineChart = ({ sentimentByDate }) => {
         <StyledCard onClick={handleCardClick}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              {t('charts.sentimentTrends')}
+              {t('charts.sentimentOverTime')}
+              <Tooltip title={t('charts.sentimentOverTimeTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

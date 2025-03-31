@@ -36,7 +36,7 @@ import {
   CompareArrows,
   FileDownload,
   Refresh,
-  Info
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { 
   BarChart, 
@@ -238,6 +238,11 @@ function ComparisonReport() {
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" component="h1">
           {t('comparisonReport.title')}
+          <Tooltip title={t('charts.comparisonReportTooltip')}>
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Typography>
         
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -656,7 +661,7 @@ function ComparisonReport() {
                 </Typography>
                 <Tooltip title={t('comparisonReport.newEntriesInfo')}>
                   <IconButton size="small">
-                    <Info fontSize="small" />
+                    <InfoIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               </Box>

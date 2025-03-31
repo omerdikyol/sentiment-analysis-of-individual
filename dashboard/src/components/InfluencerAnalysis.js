@@ -20,7 +20,8 @@ import {
   Comment as CommentIcon,
   Favorite as FavoriteIcon,
   LocationOn as LocationIcon,
-  Language as LanguageIcon
+  Language as LanguageIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -220,7 +221,12 @@ const InfluencerAnalysis = ({ data }) => {
       transition={{ duration: 0.5 }}
     >
       <Typography variant="h6" gutterBottom>
-        {t('influencerAnalysis.topInfluencers')}
+        {t('analysis.influencerAnalysis')}
+        <Tooltip title={t('charts.influencerAnalysisTooltip')}>
+          <IconButton size="small" sx={{ ml: 1 }}>
+            <InfoIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Typography>
       <Grid container spacing={3}>
         {/* Top Influencers */}

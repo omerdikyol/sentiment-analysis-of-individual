@@ -436,12 +436,14 @@ const ContextualSentiment = ({ data }) => {
       <Paper sx={{ p: 2, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="h6" mr={1}>{t('contextualSentiment.title')}</Typography>
-            <Tooltip title={t('contextualSentiment.infoTooltip')}>
-              <IconButton size="small">
-                <InfoIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <Typography variant="h6" gutterBottom>
+              {t('contextualSentiment.title')}
+              <Tooltip title={t('charts.contextualSentimentTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Typography>
           </Box>
           <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
             <InputLabel>{t('contextualSentiment.focusEntity')}</InputLabel>

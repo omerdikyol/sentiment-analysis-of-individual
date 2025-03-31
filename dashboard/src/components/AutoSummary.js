@@ -19,6 +19,7 @@ import {
   Alert,
   alpha,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -32,6 +33,7 @@ import {
   Timeline as TimelineIcon,
   AutoAwesome as AutoAwesomeIcon,
   Refresh as RefreshIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -603,7 +605,14 @@ const AutoSummary = ({ data }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <AutoAwesomeIcon sx={{ mr: 1, color: getColor('primary.main') }} />
-            <Typography variant="h6">{t('autoSummary.title')}</Typography>
+            <Typography variant="h6">
+              {t('autoSummary.title')}
+              <Tooltip title={t('charts.autoSummaryTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Typography>
           </Box>
           <IconButton onClick={handleRefresh} size="small" disabled={refreshing}>
             {refreshing ? <CircularProgress size={20} /> : <RefreshIcon />}

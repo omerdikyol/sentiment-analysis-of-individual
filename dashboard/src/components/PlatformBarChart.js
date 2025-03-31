@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, Typography, Box, styled } from '@mui/material';
+import { Card, CardContent, Typography, Box, styled, Tooltip, IconButton } from '@mui/material';
 import { motion } from 'framer-motion';
 import {
-  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import ChartModal from './ChartModal';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -105,7 +106,14 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
     return (
       <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
         <CardContent>
-          <Typography variant="h6">{t('charts.platformDistribution')}</Typography>
+          <Typography variant="h6" gutterBottom>
+            {t('metrics.mentionsByPlatform')}
+            <Tooltip title={t('charts.platformBarChartTooltip')}>
+              <IconButton size="small" sx={{ ml: 1 }}>
+                <InfoIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Typography>
           <Typography variant="body2">{t('general.noData')}</Typography>
         </CardContent>
       </Card>
@@ -177,7 +185,12 @@ const PlatformBarChart = ({ mentionsByPlatform }) => {
         <StyledCard onClick={handleCardClick}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              {t('charts.platformDistribution')}
+              {t('metrics.mentionsByPlatform')}
+              <Tooltip title={t('charts.platformBarChartTooltip')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Typography>
             <Box sx={{ height: 300, mt: 2 }}>
               {renderChart('100%')}

@@ -10,6 +10,7 @@ import {
   Stack,
   Divider,
   Tooltip,
+  IconButton,
 } from '@mui/material';
 import {
   Twitter as TwitterIcon,
@@ -22,6 +23,10 @@ import {
 import { motion } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import InfoIcon from '@mui/icons-material/Info';
+import {
+  Tooltip as RechartsTooltip,
+} from 'recharts';
 
 const PlatformSentiment = ({ data }) => {
   const theme = useTheme();
@@ -237,9 +242,16 @@ const PlatformSentiment = ({ data }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Typography variant="h6" gutterBottom>
-        {t('platformSentiment.title')}
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h6">
+          {t('platformSentiment.title')}
+          <Tooltip title={t('charts.platformDistributionTooltip')}>
+            <IconButton size="small" sx={{ ml: 1 }}>
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Typography>
+      </Box>
       <Grid container spacing={3}>
         {platformStats.map((platform) => (
           <Grid item xs={12} sm={6} md={4} key={platform.platform}>
