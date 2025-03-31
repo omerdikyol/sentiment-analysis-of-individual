@@ -704,45 +704,88 @@ class DataService {
   // Helper method to add at the end of the class
   ensureValidDate(dateStr) {
     if (!dateStr) {
-      console.warn('Missing date, using current date');
-      return new Date().toISOString().split('T')[0];
+      return new Date().toISOString();
     }
     
     try {
-      // Get current date for future date validation
-      const currentDate = new Date();
-      currentDate.setHours(23, 59, 59, 999); // End of today
+      // Try to create a date from the string
+      const date = new Date(dateStr);
       
-      // If it's already in YYYY-MM-DD format, validate it
-      if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime()) && date <= currentDate) {
-          return date.toISOString().split('T')[0];
-        }
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn(`Invalid date: ${dateStr}, using current date instead`);
+        return new Date().toISOString();
       }
       
-      // Handle ISO strings (common format in the data)
-      if (typeof dateStr === 'string' && dateStr.includes('T')) {
-        const date = new Date(dateStr);
-        if (!isNaN(date.getTime()) && date <= currentDate) {
-          return date.toISOString().split('T')[0];
-        }
+      return date.toISOString();
+    } catch (error) {
+      console.warn(`Error parsing date: ${dateStr}, using current date instead`);
+      return new Date().toISOString();
+    }
+  }
+
+  async getEmailConfig() {
+    try {
+      const response = await fetch('/api/email/config');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch email configuration: ${response.status} ${response.statusText}`);
       }
       
-      // Try to parse the date string
-      const parsedDate = new Date(dateStr);
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching email configuration:', error);
       
-      // Check if the date is valid and not in the future
-      if (isNaN(parsedDate.getTime()) || parsedDate > currentDate) {
-        console.warn(`Invalid or future date found: ${dateStr}, using current date`);
-        return currentDate.toISOString().split('T')[0];
+      // Return default configuration
+      return {
+        recipients: [],
+        notifyOnCollection: false,
+        notifyOnProcessing: false,
+        notifyOnAnalysis: true,
+        enabled: false
+      };
+    }
+  }
+
+  async saveEmailConfig(config) {
+    try {
+      const response = await fetch('/api/email/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to save email configuration: ${response.status} ${response.statusText}`);
       }
       
-      // Return the formatted date YYYY-MM-DD
-      return parsedDate.toISOString().split('T')[0];
-    } catch (e) {
-      console.error(`Error parsing date ${dateStr}:`, e);
-      return new Date().toISOString().split('T')[0];
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving email configuration:', error);
+      throw error;
+    }
+  }
+
+  async sendTestEmail(recipient) {
+    try {
+      const response = await fetch('/api/email/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ recipient })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to send test email: ${response.status} ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      throw error;
     }
   }
 }

@@ -512,13 +512,31 @@
   "sidebar": {
     "title": "Análisis de Sentimiento",
     "dashboard": "Panel de Control",
-    "sentimentData": "Datos de Sentimiento",
-    "comparisonReport": "Informe de Comparación", 
-    "advancedAIFeatures": "Funciones Avanzadas de IA",
+    "sentimentData": "Explorador de Datos",
+    "comparisonReport": "Informes de Comparación",
     "aiSummary": "Resumen de IA",
     "entityRelationships": "Relaciones de Entidades",
     "contextualSentiment": "Sentimiento Contextual",
     "emotionalSpectrum": "Espectro Emocional",
-    "languageSettings": "Configuración de Idioma"
+    "emailConfig": "Notificaciones por Email"
+  },
+  "emailConfig": {
+    "title": "Configuración de Notificaciones por Email",
+    "notificationSettings": "Configuración de Notificaciones",
+    "recipientList": "Destinatarios de Notificaciones",
+    "enableNotifications": "Activar Notificaciones por Email",
+    "notifyOnCollection": "Notificar en la Recopilación de Datos",
+    "notifyOnProcessing": "Notificar en el Procesamiento de Datos",
+    "notifyOnAnalysis": "Notificar al Finalizar el Análisis",
+    "emailAddress": "Dirección de Email",
+    "add": "Añadir",
+    "saveSettings": "Guardar Configuración",
+    "noRecipients": "No hay destinatarios configurados. Añada su primer destinatario arriba.",
+    "emptyEmailError": "La dirección de email no puede estar vacía",
+    "invalidEmailError": "Por favor, introduzca una dirección de email válida",
+    "duplicateEmailError": "Esta dirección de email ya está en la lista",
+    "loadError": "Error al cargar la configuración de email",
+    "saveSuccess": "Configuración de email guardada correctamente",
+    "saveError": "Error al guardar la configuración de email"
   }
 } 

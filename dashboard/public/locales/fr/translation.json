@@ -512,13 +512,31 @@
   "sidebar": {
     "title": "Analyse de Sentiment",
     "dashboard": "Tableau de Bord",
-    "sentimentData": "Données de Sentiment",
-    "comparisonReport": "Rapport de Comparaison", 
-    "advancedAIFeatures": "Fonctionnalités IA Avancées",
+    "sentimentData": "Explorateur de Données",
+    "comparisonReport": "Rapports de Comparaison",
     "aiSummary": "Résumé IA",
     "entityRelationships": "Relations d'Entités",
     "contextualSentiment": "Sentiment Contextuel",
     "emotionalSpectrum": "Spectre Émotionnel",
-    "languageSettings": "Paramètres de Langue"
+    "emailConfig": "Notifications par Email"
+  },
+  "emailConfig": {
+    "title": "Paramètres de Notification par Email",
+    "notificationSettings": "Paramètres de Notification",
+    "recipientList": "Destinataires des Notifications",
+    "enableNotifications": "Activer les Notifications par Email",
+    "notifyOnCollection": "Notifier lors de la Collecte de Données",
+    "notifyOnProcessing": "Notifier lors du Traitement des Données",
+    "notifyOnAnalysis": "Notifier à la Fin de l'Analyse",
+    "emailAddress": "Adresse Email",
+    "add": "Ajouter",
+    "saveSettings": "Enregistrer les Paramètres",
+    "noRecipients": "Aucun destinataire configuré. Ajoutez votre premier destinataire ci-dessus.",
+    "emptyEmailError": "L'adresse email ne peut pas être vide",
+    "invalidEmailError": "Veuillez entrer une adresse email valide",
+    "duplicateEmailError": "Cette adresse email est déjà dans la liste",
+    "loadError": "Échec du chargement de la configuration email",
+    "saveSuccess": "Paramètres d'email enregistrés avec succès",
+    "saveError": "Échec de l'enregistrement des paramètres d'email"
   }
 } 

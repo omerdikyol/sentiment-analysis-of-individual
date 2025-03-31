@@ -146,6 +146,16 @@ class ScheduleConfig(BaseModel):
     weekly_day: str = "Monday"
     monthly_day: int = Field(1, ge=1, le=28)
 
+class EmailConfig(BaseModel):
+    recipients: List[EmailStr] = []
+    notifyOnCollection: bool = False
+    notifyOnProcessing: bool = False
+    notifyOnAnalysis: bool = True
+    enabled: bool = False
+
+class TestEmailRequest(BaseModel):
+    recipient: EmailStr
+
 @app.post("/email/send")
 async def send_email(request: EmailNotificationRequest):
     """Send a simple email notification"""
@@ -159,6 +169,81 @@ async def send_email(request: EmailNotificationRequest):
             return {"status": "success", "message": "Email sent successfully"}
         else:
             raise HTTPException(status_code=500, detail="Failed to send email")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add new endpoints for email configuration
+@app.get("/email/config")
+async def get_email_config():
+    """Get the current email notification configuration"""
+    try:
+        from utils.mail_config import get_email_recipients, is_email_notification_enabled
+        from utils.mail_config import NOTIFY_ON_COLLECTION, NOTIFY_ON_PROCESSING, NOTIFY_ON_ANALYSIS
+        
+        config = {
+            "recipients": get_email_recipients(),
+            "enabled": is_email_notification_enabled(),
+            "notifyOnCollection": NOTIFY_ON_COLLECTION,
+            "notifyOnProcessing": NOTIFY_ON_PROCESSING,
+            "notifyOnAnalysis": NOTIFY_ON_ANALYSIS
+        }
+        
+        return {"status": "success", "data": config}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/email/config")
+async def update_email_config(config: EmailConfig):
+    """Update the email notification configuration"""
+    try:
+        import os
+        from pathlib import Path
+        from dotenv import load_dotenv, set_key
+        
+        # Get the path to the .env file
+        project_root = Path(__file__).parent.parent.parent
+        config_path = project_root / "config" / ".env"
+        
+        # Load current .env file
+        load_dotenv(config_path)
+        
+        # Update the configuration in the .env file
+        set_key(str(config_path), "EMAIL_RECIPIENTS", ",".join(config.recipients))
+        set_key(str(config_path), "EMAIL_NOTIFICATION_ENABLED", str(config.enabled).lower())
+        set_key(str(config_path), "NOTIFY_ON_COLLECTION", str(config.notifyOnCollection).lower())
+        set_key(str(config_path), "NOTIFY_ON_PROCESSING", str(config.notifyOnProcessing).lower())
+        set_key(str(config_path), "NOTIFY_ON_ANALYSIS", str(config.notifyOnAnalysis).lower())
+        
+        # Reload the config module
+        from importlib import reload
+        from utils import mail_config
+        reload(mail_config)
+        
+        return {"status": "success", "message": "Email configuration updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update email configuration: {str(e)}")
+
+@app.post("/email/test")
+async def send_test_email(request: TestEmailRequest):
+    """Send a test email to verify configuration"""
+    try:
+        subject = "Test Email from Sentiment Analysis System"
+        message = """
+        <h2>Test Email</h2>
+        <p>This is a test email from your Sentiment Analysis System to verify that email notifications are working correctly.</p>
+        <p>If you received this email, your email notification configuration is working properly.</p>
+        """
+        
+        success = mail_sender.send_report_email(
+            [request.recipient],
+            subject,
+            message
+        )
+        
+        if success:
+            return {"status": "success", "message": "Test email sent successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to send test email")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

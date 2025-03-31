@@ -512,13 +512,31 @@
 "sidebar": {
     "title": "تحليل المشاعر",
     "dashboard": "لوحة التحكم",
-    "sentimentData": "بيانات المشاعر",
-    "comparisonReport": "تقرير المقارنة",
-    "advancedAIFeatures": "ميزات الذكاء الاصطناعي المتقدمة",
+    "sentimentData": "مستكشف البيانات",
+    "comparisonReport": "تقارير المقارنة",
     "aiSummary": "ملخص الذكاء الاصطناعي",
     "entityRelationships": "علاقات الكيان",
     "contextualSentiment": "المشاعر السياقية",
     "emotionalSpectrum": "الطيف العاطفي",
-    "languageSettings": "إعدادات اللغة"
+    "emailConfig": "إشعارات البريد الإلكتروني"
+},
+"emailConfig": {
+    "title": "إعدادات إشعارات البريد الإلكتروني",
+    "notificationSettings": "إعدادات الإشعارات",
+    "recipientList": "قائمة المستلمين",
+    "enableNotifications": "تفعيل إشعارات البريد الإلكتروني",
+    "notifyOnCollection": "الإشعار عند جمع البيانات",
+    "notifyOnProcessing": "الإشعار عند معالجة البيانات",
+    "notifyOnAnalysis": "الإشعار عند اكتمال التحليل",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "add": "إضافة",
+    "saveSettings": "حفظ الإعدادات",
+    "noRecipients": "لم يتم تكوين أي مستلمين للبريد الإلكتروني. أضف المستلم الأول أعلاه.",
+    "emptyEmailError": "لا يمكن أن يكون عنوان البريد الإلكتروني فارغاً",
+    "invalidEmailError": "الرجاء إدخال عنوان بريد إلكتروني صالح",
+    "duplicateEmailError": "عنوان البريد الإلكتروني هذا موجود بالفعل في القائمة",
+    "loadError": "فشل في تحميل إعدادات البريد الإلكتروني",
+    "saveSuccess": "تم حفظ إعدادات البريد الإلكتروني بنجاح",
+    "saveError": "فشل في حفظ إعدادات البريد الإلكتروني"
 }
 }

@@ -512,13 +512,31 @@
   "sidebar": {
     "title": "Stimmungsanalyse",
     "dashboard": "Dashboard",
-    "sentimentData": "Stimmungsdaten",
-    "comparisonReport": "Vergleichsbericht", 
-    "advancedAIFeatures": "Erweiterte KI-Funktionen",
+    "sentimentData": "Daten-Explorer",
+    "comparisonReport": "Vergleichsberichte",
     "aiSummary": "KI-Zusammenfassung",
     "entityRelationships": "Entitätsbeziehungen",
     "contextualSentiment": "Kontextuelle Stimmung",
     "emotionalSpectrum": "Emotionales Spektrum",
-    "languageSettings": "Spracheinstellungen"
+    "emailConfig": "E-Mail-Benachrichtigungen"
+  },
+  "emailConfig": {
+    "title": "E-Mail-Benachrichtigungseinstellungen",
+    "notificationSettings": "Benachrichtigungseinstellungen",
+    "recipientList": "Benachrichtigungsempfänger",
+    "enableNotifications": "E-Mail-Benachrichtigungen aktivieren",
+    "notifyOnCollection": "Bei Datenerfassung benachrichtigen",
+    "notifyOnProcessing": "Bei Datenverarbeitung benachrichtigen",
+    "notifyOnAnalysis": "Bei Abschluss der Analyse benachrichtigen",
+    "emailAddress": "E-Mail-Adresse",
+    "add": "Hinzufügen",
+    "saveSettings": "Einstellungen speichern",
+    "noRecipients": "Keine E-Mail-Empfänger konfiguriert. Fügen Sie oben Ihren ersten Empfänger hinzu.",
+    "emptyEmailError": "E-Mail-Adresse darf nicht leer sein",
+    "invalidEmailError": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "duplicateEmailError": "Diese E-Mail-Adresse ist bereits in der Liste",
+    "loadError": "Fehler beim Laden der E-Mail-Konfiguration",
+    "saveSuccess": "E-Mail-Einstellungen erfolgreich gespeichert",
+    "saveError": "Fehler beim Speichern der E-Mail-Einstellungen"
   }
 } 

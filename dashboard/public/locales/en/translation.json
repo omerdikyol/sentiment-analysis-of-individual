@@ -512,13 +512,31 @@
   "sidebar": {
     "title": "Sentiment Analysis",
     "dashboard": "Dashboard",
-    "sentimentData": "Sentiment Data",
-    "comparisonReport": "Comparison Report", 
-    "advancedAIFeatures": "Advanced AI Features",
+    "sentimentData": "Data Explorer",
+    "comparisonReport": "Comparison Reports",
     "aiSummary": "AI Summary",
     "entityRelationships": "Entity Relationships",
     "contextualSentiment": "Contextual Sentiment",
     "emotionalSpectrum": "Emotional Spectrum",
-    "languageSettings": "Language Settings"
+    "emailConfig": "Email Notifications"
+  },
+  "emailConfig": {
+    "title": "Email Notification Settings",
+    "notificationSettings": "Notification Settings",
+    "recipientList": "Notification Recipients",
+    "enableNotifications": "Enable Email Notifications",
+    "notifyOnCollection": "Notify on Data Collection",
+    "notifyOnProcessing": "Notify on Data Processing",
+    "notifyOnAnalysis": "Notify on Analysis Completion",
+    "emailAddress": "Email Address",
+    "add": "Add",
+    "saveSettings": "Save Settings",
+    "noRecipients": "No email recipients configured. Add your first recipient above.",
+    "emptyEmailError": "Email address cannot be empty",
+    "invalidEmailError": "Please enter a valid email address",
+    "duplicateEmailError": "This email address is already in the list",
+    "loadError": "Failed to load email configuration",
+    "saveSuccess": "Email settings saved successfully",
+    "saveError": "Failed to save email settings"
   }
 } 

@@ -26,6 +26,8 @@ import {
   Summarize as SummarizeIcon,
   CompareArrows as CompareArrowsIcon,
   Language as LanguageIcon,
+  Settings as SettingsIcon,
+  NotificationImportant as NotificationIcon
 } from '@mui/icons-material';
 import LanguageSwitcher from '../LanguageSwitcher';
 
@@ -83,6 +85,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
     { text: t('sidebar.dashboard'), icon: <DashboardIcon sx={{ color: 'white' }} />, path: '/' },
     { text: t('sidebar.sentimentData'), icon: <TableChartIcon sx={{ color: 'white' }} />, path: '/sentiment-data' },
     { text: t('sidebar.comparisonReport'), icon: <CompareArrowsIcon sx={{ color: 'white' }} />, path: '/comparison-report' },
+    { text: t('sidebar.emailConfig'), icon: <NotificationIcon sx={{ color: 'white' }} />, path: '/email-config' },
   ];
 
   // Add the new AI-powered menu items
