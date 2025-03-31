@@ -51,7 +51,7 @@ def main():
         'collectors.collect_news_from_api',
         'collectors.collect_rss',
         'collectors.collect_mention',
-        'collectors.collect_social_searcher'
+        'collectors.collect_social_searcher_api'
     ]
     
     total_start_time = time.time()
