@@ -98,7 +98,53 @@ class RSSFeedCollector:
             
             # Energy News
             "https://www.rigzone.com/news/rss",
-            "https://oilprice.com/rss/main"
+            "https://oilprice.com/rss/main",
+            
+            # Additional International News
+            "https://www.reuters.com/rssfeed/world/",
+            "https://feeds.skynews.com/feeds/rss/world.xml",
+            "https://www.dw.com/en/top-stories/rss-topstories/s-9097",
+            "https://www.france24.com/en/middle-east/rss",
+            "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+            "https://www.voanews.com/api/zt$ityeq_wql",
+            "https://www3.nhk.or.jp/nhkworld/en/news/rss/",
+            "https://www.straitstimes.com/rss/world/feed.xml",
+            
+            # Technology News
+            "https://feeds.feedburner.com/TechCrunch",
+            "https://www.wired.com/feed/rss",
+            "https://www.theverge.com/rss/index.xml",
+            "https://rss.slashdot.org/Slashdot/slashdotMain",
+            "https://www.cnet.com/rss/news/",
+            "https://arstechnica.com/feed/",
+            
+            # Entertainment and Culture
+            "https://variety.com/feed/",
+            "https://www.rollingstone.com/feed/",
+            "https://www.hollywoodreporter.com/feed/",
+            "https://www.vogue.com/rss",
+            "https://www.timeout.com/london/rss",
+            
+            # Sports
+            "https://www.espn.com/espn/rss/news",
+            "https://www.skysports.com/rss/0",
+            "https://www.fifa.com/rss-feeds/news",
+            "https://www.goal.com/feeds/en/news",
+            "https://www.cbssports.com/rss/headlines/",
+            
+            # Science and Environment
+            "https://rss.sciam.com/ScientificAmerican-Global",
+            "https://www.newscientist.com/feed/home/?cmpid=RSS",
+            "https://www.nature.com/nature.rss",
+            "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+            "https://www.sciencedaily.com/rss/all.xml",
+            
+            # Social Media and Blogs
+            "https://medium.com/feed/tag/world-news",
+            "https://medium.com/feed/tag/middle-east",
+            "https://rss.app/feeds/SGYMbetbJ8RyDPtL.xml",  # Twitter trending topics
+            "https://www.reddit.com/r/worldnews/.rss",
+            "https://www.reddit.com/r/geopolitics/.rss"
         ]
 
     def _clean_text(self, text: str) -> str:

@@ -72,6 +72,19 @@ class DataProcessor:
             if date_str.lower() in ['none', 'nan', '', 'unknown']:
                 return None
             
+            # Handle Twitter date format (e.g., Thu Feb 29 13:57:27 +0000 2024)
+            twitter_pattern = r'[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+[+]\d{4}\s+\d{4}'
+            if re.match(twitter_pattern, date_str):
+                parsed_date = datetime.strptime(date_str, '%a %b %d %H:%M:%S +0000 %Y')
+                return parsed_date.strftime('%Y-%m-%d')
+            
+            # Handle standard datetime format with 5-digit timezone (e.g., 2025-03-31 10:57:46 +00000)
+            if re.match(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+[+]\d{5}', date_str):
+                # Remove timezone info since we only need the date
+                base_date = date_str.split('+')[0].strip()
+                parsed_date = datetime.strptime(base_date, '%Y-%m-%d %H:%M:%S')
+                return parsed_date.strftime('%Y-%m-%d')
+            
             # Handle ISO format with timezone (e.g., 2025-03-21T12:19:52.000Z)
             if 'T' in date_str and ('Z' in date_str or '+' in date_str):
                 parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
@@ -335,8 +348,8 @@ class DataProcessor:
         raw_dir = self.base_path / "data" / "raw"
         all_data = []
         
-        # Get all CSV files from raw directory
-        csv_files = list(raw_dir.glob("*.csv"))
+        # Get all CSV files from raw directory - update glob pattern to include @ files
+        csv_files = list(raw_dir.glob("*.csv")) + list(raw_dir.glob("@*.csv"))
         if not csv_files:
             logger.warning("No data files found in raw directory")
             return pd.DataFrame()
@@ -344,6 +357,32 @@ class DataProcessor:
         for file_path in csv_files:
             try:
                 df = pd.read_csv(file_path)
+                
+                # Add special handling for Apify data files
+                if file_path.name.startswith('@'):
+                    file_type = file_path.name.split('_')[0].replace('@', '')
+                    
+                    if file_type == 'twitter':
+                        # Handle Twitter Apify format
+                        if 'full_text' in df.columns and 'text' not in df.columns:
+                            df.rename(columns={'full_text': 'text'}, inplace=True)
+                        if 'created_at' in df.columns and 'date' not in df.columns:
+                            df.rename(columns={'created_at': 'date'}, inplace=True)
+                        if 'screen_name' in df.columns and 'user_name' not in df.columns:
+                            df.rename(columns={'screen_name': 'user_name'}, inplace=True)
+                        df['platform'] = 'twitter'
+                        df['source'] = 'twitter'
+                        
+                    elif file_type == 'news':
+                        # Handle News Apify format
+                        if 'content' in df.columns and 'text' not in df.columns:
+                            df.rename(columns={'content': 'text'}, inplace=True)
+                        if 'published_date' in df.columns and 'date' not in df.columns:
+                            df.rename(columns={'published_date': 'date'}, inplace=True)
+                        if 'source_name' in df.columns and 'user_name' not in df.columns:
+                            df.rename(columns={'source_name': 'user_name'}, inplace=True)
+                        df['platform'] = 'news'
+                        df['source'] = 'news'
                 
                 # Ensure required columns exist
                 required_columns = ['source', 'platform', 'date', 'text']
@@ -353,7 +392,7 @@ class DataProcessor:
                     # Add missing columns with default values
                     for col in missing_columns:
                         if col == 'source' or col == 'platform':
-                            df[col] = file_path.stem.split('_')[0]  # Use filename as source/platform
+                            df[col] = file_path.stem.split('_')[0].replace('@', '')  # Use filename as source/platform
                         elif col == 'date':
                             df[col] = None
                         elif col == 'text':
@@ -361,7 +400,7 @@ class DataProcessor:
                     logger.warning(f"Added missing columns {missing_columns} to {file_path}")
                 
                 # Add file info
-                df['file_source'] = file_path.stem.split('_')[0]  # Extract source from filename
+                df['file_source'] = file_path.stem.split('_')[0].replace('@', '')  # Extract source from filename
                 all_data.append(df)
                 logger.info(f"Loaded {len(df)} records from {file_path}")
             except Exception as e:
@@ -489,23 +528,40 @@ class DataProcessor:
         df = df.drop_duplicates(subset=['normalized_text'])
         logger.info(f"Records after removing exact duplicates: {len(df)}")
 
-        # Remove similar content
-        indices_to_drop = []
-        for idx1, row1 in df.iterrows():
+        # Remove similar content using a more efficient approach
+        logger.info("Removing similar content (this may take a few minutes)...")
+        total_rows = len(df)
+        indices_to_drop = set()
+        batch_size = 100  # Process in batches to show progress
+        
+        for idx1 in range(0, total_rows):
+            if idx1 % batch_size == 0:
+                logger.info(f"Processing similar content removal: {idx1}/{total_rows} records...")
+            
             if idx1 in indices_to_drop:
                 continue
-            for idx2, row2 in df.iloc[idx1+1:].iterrows():
+                
+            text1 = df.iloc[idx1]['normalized_text']
+            # Only compare with subsequent rows to avoid redundant comparisons
+            for idx2 in range(idx1 + 1, min(idx1 + 1000, total_rows)):  # Limit comparison window
                 if idx2 in indices_to_drop:
                     continue
-                if self.is_similar_text(row1['normalized_text'], row2['normalized_text']):
+                    
+                text2 = df.iloc[idx2]['normalized_text']
+                # Quick length comparison before doing expensive similarity check
+                len_ratio = len(text1) / len(text2) if len(text2) > len(text1) else len(text2) / len(text1)
+                if len_ratio < 0.5:  # Skip if lengths are too different
+                    continue
+                    
+                if self.is_similar_text(text1, text2):
                     # Keep the row with more information (longer text)
-                    if len(str(row1['text'])) < len(str(row2['text'])):
-                        indices_to_drop.append(idx1)
+                    if len(str(df.iloc[idx1]['text'])) < len(str(df.iloc[idx2]['text'])):
+                        indices_to_drop.add(idx1)
+                        break
                     else:
-                        indices_to_drop.append(idx2)
-                    break
+                        indices_to_drop.add(idx2)
 
-        df = df.drop(indices_to_drop)
+        df = df.drop(index=[i for i in indices_to_drop if i < len(df)])
         logger.info(f"Records after removing similar content: {len(df)}")
 
         # Detect country information
@@ -533,27 +589,18 @@ class DataProcessor:
         # Save processed data
         processed_dir = self.base_path / "data" / "processed"
         processed_dir.mkdir(parents=True, exist_ok=True)
-
-        # Save with timestamp
+        
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        timestamped_file = processed_dir / f"processed_data_{timestamp}.csv"
-        df.to_csv(timestamped_file, index=False)
+        output_file = processed_dir / f"processed_data_{timestamp}.csv"
+        df.to_csv(output_file, index=False)
+        logger.info(f"Saved processed data to {output_file}")
         
-        # Save as latest
-        latest_file = processed_dir / "latest.csv"
-        df.to_csv(latest_file, index=False)
-
-        logger.info(f"Processing complete. Saved {len(df)} records to {timestamped_file}")
-        
-        # Rotate files for the dashboard comparison feature
-        logger.info("Rotating processed files for dashboard comparison...")
-        print(timestamped_file)
-        success = rotate_processed_files(str(timestamped_file))
-        if success:
-            logger.info("CSV file rotation completed successfully")
+        # Rotate processed files for the dashboard
+        if rotate_processed_files(output_file):
+            logger.info("Successfully rotated processed files for dashboard")
         else:
-            logger.warning("CSV file rotation failed")
-            
+            logger.error("Failed to rotate processed files for dashboard")
+        
         return True
 
 if __name__ == "__main__":

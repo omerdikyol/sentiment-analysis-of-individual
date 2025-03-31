@@ -47,11 +47,11 @@ def main():
     
     # List of collector modules to run
     collectors = [
-        'collectors.collect_x',
         'collectors.collect_news_from_api',
+        'collectors.collect_news_apify',
         'collectors.collect_rss',
-        'collectors.collect_mention',
-        'collectors.collect_social_searcher_api'
+        'collectors.collect_social_searcher_api',
+        'collectors.collect_twitter_apify',
     ]
     
     total_start_time = time.time()

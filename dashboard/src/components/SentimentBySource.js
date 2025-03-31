@@ -34,6 +34,7 @@ const SentimentBySource = ({ data }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [minMentions, setMinMentions] = useState(5);
+  const MAX_SOURCES = 20; // Limit to display only top 20 sources
 
   // Process raw data to get sentiment distribution by source
   const processSourceData = useMemo(() => {
@@ -133,7 +134,7 @@ const SentimentBySource = ({ data }) => {
     });
 
     // Convert to percentages and format for chart
-    const results = Object.entries(sourceStats)
+    let results = Object.entries(sourceStats)
       .filter(([_, stats]) => stats.total >= minMentions) // Filter by min mentions
       .map(([source, stats]) => {
         // Calculate percentages
@@ -166,9 +167,39 @@ const SentimentBySource = ({ data }) => {
       })
       .sort((a, b) => b.total - a.total);
 
+    // If we have more than MAX_SOURCES, combine the rest into "Other"
+    if (results.length > MAX_SOURCES) {
+      const topSources = results.slice(0, MAX_SOURCES);
+      const otherSources = results.slice(MAX_SOURCES);
+      
+      // Combine all other sources
+      const otherTotal = otherSources.reduce((sum, source) => sum + source.total, 0);
+      const otherPositive = otherSources.reduce((sum, source) => sum + source.positiveCount, 0);
+      const otherNeutral = otherSources.reduce((sum, source) => sum + source.neutralCount, 0);
+      const otherNegative = otherSources.reduce((sum, source) => sum + source.negativeCount, 0);
+      const otherSentimentSum = otherSources.reduce((sum, source) => sum + source.avgSentiment * source.total, 0);
+      
+      // Create an "Other sources" entry
+      const otherEntry = {
+        source: t('platformSentiment.otherSources'),
+        positive: parseFloat(((otherPositive / otherTotal) * 100).toFixed(1)),
+        neutral: parseFloat(((otherNeutral / otherTotal) * 100).toFixed(1)),
+        negative: parseFloat(((otherNegative / otherTotal) * 100).toFixed(1)),
+        avgSentiment: parseFloat((otherSentimentSum / otherTotal).toFixed(2)),
+        total: otherTotal,
+        positiveCount: otherPositive,
+        neutralCount: otherNeutral,
+        negativeCount: otherNegative,
+        sampleValues: []
+      };
+      
+      // Return top sources plus the "Other" entry
+      results = [...topSources, otherEntry];
+    }
+
     console.log("Final processed data:", results);
     return results;
-  }, [data, minMentions, t]);
+  }, [data, minMentions, t, MAX_SOURCES]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

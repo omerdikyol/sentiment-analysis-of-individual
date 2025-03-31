@@ -17,6 +17,8 @@ if config_path.exists():
             if 'target' in config:
                 target_individual = config['target']['individual_name']
                 query_variations = config['target']['query_variations']
+                if target_individual not in query_variations:
+                    query_variations.append(target_individual)
     except Exception as e:
         print(f"Error loading target from config: {e}")
 
@@ -40,8 +42,9 @@ if not query_variations:
 if not query_variations:
     target_individual = "Tamim ibn Hamad Al Thani"
     query_variations = [
+        target_individual,
         "Tamim ibn Hamad Al Thani",
-        "Tamim bin Hamad Al Thani",
+        "Tamim bin Hamad Al Thani", 
         "Tamim bin Hamad",
         "Sheikh Tamim",
         "Qatar Emir",
