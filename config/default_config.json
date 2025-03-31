@@ -14,5 +14,15 @@
         "social_searcher": true,
         "instagram": false,
         "linkedin": false
+    },
+    "target": {
+        "individual_name": "Sheikh Tamim ibn Hamad Al Thani",
+        "query_variations": [
+            "Tamim bin Hamad Al Thani",
+            "Sheikh Tamim",
+            "Qatar Emir",
+            "Qatar ruler",
+            "Qatar leader"
+        ]
     }
 }

@@ -86,6 +86,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
     { text: t('sidebar.sentimentData'), icon: <TableChartIcon sx={{ color: 'white' }} />, path: '/sentiment-data' },
     { text: t('sidebar.comparisonReport'), icon: <CompareArrowsIcon sx={{ color: 'white' }} />, path: '/comparison-report' },
     { text: t('sidebar.emailConfig'), icon: <NotificationIcon sx={{ color: 'white' }} />, path: '/email-config' },
+    { text: t('sidebar.targetConfig'), icon: <SettingsIcon sx={{ color: 'white' }} />, path: '/target-config' },
   ];
 
   // Add the new AI-powered menu items

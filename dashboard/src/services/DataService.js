@@ -770,22 +770,56 @@ class DataService {
 
   async sendTestEmail(recipient) {
     try {
-      const response = await fetch('/api/email/test', {
+      const response = await fetch('http://localhost:8000/email/test', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ recipient })
+        body: JSON.stringify({ recipient }),
       });
       
-      if (!response.ok) {
-        throw new Error(`Failed to send test email: ${response.status} ${response.statusText}`);
-      }
-      
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Error sending test email:', error);
-      throw error;
+      return { status: 'error', message: error.message };
+    }
+  }
+
+  // Add target individual management methods
+  async getTargetIndividual() {
+    try {
+      const response = await fetch('http://localhost:8000/target');
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error getting target individual configuration:', error);
+      return { 
+        status: 'error', 
+        message: error.message,
+        data: {
+          individual_name: 'Unknown',
+          query_variations: []
+        }
+      };
+    }
+  }
+
+  async updateTargetIndividual(targetConfig) {
+    try {
+      const response = await fetch('http://localhost:8000/target', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(targetConfig),
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error updating target individual configuration:', error);
+      return { status: 'error', message: error.message };
     }
   }
 }

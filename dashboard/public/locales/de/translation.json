@@ -518,7 +518,8 @@
     "entityRelationships": "Entitätsbeziehungen",
     "contextualSentiment": "Kontextuelle Stimmung",
     "emotionalSpectrum": "Emotionales Spektrum",
-    "emailConfig": "E-Mail-Benachrichtigungen"
+    "emailConfig": "E-Mail-Benachrichtigungen",
+    "targetConfig": "Zielperson"
   },
   "emailConfig": {
     "title": "E-Mail-Benachrichtigungseinstellungen",
@@ -538,5 +539,29 @@
     "loadError": "Fehler beim Laden der E-Mail-Konfiguration",
     "saveSuccess": "E-Mail-Einstellungen erfolgreich gespeichert",
     "saveError": "Fehler beim Speichern der E-Mail-Einstellungen"
+  },
+  "target": {
+    "title": "Zielperson-Konfiguration",
+    "subtitle": "Konfigurieren Sie die Zielperson und ihre Namensvariationen für die Sentiment-Analyse",
+    "nameSection": "Name der Zielperson",
+    "nameLabel": "Name",
+    "namePlaceholder": "Geben Sie den Namen der Zielperson ein",
+    "nameDescription": "Dies ist der Hauptname, der zur Identifizierung der Zielperson in allen Datenquellen verwendet wird.",
+    "variationsSection": "Namensvariationen",
+    "variationsLabel": "Variationen",
+    "variationsPlaceholder": "Geben Sie Namensvariationen ein",
+    "variationsDescription": "Fügen Sie verschiedene Variationen des Namens der Zielperson hinzu, um die Genauigkeit der Datenerfassung zu verbessern.",
+    "addVariationButton": "Variation Hinzufügen",
+    "addVariationLabel": "Eine neue Abfragevariante hinzufügen",
+    "removeVariationButton": "Entfernen",
+    "emptyVariationsMessage": "Noch keine Variationen hinzugefügt. Klicken Sie auf 'Variation Hinzufügen', um eine hinzuzufügen.",
+    "saveButton": "Konfiguration Speichern",
+    "cancelButton": "Abbrechen",
+    "savingMessage": "Wird gespeichert...",
+    "savedMessage": "Konfiguration erfolgreich gespeichert",
+    "errorMessage": "Fehler beim Speichern der Konfiguration",
+    "nameRequiredError": "Der Name der Zielperson ist erforderlich",
+    "variationRequiredError": "Der Name der Variation ist erforderlich",
+    "duplicateVariationError": "Diese Variation existiert bereits"
   }
 } 

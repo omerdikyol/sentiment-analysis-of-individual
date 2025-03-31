@@ -518,7 +518,8 @@
     "entityRelationships": "علاقات الكيان",
     "contextualSentiment": "المشاعر السياقية",
     "emotionalSpectrum": "الطيف العاطفي",
-    "emailConfig": "إشعارات البريد الإلكتروني"
+    "emailConfig": "إشعارات البريد الإلكتروني",
+    "targetConfig": "الفرد المستهدف"
 },
 "emailConfig": {
     "title": "إعدادات إشعارات البريد الإلكتروني",
@@ -538,5 +539,29 @@
     "loadError": "فشل في تحميل إعدادات البريد الإلكتروني",
     "saveSuccess": "تم حفظ إعدادات البريد الإلكتروني بنجاح",
     "saveError": "فشل في حفظ إعدادات البريد الإلكتروني"
+},
+"target": {
+    "title": "تكوين الفرد المستهدف",
+    "subtitle": "قم بتكوين الفرد المستهدف وتنويعات اسمه لتحليل المشاعر",
+    "nameSection": "اسم الفرد المستهدف",
+    "nameLabel": "الاسم",
+    "namePlaceholder": "أدخل اسم الفرد المستهدف",
+    "nameDescription": "هذا هو الاسم الرئيسي الذي سيتم استخدامه لتحديد الفرد المستهدف في جميع مصادر البيانات.",
+    "variationsSection": "تنويعات الاسم",
+    "variationsLabel": "التنويعات",
+    "variationsPlaceholder": "أدخل تنويعات الاسم",
+    "variationsDescription": "أضف تنويعات مختلفة لاسم الفرد المستهدف لتحسين دقة جمع البيانات.",
+    "addVariationButton": "إضافة تنويع",
+    "addVariationLabel": "إضافة تنويع استعلام جديد",
+    "removeVariationButton": "إزالة",
+    "emptyVariationsMessage": "لم يتم إضافة أي تنويعات بعد. انقر على 'إضافة تنويع' لإضافة واحدة.",
+    "saveButton": "حفظ التكوين",
+    "cancelButton": "إلغاء",
+    "savingMessage": "جاري الحفظ...",
+    "savedMessage": "تم حفظ التكوين بنجاح",
+    "errorMessage": "خطأ في حفظ التكوين",
+    "nameRequiredError": "اسم الفرد المستهدف مطلوب",
+    "variationRequiredError": "اسم التنويع مطلوب",
+    "duplicateVariationError": "هذا التنويع موجود بالفعل"
 }
 }

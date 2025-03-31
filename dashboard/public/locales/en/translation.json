@@ -510,15 +510,19 @@
     "score": "Score"
   },
   "sidebar": {
-    "title": "Sentiment Analysis",
+    "title": "Analytics Dashboard",
     "dashboard": "Dashboard",
-    "sentimentData": "Data Explorer",
-    "comparisonReport": "Comparison Reports",
+    "sentimentData": "Sentiment Data",
+    "sentimentAnalysis": "Sentiment Analysis",
+    "analytics": "Analytics",
+    "insightsEngine": "Insights Engine",
     "aiSummary": "AI Summary",
     "entityRelationships": "Entity Relationships",
     "contextualSentiment": "Contextual Sentiment",
     "emotionalSpectrum": "Emotional Spectrum",
-    "emailConfig": "Email Notifications"
+    "comparisonReport": "Comparison Report",
+    "emailConfig": "Email Notifications",
+    "targetConfig": "Target Individual"
   },
   "emailConfig": {
     "title": "Email Notification Settings",
@@ -538,5 +542,40 @@
     "loadError": "Failed to load email configuration",
     "saveSuccess": "Email settings saved successfully",
     "saveError": "Failed to save email settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "saveChanges": "Save Changes",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error"
+  },
+  "target": {
+    "title": "Target Individual Configuration",
+    "subtitle": "Configure the target individual and their name variations for sentiment analysis",
+    "nameSection": "Target Individual Name",
+    "nameLabel": "Name",
+    "namePlaceholder": "Enter the target individual's name",
+    "nameDescription": "This is the primary name that will be used to identify the target individual across all data sources.",
+    "variationsSection": "Name Variations",
+    "variationsLabel": "Variations",
+    "variationsPlaceholder": "Enter name variations",
+    "variationsDescription": "Add different variations of the target individual's name to improve data collection accuracy.",
+    "addVariationButton": "Add Variation",
+    "addVariationLabel": "Add a new query variation",
+    "removeVariationButton": "Remove",
+    "emptyVariationsMessage": "No variations added yet. Click 'Add Variation' to add one.",
+    "saveButton": "Save Configuration",
+    "cancelButton": "Cancel",
+    "savingMessage": "Saving...",
+    "savedMessage": "Configuration saved successfully",
+    "errorMessage": "Error saving configuration",
+    "nameRequiredError": "Target individual name is required",
+    "variationRequiredError": "Variation name is required",
+    "duplicateVariationError": "This variation already exists"
   }
 } 

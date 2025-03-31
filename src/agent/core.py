@@ -79,6 +79,19 @@ class SentimentAnalysisAgent:
                 'instagram': False,  # Not implemented yet
                 'linkedin': False    # Not implemented yet
             },
+            'target': {
+                'individual_name': 'Sheikh Tamim bin Hamad Al Thani',
+                'query_variations': [
+                    'Sheikh Tamim bin Hamad Al Thani',
+                    'Sheikh Tamim',
+                    'Tamim bin Hamad',
+                    'Qatar Emir',
+                    'Qatar ruler',
+                    'Qatar leader',
+                    'Tamim Qatar',
+                    'Sheikh Tamim bin Hamad'
+                ]
+            },
             'adaptive_scheduling': True,
             'auto_optimization': True
         }

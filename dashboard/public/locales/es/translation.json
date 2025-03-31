@@ -518,7 +518,8 @@
     "entityRelationships": "Relaciones de Entidades",
     "contextualSentiment": "Sentimiento Contextual",
     "emotionalSpectrum": "Espectro Emocional",
-    "emailConfig": "Notificaciones por Email"
+    "emailConfig": "Notificaciones por Email",
+    "targetConfig": "Individuo Objetivo"
   },
   "emailConfig": {
     "title": "Configuración de Notificaciones por Email",
@@ -538,5 +539,29 @@
     "loadError": "Error al cargar la configuración de email",
     "saveSuccess": "Configuración de email guardada correctamente",
     "saveError": "Error al guardar la configuración de email"
+  },
+  "target": {
+    "title": "Configuración del Individuo Objetivo",
+    "subtitle": "Configure el individuo objetivo y sus variaciones de nombre para el análisis de sentimiento",
+    "nameSection": "Nombre del Individuo Objetivo",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Ingrese el nombre del individuo objetivo",
+    "nameDescription": "Este es el nombre principal que se utilizará para identificar al individuo objetivo en todas las fuentes de datos.",
+    "variationsSection": "Variaciones de Nombre",
+    "variationsLabel": "Variaciones",
+    "variationsPlaceholder": "Ingrese variaciones de nombre",
+    "variationsDescription": "Agregue diferentes variaciones del nombre del individuo objetivo para mejorar la precisión de la recolección de datos.",
+    "addVariationButton": "Agregar Variación",
+    "addVariationLabel": "Agregar una nueva variación de consulta",
+    "removeVariationButton": "Eliminar",
+    "emptyVariationsMessage": "Aún no hay variaciones agregadas. Haga clic en 'Agregar Variación' para agregar una.",
+    "saveButton": "Guardar Configuración",
+    "cancelButton": "Cancelar",
+    "savingMessage": "Guardando...",
+    "savedMessage": "Configuración guardada exitosamente",
+    "errorMessage": "Error al guardar la configuración",
+    "nameRequiredError": "El nombre del individuo objetivo es requerido",
+    "variationRequiredError": "El nombre de la variación es requerido",
+    "duplicateVariationError": "Esta variación ya existe"
   }
 } 

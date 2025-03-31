@@ -76,6 +76,7 @@ import PDFExportButton from './components/PDFExportButton';
 import ComparisonReport from './components/ComparisonReport';
 import LanguageSwitcher from './components/LanguageSwitcher';
 import EmailConfig from './components/EmailConfig';
+import TargetIndividualConfig from './components/TargetIndividualConfig';
 
 // Import our new advanced NLP & AI components
 import EntityRelationshipGraph from './components/EntityRelationshipGraph';
@@ -940,6 +941,7 @@ function App() {
                     <Route path="/auto-summary" element={<AutoSummary />} />
                     <Route path="/comparison-report" element={<ComparisonReport />} />
                     <Route path="/email-config" element={<EmailConfig />} />
+                    <Route path="/target-config" element={<TargetIndividualConfig />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </ContentContainer>

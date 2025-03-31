@@ -518,7 +518,8 @@
     "entityRelationships": "Relations d'Entités",
     "contextualSentiment": "Sentiment Contextuel",
     "emotionalSpectrum": "Spectre Émotionnel",
-    "emailConfig": "Notifications par Email"
+    "emailConfig": "Notifications par Email",
+    "targetConfig": "Individu Cible"
   },
   "emailConfig": {
     "title": "Paramètres de Notification par Email",
@@ -538,5 +539,28 @@
     "loadError": "Échec du chargement de la configuration email",
     "saveSuccess": "Paramètres d'email enregistrés avec succès",
     "saveError": "Échec de l'enregistrement des paramètres d'email"
+  },
+  "target": {
+    "title": "Configuration de l'Individu Cible",
+    "subtitle": "Configurez l'individu cible et ses variations de nom pour l'analyse des sentiments",
+    "nameSection": "Nom de l'Individu Cible",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Entrez le nom de l'individu cible",
+    "nameDescription": "C'est le nom principal qui sera utilisé pour identifier l'individu cible dans toutes les sources de données.",
+    "variationsSection": "Variations de Nom",
+    "variationsLabel": "Variations",
+    "variationsPlaceholder": "Entrez les variations de nom",
+    "variationsDescription": "Ajoutez différentes variations du nom de l'individu cible pour améliorer la précision de la collecte de données.",
+    "addVariationButton": "Ajouter une Variation",
+    "removeVariationButton": "Supprimer",
+    "emptyVariationsMessage": "Aucune variation ajoutée pour le moment. Cliquez sur 'Ajouter une Variation' pour en ajouter une.",
+    "saveButton": "Enregistrer la Configuration",
+    "cancelButton": "Annuler",
+    "savingMessage": "Enregistrement en cours...",
+    "savedMessage": "Configuration enregistrée avec succès",
+    "errorMessage": "Erreur lors de l'enregistrement de la configuration",
+    "nameRequiredError": "Le nom de l'individu cible est requis",
+    "variationRequiredError": "Le nom de la variation est requis",
+    "duplicateVariationError": "Cette variation existe déjà"
   }
 } 

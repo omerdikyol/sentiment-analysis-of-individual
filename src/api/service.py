@@ -333,6 +333,56 @@ def start_scheduler():
     if report_scheduler:
         report_scheduler.start()
 
+# Add new models for target individual management
+class TargetIndividualConfig(BaseModel):
+    individual_name: str
+    query_variations: List[str]
+
+@app.get("/target")
+async def get_target_individual():
+    """Get the current target individual configuration"""
+    config = agent.config
+    if 'target' not in config:
+        return {
+            "status": "error", 
+            "message": "Target individual not configured. Using defaults."
+        }
+    
+    return {
+        "status": "success",
+        "data": config['target']
+    }
+
+@app.post("/target")
+async def update_target_individual(target_config: TargetIndividualConfig):
+    """Update the target individual configuration"""
+    try:
+        # Create updated config
+        updated_config = {'target': {
+            'individual_name': target_config.individual_name,
+            'query_variations': target_config.query_variations
+        }}
+        
+        # Update agent configuration
+        result = agent.execute_command('update_config', updated_config)
+        
+        if not result['success']:
+            raise HTTPException(status_code=400, detail=result['message'])
+        
+        # Broadcast status update to all connected clients
+        await broadcast_update({
+            'type': 'target_update',
+            'data': updated_config['target']
+        })
+        
+        return {
+            "status": "success", 
+            "message": "Target individual configuration updated successfully",
+            "data": updated_config['target']
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 def start():
     """Start the API service and the agent"""
     import uvicorn
