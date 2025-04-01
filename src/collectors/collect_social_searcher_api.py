@@ -187,7 +187,7 @@ def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last
                                                 })
                                                 
                                                 # Print brief summary of collected data
-                                                print(f"      Collected: {platform} - {text[:50]}...")
+                                                # print(f"      Collected: {platform} - {text[:50]}...")
                                                 
                                             except Exception as e:
                                                 print(f"      Error processing post: {e}")

@@ -1,8 +1,7 @@
 {
     "config_list": [
         {
-            "model": "mistralai/mistral-7b-instruct",
-            "api_key": "${OPENROUTER_API_KEY}",
+            "model": "google/gemma-3-4b-it:free",
             "base_url": "https://openrouter.ai/api/v1",
             "api_type": "openai",
             "headers": {

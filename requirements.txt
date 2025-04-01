@@ -12,6 +12,12 @@ bitsandbytes>=0.41.0
 sentence-transformers>=2.5.0
 huggingface-hub>=0.20.0
 
+# Autogen and OpenAI (Ensure >=1.0 compatibility)
+# pyautogen~=0.1.14 # Removed older version
+# openai<1.0.0 # Removed older version constraint
+autogen~=0.8.1 # Use the version that seems to be installed/intended
+openai>=1.0.0 # Newer Autogen likely needs newer OpenAI
+
 # Web and API
 fastapi>=0.100.0
 uvicorn>=0.23.0
@@ -36,3 +42,4 @@ pytest-asyncio>=0.21.0
 # Utilities
 python-dateutil>=2.8.2
 tqdm>=4.65.0
+tabulate>=0.9.0

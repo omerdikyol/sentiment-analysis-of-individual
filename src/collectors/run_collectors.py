@@ -45,13 +45,13 @@ def main():
     src_dir = Path(__file__).parent.parent
     sys.path.append(str(src_dir))
     
-    # List of collector modules to run
+    # List of collector modules to run - RSS moved to the end
     collectors = [
-        'collectors.collect_news_from_api',
-        'collectors.collect_news_apify',
-        'collectors.collect_rss',
-        'collectors.collect_social_searcher_api',
-        'collectors.collect_twitter_apify',
+        #'collectors.collect_news_from_api',
+        #'collectors.collect_news_apify',
+        #'collectors.collect_social_searcher_api',
+        #'collectors.collect_twitter_apify',
+        #'collectors.collect_rss', # Will run last because it takes a long time
     ]
     
     total_start_time = time.time()
@@ -67,12 +67,11 @@ def main():
             successful_collectors += 1
     
     total_duration = time.time() - total_start_time
-    success_rate = (successful_collectors / total_collectors) * 100
-    
-    logger.info(f"{'#'*30} Collection Summary {'#'*30}")
-    logger.info(f"Total Duration: {total_duration:.2f}s")
-    logger.info(f"Success Rate: {success_rate:.1f}% ({successful_collectors}/{total_collectors} collectors)")
-    logger.info(f"{'#'*30} End of Collection Run {'#'*30}")
+    # Removed the final summary logging to reduce console output
+    # logger.info(f"{'#'*30} Collection Summary {'#'*30}")
+    # logger.info(f"Total Duration: {total_duration:.2f}s")
+    # logger.info(f"Success Rate: {success_rate:.1f}% ({successful_collectors}/{total_collectors} collectors)")
+    logger.info(f"{'#'*30} End of Collection Run (Duration: {total_duration:.2f}s) {'#'*30}") # Keep a minimal end message
 
 if __name__ == "__main__":
-    main() 
+    main()

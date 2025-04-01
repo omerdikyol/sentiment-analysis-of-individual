@@ -5,12 +5,22 @@ import logging
 import json
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+import pandas as pd # Import pandas
 
 logger = logging.getLogger('AutogenAgents')
 
 class AutogenAgentSystem:
     def __init__(self, config_path: Path, llm_config: Optional[Dict[str, Any]] = None):
         self.config_path = config_path
+        # Explicitly load .env file from the agent directory
+        agent_env_path = Path(__file__).parent / '.env'
+        if agent_env_path.exists():
+            load_dotenv(dotenv_path=agent_env_path, override=True)
+            logger.info(f"Loaded environment variables from {agent_env_path}")
+        else:
+             logger.warning(f"Agent-specific .env file not found at {agent_env_path}. Relying on system environment or other .env files.")
+             
         self.latest_insights = []  # Store latest insights for email reporting
         self.llm_config = llm_config or self._get_default_llm_config()
         
@@ -24,37 +34,113 @@ class AutogenAgentSystem:
         self.group_chat = self._create_group_chat()
         
     def _get_default_llm_config(self) -> Dict[str, Any]:
-        """Get default LLM configuration"""
-        config = {
-            "timeout": 600,
-            "cache_seed": 42,
-            "temperature": 0.7,
-            "config_list": self._load_config_list(),
-        }
-        return config
-    
-    def _load_config_list(self) -> List[Dict[str, str]]:
-        """Load API configurations"""
+        """Get default LLM configuration (adjusted for openai>=1.0)"""
+        # Parameters like timeout, temperature are now typically expected within the config_list items
+        config_list = self._load_config_list()
+        # Return only the config_list as per newer autogen/openai patterns
+        return {"config_list": config_list}
+
+    def _load_config_list(self) -> List[Dict[str, Any]]:
+        """Load API configurations, automatically adding OpenRouter if key is in env."""
         config_file = self.config_path / 'llm_config.json'
+        allowed_keys = {"model", "api_key", "base_url", "api_type", "api_version", "timeout", "temperature", "max_tokens"}
+        processed_config_list = []
+        found_openrouter_in_file = False
+
+        # Default parameters to merge
+        default_params = {
+            "timeout": 600,
+            "temperature": 0.7
+        }
+
+        # 1. Process config file if it exists
         if config_file.exists():
-            with open(config_file, 'r') as f:
-                config = json.load(f)
-                # Resolve environment variables in config_list
-                for item in config.get('config_list', []):
-                    for key, value in item.items():
+            try:
+                with open(config_file, 'r') as f:
+                    config_data = json.load(f)
+                config_list_from_file = config_data.get('config_list', [])
+
+                for item in config_list_from_file:
+                    raw_item = item.copy()
+                    resolved_item = {}
+                    # Resolve environment variables
+                    for key, value in raw_item.items():
                         if isinstance(value, str) and value.startswith('${') and value.endswith('}'):
-                            env_var = value[2:-1]  # Remove ${ and }
-                            item[key] = os.getenv(env_var, value)  # Replace with env var value
-                return config.get('config_list', [])
-        return [{"model": "gpt-4", "api_key": "YOUR_API_KEY"}]  # Default config
+                            env_var = value[2:-1]
+                            resolved_item[key] = os.getenv(env_var, value)
+                        else:
+                            resolved_item[key] = value
+
+                    # Merge default params if missing
+                    for dk, dv in default_params.items():
+                        if dk not in resolved_item:
+                             resolved_item[dk] = dv
+                             
+                    # Filter for allowed keys
+                    filtered_item = {k: v for k, v in resolved_item.items() if k in allowed_keys}
+
+                    # Check for required keys (model, api_key)
+                    if "model" in filtered_item and "api_key" in filtered_item:
+                        processed_config_list.append(filtered_item)
+                        # Track if OpenRouter was explicitly configured
+                        if "openrouter.ai" in filtered_item.get("base_url", ""):
+                            found_openrouter_in_file = True
+                    else:
+                        logger.warning(f"Skipping config item from file due to missing model or api_key: {resolved_item}")
+                        
+            except json.JSONDecodeError:
+                logger.error(f"Error decoding JSON from {config_file}. Proceeding without file config.", exc_info=True)
+            except Exception as e:
+                 logger.error(f"Error processing {config_file}: {e}. Proceeding without file config.", exc_info=True)
+        else:
+            logger.info(f"{config_file} not found. Checking environment variables for configuration.")
+
+        # 2. Check for OPENROUTER_API_KEY environment variable
+        openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        if openrouter_key and not found_openrouter_in_file:
+            logger.info("Found OPENROUTER_API_KEY environment variable. Adding OpenRouter config with free model.")
+            openrouter_config = {
+                "model": "google/gemma-3-4b-it:free",
+                "api_key": openrouter_key,
+                "base_url": "https://openrouter.ai/api/v1",
+                **default_params # Add default params
+            }
+            filtered_openrouter_config = {k: v for k, v in openrouter_config.items() if k in allowed_keys}
+            processed_config_list.append(filtered_openrouter_config)
+
+        # 3. Fallback/Default: Check for standard OPENAI_API_KEY if no other configs were added
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if not processed_config_list and openai_key:
+             logger.info("No specific configs found, but OPENAI_API_KEY exists. Adding default OpenAI config.")
+             default_openai_config = {
+                 "model": "gpt-4", # Or another default OpenAI model
+                 "api_key": openai_key,
+                 **default_params
+             }
+             filtered_openai_config = {k: v for k, v in default_openai_config.items() if k in allowed_keys}
+             processed_config_list.append(filtered_openai_config)
+             
+        # 4. Final fallback if absolutely nothing is configured
+        if not processed_config_list:
+            logger.error("CRITICAL: No LLM configuration found in file or environment variables (OPENROUTER_API_KEY, OPENAI_API_KEY). Autogen agents will likely fail.")
+            # Return a dummy config to avoid immediate crashes, but log severity
+            processed_config_list = [{
+                "model": "placeholder_model",
+                "api_key": "MISSING_API_KEY"
+            }]
+
+        logger.info(f"Final Autogen config_list: {[{k: (v[:5] + '...' if k == 'api_key' else v) for k,v in item.items()} for item in processed_config_list]}")
+        return processed_config_list
 
     def _create_assistant(self) -> autogen.AssistantAgent:
         """Create the main assistant agent"""
         return autogen.AssistantAgent(
             name="assistant",
-            system_message="""You are a highly capable AI assistant focused on sentiment analysis.
-            Your role is to coordinate with other agents to analyze and process sentiment data effectively.
-            You can understand complex requests and break them down into manageable tasks.""",
+            system_message="""You are a highly capable AI assistant coordinating a sentiment analysis task.
+            Your role is to manage the discussion between the researcher, data analyst, and critic.
+            Ensure the team focuses SOLELY on the data sample and metadata provided in the initial prompt.
+            DO NOT write or execute Python code for analysis. Rely on the analyst's findings.
+            Summarize the final insights, data quality concerns, and recommendations derived from the provided data sample.""",
             llm_config=self.llm_config
         )
 
@@ -62,9 +148,12 @@ class AutogenAgentSystem:
         """Create the researcher agent"""
         return autogen.AssistantAgent(
             name="researcher",
-            system_message="""You are a research specialist focused on gathering and validating data.
-            Your role is to ensure data quality and suggest improvements to data collection methods.
-            You work closely with the data analyst to ensure data integrity.""",
+            system_message="""You are a data validation specialist.
+            Your role is to examine the data sample and metadata provided in the initial prompt.
+            Focus ONLY on the provided sample.
+            Assess its apparent quality, consistency (e.g., date formats, sentiment scores vs labels), and potential completeness issues VISIBLE IN THE SAMPLE.
+            Identify specific examples from the sample data to support your assessment.
+            DO NOT write or execute Python code.""",
             llm_config=self.llm_config
         )
 
@@ -72,9 +161,12 @@ class AutogenAgentSystem:
         """Create the data analyst agent"""
         return autogen.AssistantAgent(
             name="data_analyst",
-            system_message="""You are a data analysis expert specialized in sentiment analysis.
-            Your role is to process and analyze sentiment data, identify patterns, and generate insights.
-            You work with both structured and unstructured data to extract meaningful conclusions.""",
+            system_message="""You are a data analyst expert specializing in sentiment analysis.
+            Your role is to analyze the data sample provided in the initial prompt.
+            Focus ONLY on the provided sample.
+            Identify sentiment patterns (e.g., trends by source, platform, or country based on the sample), and summarize key observations.
+            Calculate simple statistics (like average sentiment) based ONLY on the sample data presented.
+            DO NOT write or execute Python code. Perform your analysis based on reading the provided Markdown table.""",
             llm_config=self.llm_config
         )
 
@@ -82,9 +174,11 @@ class AutogenAgentSystem:
         """Create the critic agent"""
         return autogen.AssistantAgent(
             name="critic",
-            system_message="""You are a critical thinker and quality assurance specialist.
-            Your role is to evaluate the work of other agents, identify potential issues,
-            and suggest improvements to the analysis process.""",
+            system_message="""You are a critical reviewer of data analysis.
+            Your role is to evaluate the analysis performed by the researcher and data analyst based ONLY on the data sample and metadata provided in the initial prompt.
+            Identify potential limitations, biases, or misinterpretations evident *from the sample data*.
+            Suggest alternative interpretations or necessary clarifications based *only on the sample*.
+            DO NOT write or execute Python code.""",
             llm_config=self.llm_config
         )
 
@@ -99,16 +193,45 @@ class AutogenAgentSystem:
     async def analyze_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform collaborative analysis using the agent group"""
         try:
-            # Create the initial message
+            # Extract data and metadata
+            records = data.get('data', [])
+            metadata = data.get('metadata', {})
+            record_count = len(records)
+            
+            # Prepare a sample of the data as a Markdown table string (first 50 rows)
+            data_sample_str = "No data sample available." # Default message
+            if records:
+                sample_df = pd.DataFrame(records[:50]) # Create DataFrame from first 50 records
+                # Select common/important columns to display (adjust as needed)
+                cols_to_show = ['date', 'source', 'platform', 'text', 'sentiment_label', 'sentiment_score', 'country']
+                existing_cols = [col for col in cols_to_show if col in sample_df.columns]
+                if existing_cols:
+                    # Truncate long text for display
+                    if 'text' in existing_cols:
+                        sample_df['text'] = sample_df['text'].str.slice(0, 100) + '...'
+                    data_sample_str = sample_df[existing_cols].to_markdown(index=False)
+                else:
+                    data_sample_str = "Could not display relevant columns from data sample."
+            
+            # Create the initial message including the data sample
             initial_message = {
-                "content": f"""Please analyze the following data and provide insights:
-                {json.dumps(data, indent=2)}
+                "content": f"""Please analyze the following data based on the provided sample and metadata.
                 
+                Metadata:
+                - Timestamp: {metadata.get('timestamp', 'N/A')}
+                - Source Count: {metadata.get('source_count', 'N/A')}
+                - Total Records: {metadata.get('total_records', record_count)}
+                
+                Data Sample (first 50 rows):
+                ```markdown
+                {data_sample_str}
+                ```
+
                 Please follow these steps:
-                1. Researcher: Validate data quality and completeness
-                2. Data Analyst: Perform sentiment analysis and pattern recognition
-                3. Critic: Review findings and suggest improvements
-                4. Assistant: Summarize key insights and recommendations""",
+                1. Researcher: Validate data quality and completeness based on the sample and metadata.
+                2. Data Analyst: Perform sentiment analysis and pattern recognition based on the sample and metadata.
+                3. Critic: Review findings and suggest improvements based on the sample and metadata.
+                4. Assistant: Summarize key insights and recommendations based on the sample and metadata.""",
                 "role": "user"
             }
             
@@ -119,15 +242,16 @@ class AutogenAgentSystem:
             )
             
             # Start the analysis
-            result = await manager.run(initial_message)
+            result = manager.run(initial_message)
+            logger.info("Autogen agent conversation for data analysis completed.")
             
-            # Extract insights from the conversation
-            insights = self._extract_insights(result)
+            # Extract insights from the conversation history within the result object
+            insights = self._extract_insights(result.chat_history if hasattr(result, 'chat_history') else [])
             
             return {
                 "timestamp": datetime.now().isoformat(),
                 "insights": insights,
-                "raw_conversation": result
+                "raw_conversation": result.chat_history if hasattr(result, 'chat_history') else [] # Return history list
             }
             
         except Exception as e:
@@ -137,33 +261,57 @@ class AutogenAgentSystem:
                 "timestamp": datetime.now().isoformat()
             }
 
-    def _extract_insights(self, conversation: List[Dict[str, Any]]) -> List[str]:
-        """Extract key insights from the conversation"""
-        insights = []
+    def _extract_insights(self, conversation: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Extract key insights, quality notes, and recommendations from the conversation"""
+        insights = {
+            "summary": [],
+            "data_quality": [],
+            "recommendations": []
+        }
+        temp_insights_set = set() # To avoid duplicates across categories initially
         
         # Extract insights from assistant responses
         for message in conversation:
-            if message.get('role') == 'assistant':
-                content = message.get('content', '')
-                
-                # Look for insights sections in the content
-                if 'key insight' in content.lower() or 'finding' in content.lower():
-                    # Split by common separators and extract potential insights
-                    lines = content.split('\n')
-                    for line in lines:
-                        line = line.strip()
-                        if (line.startswith('- ') or line.startswith('* ') or 
-                            line.startswith('•') or ':' in line or 
-                            'insight' in line.lower() or 'finding' in line.lower()):
-                            # Clean the line
-                            clean_line = line.strip('- *•').strip()
-                            if len(clean_line) > 10 and clean_line not in insights:
-                                insights.append(clean_line)
+            # Focus on messages from key agents, especially the final summary from assistant
+            if message.get('name') in ['assistant', 'critic', 'researcher', 'data_analyst']:
+                content = message.get('content', '').lower()
+                lines = content.split('\n')
+                current_section = "summary" # Default section
+
+                for line in lines:
+                    line_stripped = line.strip()
+                    
+                    # Detect section headers (simple heuristic)
+                    if "quality" in line_stripped and len(line_stripped) < 50: # Avoid long lines being headers
+                        current_section = "data_quality"
+                        continue
+                    if "recommend" in line_stripped and len(line_stripped) < 50:
+                        current_section = "recommendations"
+                        continue
+                    if "summary" in line_stripped or "insight" in line_stripped or "finding" in line_stripped and len(line_stripped) < 50:
+                        current_section = "summary"
+                        continue
+                        
+                    # Check if line looks like an insight/point
+                    if (line_stripped.startswith('- ') or line_stripped.startswith('* ') or line_stripped.startswith('•')):
+                        clean_line = line_stripped.strip('- *•').strip()
+                        
+                        # Basic filtering and deduplication
+                        if len(clean_line) > 10 and clean_line not in temp_insights_set:
+                             # Assign to the detected section
+                            if current_section in insights:
+                                insights[current_section].append(clean_line)
+                            else: # Fallback to summary
+                                insights["summary"].append(clean_line)
+                            temp_insights_set.add(clean_line)
         
-        # Store the latest insights for email reporting
-        self.latest_insights = insights
+        # Store a flat list of summary points for potential email reporting (can be adjusted)
+        self.latest_insights = insights.get("summary", [])
         
-        return insights
+        # Log extracted insights structure for debugging
+        logger.debug(f"Extracted insights structure: {{summary: {len(insights['summary'])}, quality: {len(insights['data_quality'])}, recs: {len(insights['recommendations'])} }}")
+        
+        return insights # Return the dictionary
 
     def _parse_researcher_message(self, content: str) -> Dict[str, Any]:
         """Parse researcher's message for data quality insights"""
@@ -247,15 +395,16 @@ class AutogenAgentSystem:
                 llm_config=self.llm_config
             )
             
-            result = await manager.run(message)
+            result = manager.run(message)
+            logger.info("Autogen agent conversation for optimization completed.")
             
-            # Extract optimization suggestions
-            optimizations = self._extract_optimizations(result)
+            # Extract optimization suggestions from the conversation history within the result object
+            optimizations = self._extract_optimizations(result.chat_history if hasattr(result, 'chat_history') else [])
             
             return {
                 "timestamp": datetime.now().isoformat(),
                 "optimizations": optimizations,
-                "raw_conversation": result
+                "raw_conversation": result.chat_history if hasattr(result, 'chat_history') else [] # Return history list
             }
             
         except Exception as e:

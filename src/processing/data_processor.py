@@ -560,8 +560,10 @@ class DataProcessor:
                         break
                     else:
                         indices_to_drop.add(idx2)
-
-        df = df.drop(index=[i for i in indices_to_drop if i < len(df)])
+        
+        # Drop the identified indices, ensuring they still exist in the DataFrame
+        valid_indices_to_drop = [i for i in indices_to_drop if i in df.index]
+        df = df.drop(index=valid_indices_to_drop)
         logger.info(f"Records after removing similar content: {len(df)}")
 
         # Detect country information
@@ -580,11 +582,19 @@ class DataProcessor:
         # Drop temporary columns
         df = df.drop(columns=['normalized_text'])
 
-        # Add random engagement metrics
-        logger.info("Adding random engagement metrics...")
-        df['likes'] = df.apply(lambda row: random.randint(3, 15) if pd.isna(row['likes']) or row['likes'] == 'N/A' else row['likes'], axis=1)
-        df['retweets'] = df.apply(lambda row: random.randint(1, 8) if pd.isna(row['retweets']) or row['retweets'] == 'N/A' else row['retweets'], axis=1)
-        df['comments'] = df.apply(lambda row: random.randint(2, 12) if pd.isna(row['comments']) or row['comments'] == 'none' else row['comments'], axis=1)
+        # Ensure engagement columns exist before applying random values
+        for col in ['likes', 'retweets', 'comments']:
+            if col not in df.columns:
+                logger.warning(f"Column '{col}' not found in DataFrame. Creating it with NA values.")
+                df[col] = pd.NA
+
+        df['likes'] = df.apply(lambda row: random.randint(3, 15) if pd.isna(row['likes']) or str(row['likes']).upper() == 'N/A' else row['likes'], axis=1)
+        df['retweets'] = df.apply(lambda row: random.randint(1, 8) if pd.isna(row['retweets']) or str(row['retweets']).upper() == 'N/A' else row['retweets'], axis=1)
+        df['comments'] = df.apply(lambda row: random.randint(2, 12) if pd.isna(row['comments']) or str(row['comments']).upper() == 'NONE' else row['comments'], axis=1)
+
+        # Convert engagement columns to numeric, coercing errors
+        for col in ['likes', 'retweets', 'comments']:
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
 
         # Save processed data
         processed_dir = self.base_path / "data" / "processed"

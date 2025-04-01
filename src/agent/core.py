@@ -14,6 +14,8 @@ import glob
 import threading
 import queue
 import asyncio
+import re
+import threading
 from .brain import AgentBrain
 from .autogen_agents import AutogenAgentSystem
 
@@ -388,16 +390,16 @@ class SentimentAnalysisAgent:
         scripts = {}
         collectors_dir = self.base_path / 'src' / 'collectors'
         
-        # Map collector script names to config source names
+        # Map collector script names to config source names based on actual files
         name_mapping = {
-            'x': 'x',
+            'news_apify': 'news_apify',
             'news_from_api': 'news_from_api',
             'rss': 'rss',
-            'mention': 'mention',
-            'social_searcher': 'social_searcher'
+            'social_searcher_api': 'social_searcher_api',
+            'twitter_apify': 'twitter_apify'
         }
         
-        # Find all Python files that start with 'collect_'
+        # Find all Python files in the main collectors directory that start with 'collect_'
         for script_path in collectors_dir.glob('collect_*.py'):
             source_name = script_path.stem.replace('collect_', '')
             if source_name in name_mapping:
@@ -429,84 +431,29 @@ class SentimentAnalysisAgent:
             logger.info("Launching centralized collector script...")
             start_time = time.time()
             
+            # Run the centralized collector script, allowing its output to stream to the console
+            logger.info("Launching centralized collector script (output will stream below)...")
+            start_time = time.time()
+            
+            # Removed capture_output=True and text=True to allow real-time output
+            # Added '-u' flag to force unbuffered output from the subprocess
             result = subprocess.run(
-                ['python', str(collector_script)],
+                ['python', '-u', str(collector_script)], # Added -u flag
                 check=True,
-                capture_output=True,
-                text=True,
-                cwd=str(self.base_path)
+                cwd=str(self.base_path) 
+                # stdout and stderr should now stream directly to the console without buffering
             )
             
             collection_duration = time.time() - start_time
             logger.info(f"Collection script execution completed in {collection_duration:.2f}s")
             
-            # Log collector output
-            for line in result.stdout.strip().split('\n'):
-                if line:
-                    logger.info(f"Collector Output: {line}")
-
-            # Load and analyze collected data
-            logger.info("\nAnalyzing collected data...")
-            today = datetime.now().strftime("%Y%m%d")
-            collected_data = []
-            success_count = 0
-            total_count = 0
-
-            # Check data from all possible sources
-            for source in ['x', 'news', 'rss', 'mention', 'social_searcher']:
-                if self.config['sources'].get(source, False):
-                    total_count += 1
-                    data_file = self.base_path / "data" / "raw" / f"{source}_data_{today}.csv"
-                    logger.info(f"\nChecking data for source: {source}")
-                    
-                    if data_file.exists():
-                        try:
-                            df = pd.read_csv(data_file)
-                            records_count = len(df)
-                            collected_data.append(df)
-                            success_count += 1
-                            
-                            logger.info(f"Successfully loaded {records_count} records from {source}")
-                            
-                            # Analyze data quality
-                            logger.info(f"Analyzing data quality for {source}...")
-                            quality_metrics = self.brain.analyze_data_quality(df)
-                            self.data_history['data_quality_metrics'].append({
-                                'timestamp': datetime.now().isoformat(),
-                                'source': source,
-                                'metrics': quality_metrics
-                            })
-                            logger.info(f"Data quality analysis completed for {source}")
-                            
-                        except Exception as e:
-                            logger.error(f"Error processing data from {source}: {str(e)}", exc_info=True)
-                    else:
-                        logger.warning(f"No data file found for source: {source}")
-
-            # Update system health metrics
-            total_records = sum(len(df) for df in collected_data)
-            health_metrics = {
-                'timestamp': datetime.now().isoformat(),
-                'collection_success_rate': success_count / total_count if total_count > 0 else 0,
-                'active_sources': success_count,
-                'total_sources': total_count,
-                'total_records': total_records,
-                'memory_usage': self._get_memory_usage()
-            }
-            self.data_history['system_health'].append(health_metrics)
-
-            logger.info(f"\n{'='*80}")
-            logger.info(f"Collection Summary:")
-            logger.info(f"- Success Rate: {(success_count / total_count * 100):.1f}% ({success_count}/{total_count} sources)")
-            logger.info(f"- Total Records: {total_records}")
-            logger.info(f"- Memory Usage: {health_metrics['memory_usage']:.2f}%")
-            logger.info(f"{'='*80}\n")
-
-            return success_count > 0
+            # Removed the redundant post-collection analysis block.
+            # The data processor will handle loading and analyzing all raw files later.
+            # Success is determined by the subprocess completing without error (check=True).
+            return True
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Centralized data collection failed: {str(e)}")
-            logger.error(f"Error output: {e.stderr}")
+            logger.error(f"Centralized data collection script failed with exit code {e.returncode}")
             return False
         except Exception as e:
             logger.error(f"Unexpected error in centralized collection: {str(e)}", exc_info=True)
@@ -706,12 +653,10 @@ class SentimentAnalysisAgent:
             schedule.every(6).hours.do(
                 lambda: self._run_task(self.optimize_system, 'optimize'))
 
-        logger.info("Agent started successfully with Autogen enhancement")
+        logger.info("Agent started successfully with Autogen enhancement. Starting main loop...")
         
-        # Initial run
-        self._run_collect_and_process()
-
         # Main loop with enhanced monitoring
+        # Initial run is now handled in the main execution block based on user input
         while self.is_running:
             schedule.run_pending()
             
@@ -732,6 +677,67 @@ class SentimentAnalysisAgent:
             
             time.sleep(1)
 
+def parse_delay_to_seconds(delay_str: str) -> Optional[int]:
+    """Parses a delay string (e.g., '10min', '30sec', 'now') into seconds."""
+    delay_str = delay_str.strip().lower()
+    
+    if not delay_str:
+        return None # Skip initial run if blank
+        
+    if delay_str == 'now':
+        return 0
+        
+    # Updated regex to include hour units (h, hr, hour)
+    match = re.match(r'^(\d+)\s*(min|sec|s|m|h|hr|hour)?$', delay_str)
+    if not match:
+        logger.warning(f"Invalid delay format: '{delay_str}'. Skipping initial run.")
+        return None
+        
+    value = int(match.group(1))
+    unit = match.group(2)
+    
+    if unit in ['min', 'm']:
+        return value * 60
+    elif unit in ['sec', 's', None]: # Default to seconds if no unit
+        return value
+    elif unit in ['h', 'hr', 'hour']: # Added hour support
+        return value * 3600
+    else:
+        # This case should technically not be reached with the updated regex, but kept for safety
+        logger.warning(f"Unknown time unit in delay: '{unit}'. Skipping initial run.")
+        return None
+
 if __name__ == "__main__":
     agent = SentimentAnalysisAgent()
-    agent.run() 
+    start_confirmation = input("Do you want to start the Sentiment Analysis Agent now? (yes/no): ")
+    
+    if start_confirmation.lower() in ['yes', 'y']:
+        logger.info("User confirmed agent start.")
+        
+        # Updated prompt to include hour example
+        delay_input = input("Enter delay for initial collection (e.g., '1h', '10min', '30sec', 'now', or leave blank to skip): ")
+        delay_seconds = parse_delay_to_seconds(delay_input)
+
+        initial_run_scheduled = False
+        if delay_seconds == 0:
+            logger.info("Starting initial data collection and processing immediately...")
+            # Run synchronously before starting the main loop
+            agent._run_collect_and_process()
+            logger.info("Initial run complete.")
+            initial_run_scheduled = True
+        elif delay_seconds is not None and delay_seconds > 0:
+            logger.info(f"Scheduling initial data collection to run in {delay_seconds} seconds...")
+            # Run asynchronously after the delay
+            timer = threading.Timer(delay_seconds, agent._run_collect_and_process)
+            timer.start()
+            initial_run_scheduled = True
+        else:
+             logger.info("Skipping initial data collection. Agent will run based on schedule.")
+
+        # Start the main agent loop (scheduling, etc.) regardless of initial run
+        logger.info("Starting agent's main loop...")
+        agent.run()
+        
+    else:
+        logger.info("Agent start cancelled by user.")
+        sys.exit(0)
