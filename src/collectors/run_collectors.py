@@ -47,11 +47,11 @@ def main():
     
     # List of collector modules to run - RSS moved to the end
     collectors = [
-        #'collectors.collect_news_from_api',
-        #'collectors.collect_news_apify',
-        #'collectors.collect_social_searcher_api',
-        #'collectors.collect_twitter_apify',
-        #'collectors.collect_rss', # Will run last because it takes a long time
+        'collectors.collect_news_from_api',
+        'collectors.collect_news_apify',
+        'collectors.collect_social_searcher_api',
+        'collectors.collect_twitter_apify',
+        'collectors.collect_rss', # Will run last because it takes a long time
     ]
     
     total_start_time = time.time()
