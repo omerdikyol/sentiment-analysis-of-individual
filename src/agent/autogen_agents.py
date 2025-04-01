@@ -376,17 +376,30 @@ class AutogenAgentSystem:
         return items
 
     async def optimize_collection(self, performance_metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """Use agents to optimize data collection strategy"""
+        """Use agents to optimize system based on high-level performance metrics."""
         try:
-            message = {
-                "content": f"""Please analyze the current data collection performance and suggest optimizations:
-                {json.dumps(performance_metrics, indent=2)}
+            # Prepare a summary of the metrics for the prompt
+            metrics_summary = json.dumps(performance_metrics, indent=2, default=str)
+            # Truncate if too long to avoid excessive prompt length
+            if len(metrics_summary) > 3000:
+                metrics_summary = metrics_summary[:3000] + "\n... (metrics truncated) ..."
                 
-                Consider:
-                1. Collection frequency
-                2. Resource usage
-                3. Data quality
-                4. Success rates""",
+            message = {
+                "content": f"""Please analyze the following system performance metrics and suggest optimizations:
+                ```json
+                {metrics_summary}
+                ```
+                
+                Consider potential improvements based ONLY on these high-level metrics. Focus on:
+                1. Adjusting `collection_interval_minutes` (currently {performance_metrics.get('current_collection_interval_minutes')}) or `processing_interval_minutes` (currently {performance_metrics.get('current_processing_interval_minutes')}). Justify based on data freshness needs vs. processing time or observed sentiment stability.
+                2. Suggesting general data quality checks if `latest_data_quality` indicates issues (e.g., low completeness).
+                3. Highlighting potential bottlenecks if `overall_collection_status` shows long durations or failures.
+                4. Briefly interpreting the `latest_sentiment_analysis` summary.
+                
+                Provide concise, actionable suggestions. Example output format for frequency:
+                "Suggest changing collection_interval_minutes to 60 because..."
+                If suggesting other changes, describe them briefly.
+                DO NOT ask for granular per-source statistics as they are not available.""",
                 "role": "user"
             }
             

@@ -7,38 +7,40 @@ from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load environment variables from .env file
-load_dotenv(Path("config/.env"))
+# Load environment variables from config/.env
+# Assume .env is in the config directory relative to project root
+project_root = Path(__file__).parent.parent.parent
+load_dotenv(project_root / "config" / ".env")
 
 logger = logging.getLogger(__name__)
 
 class MailSender:
     """
-    Utility class for sending emails from the sentiment analysis system.
-    Supports Proton Mail and other SMTP providers.
+    Utility class for sending emails using SMTP configuration from .env file.
     """
     
     def __init__(self):
-        """Initialize email configuration from environment variables."""
-        # Get email provider type from environment
-        self.email_provider = os.getenv("EMAIL_PROVIDER", "gmail").lower()
+        """Initialize email configuration directly from environment variables."""
+        # Remove provider-specific logic
+        # self.email_provider = os.getenv("EMAIL_PROVIDER", "gmail").lower()
         
-        # Set default SMTP settings based on provider
-        if self.email_provider == "protonmail":
-            self.smtp_server = os.getenv("SMTP_SERVER", "smtp.protonmail.ch")
-            self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        else:
-            # Default to Gmail settings
-            self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-            self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
-            
-        self.smtp_username = os.getenv("SMTP_USERNAME", "")
-        self.smtp_password = os.getenv("SMTP_PASSWORD", "")
-        self.sender_email = os.getenv("SENDER_EMAIL", self.smtp_username)
+        # Load SMTP settings directly from .env
+        self.smtp_server = os.getenv("EMAIL_SERVER")
+        self.smtp_port = int(os.getenv("EMAIL_PORT", 587)) # Default to 587 if not set
+        self.smtp_username = os.getenv("EMAIL_USERNAME")
+        self.smtp_password = os.getenv("EMAIL_PASSWORD")
+        self.sender_email = os.getenv("EMAIL_SENDER") # Use the dedicated sender email
         
         # Validate configuration
-        if not all([self.smtp_username, self.smtp_password]):
-            logger.warning("Email configuration incomplete. Check SMTP settings in .env file.")
+        if not all([self.smtp_server, self.smtp_port, self.smtp_username, self.smtp_password, self.sender_email]):
+            logger.warning(
+                "Email configuration incomplete. Check EMAIL_SERVER, EMAIL_PORT, "
+                "EMAIL_USERNAME, EMAIL_PASSWORD, and EMAIL_SENDER in config/.env file."
+            )
+            # Set a flag or handle appropriately if config is invalid
+            self.valid_config = False
+        else:
+            self.valid_config = True
     
     def send_email(self, recipients, subject, body, attachments=None, html=False):
         """
@@ -54,8 +56,8 @@ class MailSender:
         Returns:
             bool: True if sent successfully, False otherwise
         """
-        if not all([self.smtp_username, self.smtp_password]):
-            logger.error("Cannot send email: SMTP configuration is incomplete")
+        if not self.valid_config:
+            logger.error("Cannot send email: SMTP configuration is incomplete or invalid.")
             return False
             
         # Convert single recipient to list
@@ -86,9 +88,9 @@ class MailSender:
                     except Exception as e:
                         logger.error(f"Failed to attach file {file_path}: {str(e)}")
             
-            # Send email - handle both ProtonMail and other providers
+            # Send email using configured SMTP settings
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                server.starttls()
+                server.starttls() # Assume TLS is needed for ports 587/2525
                 server.login(self.smtp_username, self.smtp_password)
                 server.send_message(msg)
                 

@@ -17,8 +17,8 @@ config_path = project_root / "config" / ".env"
 # Load environment variables from .env file
 load_dotenv(config_path)
 
-# Email provider setting
-EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "gmail").lower()
+# Removed EMAIL_PROVIDER setting as we're using direct SMTP config now
+# EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "gmail").lower()
 
 # Email notification settings
 DEFAULT_EMAIL_RECIPIENTS = os.getenv("EMAIL_RECIPIENTS", "").split(",")
@@ -47,11 +47,12 @@ def is_email_notification_enabled() -> bool:
     """
     return EMAIL_NOTIFICATION_ENABLED
 
-def get_email_provider() -> str:
-    """
-    Get the configured email provider.
-    
-    Returns:
-        str: Email provider name (e.g., 'protonmail', 'gmail')
-    """
-    return EMAIL_PROVIDER 
+# Removed get_email_provider function
+# def get_email_provider() -> str:
+#     """
+#     Get the configured email provider.
+#     
+#     Returns:
+#         str: Email provider name (e.g., 'protonmail', 'gmail')
+#     """
+#     return EMAIL_PROVIDER 

@@ -259,51 +259,38 @@ class SentimentAnalysisAgent:
             from src.utils.mail_config import NOTIFY_ON_ANALYSIS, get_email_recipients
             
             if NOTIFY_ON_ANALYSIS and processing_success:
-                # Load the latest processed data and previous data for comparison
+                logger.info("Analysis notifications enabled and processing successful. Checking for sentiment changes...")
                 try:
-                    # Path to data files
-                    processed_path = self.base_path / 'data' / 'processed'
-                    latest_file = processed_path / 'latest.csv'
-                    previous_file = processed_path / 'previous.csv'
-                    
-                    # Check if files exist
+                    # Load data for comparison from the dashboard directory
+                    dashboard_dir = self.base_path / 'dashboard' / 'public'
+                    latest_file = dashboard_dir / 'processed_data.csv' # Path to current dashboard file
+                    previous_file = dashboard_dir / 'processed_data_old.csv' # Path to previous dashboard file
+
                     if not latest_file.exists():
-                        logger.error(f"Latest processed data file not found: {latest_file}")
-                        return
-                        
-                    # Load current data
+                         logger.warning(f"Cannot send analysis notification: {latest_file.name} not found in dashboard/public.")
+                         return # Exit if no latest data
+                         
                     latest_data = pd.read_csv(latest_file)
+                    previous_data = pd.read_csv(previous_file) if previous_file.exists() else None
                     
-                    # Initialize change detection variables
-                    sentiment_changed = False
-                    sentiment_change_data = {}
-                    
-                    # Load and compare with previous data if it exists
-                    if previous_file.exists():
-                        previous_data = pd.read_csv(previous_file)
-                        
-                        # Detect sentiment changes
-                        sentiment_change_data = detect_sentiment_change(latest_data, previous_data)
-                        sentiment_changed = sentiment_change_data.get("sentiment_changed", False)
-                        
-                        logger.info(f"Sentiment change detected: {sentiment_changed}")
-                        if sentiment_changed:
-                            change_value = sentiment_change_data.get("sentiment_change", 0)
-                            change_direction = "improved" if change_value > 0 else "declined"
-                            logger.info(f"Sentiment has {change_direction} by {abs(change_value):.2f} points")
-                    
-                    # Get overall sentiment score
-                    overall_sentiment = latest_data['sentiment_score'].mean() if 'sentiment_score' in latest_data.columns else 0
-                    
-                    # Count positive, negative, and neutral mentions
-                    if 'sentiment_label' in latest_data.columns:
-                        positive_count = len(latest_data[latest_data['sentiment_label'] == 'positive'])
-                        negative_count = len(latest_data[latest_data['sentiment_label'] == 'negative'])
-                        neutral_count = len(latest_data[latest_data['sentiment_label'] == 'neutral'])
+                    if previous_data is None:
+                         logger.info(f"Previous data file ({previous_file.name}) not found. Cannot detect changes for first run.")
+                         sentiment_changed = False
+                         sentiment_change_data = {}
                     else:
-                        positive_count = len(latest_data[latest_data['sentiment_score'] > 0.2]) if 'sentiment_score' in latest_data.columns else 0
-                        negative_count = len(latest_data[latest_data['sentiment_score'] < -0.2]) if 'sentiment_score' in latest_data.columns else 0
-                        neutral_count = len(latest_data) - positive_count - negative_count
+                         # Detect sentiment change
+                         sentiment_changed, sentiment_change_data = detect_sentiment_change(latest_data, previous_data)
+                    
+                    if sentiment_changed:
+                        logger.info(f"Significant sentiment change detected: {sentiment_change_data.get('change_direction')} by {abs(sentiment_change_data.get('change_value', 0)):.2f} points")
+                    else:
+                        logger.info("No significant sentiment change detected.")
+
+                    # Calculate necessary stats for report
+                    # ... (existing code for positive/negative counts, percentages, topics)
+                    positive_count = (latest_data['sentiment_label'] == 'positive').sum()
+                    negative_count = (latest_data['sentiment_label'] == 'negative').sum()
+                    neutral_count = len(latest_data) - positive_count - negative_count
                     
                     # Calculate percentages
                     total = len(latest_data)
@@ -354,8 +341,9 @@ class SentimentAnalysisAgent:
                                 insights.append(f"Topic declining: '{topic}' reduced from {prev_count} to {curr_count} mentions")
                     
                     # Prepare report data
+                    logger.info("Preparing analysis report data...") # Log before prep
                     analysis_data = {
-                        "overall_sentiment": overall_sentiment,
+                        "overall_sentiment": latest_data['sentiment_score'].mean() if 'sentiment_score' in latest_data.columns else 0,
                         "positive_mentions": positive_pct,
                         "neutral_mentions": neutral_pct,
                         "negative_mentions": negative_pct,
@@ -371,17 +359,28 @@ class SentimentAnalysisAgent:
                     
                     # Send report email
                     recipients = get_email_recipients()
+                    logger.info(f"Sending analysis report email to: {recipients}") # Log before sending
                     send_analysis_report(analysis_data, recipients)
+                    logger.info("Analysis report email sent successfully.") # Log after sending
                     
-                    # After successful processing, copy latest.csv to previous.csv for next comparison
-                    import shutil
-                    shutil.copy2(latest_file, previous_file)
-                    
+                    # After successful processing and notification, the file rotation already handles the state.
+                    # No need to copy files here manually as we are reading the dashboard files directly.
+                    # try:
+                    #     import shutil
+                    #     shutil.copy2(latest_file, previous_file) # This was incorrect logic
+                    #     logger.info(f"Successfully copied {latest_file.name} to {previous_file.name} for next comparison.")
+                    # except Exception as copy_err:
+                    #     logger.error(f"Failed to copy latest data to previous data file: {copy_err}")
+                        
                 except Exception as e:
-                    logger.error(f"Error sending analysis notification: {str(e)}", exc_info=True)
+                    logger.error(f"Error during analysis notification preparation or sending: {str(e)}", exc_info=True)
+            elif not NOTIFY_ON_ANALYSIS:
+                 logger.info("Analysis notifications are disabled (NOTIFY_ON_ANALYSIS=False). Skipping notification.")
+            elif not processing_success:
+                 logger.warning("Skipping analysis notification because the data processing step failed.")
         
         except ImportError as e:
-            logger.warning(f"Email notification module not available: {str(e)}")
+            logger.warning(f"Email notification module could not be imported: {str(e)}. Notifications disabled.")
         except Exception as e:
             logger.error(f"Error in email notification: {str(e)}", exc_info=True)
 
@@ -545,50 +544,96 @@ class SentimentAnalysisAgent:
             logger.error(f"Failed to update metrics: {str(e)}")
 
     def optimize_system(self):
-        """Use Autogen to optimize system performance"""
+        """Use Autogen to optimize system performance based on available high-level metrics."""
+        logger.info("Starting system optimization analysis...")
         try:
-            # Prepare performance metrics
+            # Prepare available performance metrics (high-level)
+            latest_sentiment_metrics = self.data_history['sentiment_trends'][-1] if self.data_history['sentiment_trends'] else {}
+            latest_health_metrics = self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
+            latest_data_quality = latest_sentiment_metrics.get('data_quality', {}) # Get quality from sentiment metrics
+            last_collection_run = self.task_status['last_run'].get('collect', {}) # Get overall collection status
+            
             performance_data = {
-                'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {},
-                'data_quality': self.data_history['data_quality_metrics'][-1] if self.data_history['data_quality_metrics'] else {},
-                'collection_stats': {
-                    source: self.task_status['last_run'].get(f'collect_{source}', {})
-                    for source in self.config['sources']
-                    if self.config['sources'][source]
-                }
+                'overall_collection_status': {
+                    'timestamp': last_collection_run.get('timestamp'),
+                    'duration_seconds': last_collection_run.get('duration'),
+                    'success': last_collection_run.get('success')
+                 },
+                'latest_sentiment_analysis': {
+                    'timestamp': latest_sentiment_metrics.get('timestamp'),
+                    'total_records_processed': latest_sentiment_metrics.get('total_records'),
+                    'average_sentiment_score': latest_sentiment_metrics.get('average_sentiment_score'),
+                    'sentiment_distribution': latest_sentiment_metrics.get('sentiment_distribution'),
+                    'autogen_insights_summary': latest_sentiment_metrics.get('autogen_insights', {}).get('summary', [])[:3] # Sample of insights
+                },
+                'latest_data_quality': latest_data_quality,
+                'system_health': latest_health_metrics, # e.g., memory usage if tracked
+                'current_collection_interval_minutes': self.config.get('collection_interval_minutes'),
+                'current_processing_interval_minutes': self.config.get('processing_interval_minutes')
             }
-            
+
+            # Remove collection_stats which is often empty/unavailable
+            # 'collection_stats': {
+            #     source: self.task_status['last_run'].get(f'collect_{source}', {})
+            #     for source in self.config['sources']
+            #     if self.config['sources'][source]
+            # }
+
+            # Clean up None values before sending to LLM
+            performance_data = json.loads(json.dumps(performance_data, default=str)) # Convert non-serializable first
+
+            logger.info(f"Sending performance data to Autogen for optimization: {json.dumps(performance_data, indent=2)}")
+
             # Get optimization suggestions from Autogen
-            optimization_result = self.event_loop.run_until_complete(
-                self.autogen_system.optimize_collection(performance_data)
-            )
-            
-            if 'optimizations' in optimization_result:
-                # Update collection frequency if suggested
-                if optimization_result['optimizations']['collection_frequency']:
-                    new_frequency = optimization_result['optimizations']['collection_frequency']
-                    if 15 <= new_frequency <= 120:  # Ensure reasonable bounds
-                        self.config['collection_interval_minutes'] = new_frequency
-                        logger.info(f"Updated collection frequency to {new_frequency} minutes")
-                
-                # Update configuration with other optimizations
-                if optimization_result['optimizations']['suggested_changes']:
-                    for change in optimization_result['optimizations']['suggested_changes']:
-                        if isinstance(change, dict):
-                            self.config.update(change)
-                
-                # Save updated config
-                with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
-                    json.dump(self.config, f, indent=4)
-                
-                logger.info("System optimization completed successfully")
+            optimization_result = self.autogen_system.optimize_collection(performance_data)
+
+            if optimization_result and 'optimizations' in optimization_result:
+                logger.info(f"Received optimization suggestions: {optimization_result['optimizations']}")
+                # Update collection frequency if suggested and valid
+                new_frequency = optimization_result['optimizations'].get('collection_frequency')
+                if isinstance(new_frequency, (int, float)) and 15 <= new_frequency <= 1440:  # Check type and reasonable bounds (15 min to 1 day)
+                    self.config['collection_interval_minutes'] = int(new_frequency)
+                    schedule.clear('collect-task') # Clear existing collection schedule
+                    schedule.every(self.config['collection_interval_minutes']).minutes.do(
+                        lambda: self._run_task(self.collect_data, 'collect')
+                    ).tag('collect-task') # Re-add with new interval and tag
+                    logger.info(f"Updated collection frequency to {int(new_frequency)} minutes based on optimization.")
+                elif new_frequency is not None:
+                     logger.warning(f"Received invalid collection frequency suggestion: {new_frequency}. Ignoring.")
+
+                # --- Placeholder for applying other suggested changes --- 
+                # Example: Adjusting data sources based on quality/performance
+                suggested_changes = optimization_result['optimizations'].get('suggested_changes', [])
+                for change in suggested_changes:
+                     # Implement logic to apply changes to self.config or elsewhere
+                     logger.info(f"Applying suggested change: {change}")
+                     pass # Add actual implementation later
+                # -----------------------------------------------------------
+
+                # Save updated config if changes were made (e.g., frequency)
+                if new_frequency is not None: # Check if frequency was actually updated
+                    self.save_config()
+                    logger.info("Configuration saved after applying optimizations.")
+
+                logger.info("System optimization processing completed.")
                 return True
-            
-            return False
-            
+            else:
+                logger.warning("No valid optimization suggestions received from Autogen.")
+                return False
+
         except Exception as e:
-            logger.error(f"Error in system optimization: {str(e)}")
+            logger.error(f"Error in system optimization: {str(e)}", exc_info=True)
             return False
+
+    def save_config(self):
+        """Save the current agent configuration to file."""
+        try:
+            config_path = self.base_path / 'config' / 'default_config.json'
+            with open(config_path, 'w') as f:
+                json.dump(self.config, f, indent=4, default=str) # Use default=str for non-serializable types
+            logger.info(f"Configuration successfully saved to {config_path}")
+        except Exception as e:
+            logger.error(f"Failed to save configuration: {e}", exc_info=True)
 
     def cleanup_old_data(self):
         """Clean up old data files based on retention policy"""
