@@ -657,35 +657,5 @@ def parse_delay_to_seconds(delay_str: str) -> Optional[int]:
 
 if __name__ == "__main__":
     agent = SentimentAnalysisAgent()
-    start_confirmation = input("Do you want to start the Sentiment Analysis Agent now? (yes/no): ")
-    
-    if start_confirmation.lower() in ['yes', 'y']:
-        logger.info("User confirmed agent start.")
-        
-        # Updated prompt to include hour example
-        delay_input = input("Enter delay for initial collection (e.g., '1h', '10min', '30sec', 'now', or leave blank to skip): ")
-        delay_seconds = parse_delay_to_seconds(delay_input)
-
-        initial_run_scheduled = False
-        if delay_seconds == 0:
-            logger.info("Starting initial data collection and processing immediately...")
-            # Run synchronously before starting the main loop
-            agent._run_collect_and_process()
-            logger.info("Initial run complete.")
-            initial_run_scheduled = True
-        elif delay_seconds is not None and delay_seconds > 0:
-            logger.info(f"Scheduling initial data collection to run in {delay_seconds} seconds...")
-            # Run asynchronously after the delay
-            timer = threading.Timer(delay_seconds, agent._run_collect_and_process)
-            timer.start()
-            initial_run_scheduled = True
-        else:
-             logger.info("Skipping initial data collection. Agent will run based on schedule.")
-
-        # Start the main agent loop (scheduling, etc.) regardless of initial run
-        logger.info("Starting agent's main loop...")
-        agent.run()
-        
-    else:
-        logger.info("Agent start cancelled by user.")
-        sys.exit(0)
+    logger.info("Starting agent's main loop...")
+    agent.run()

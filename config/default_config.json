@@ -1,6 +1,6 @@
 {
-    "collection_interval_minutes": 30,
-    "processing_interval_minutes": 60,
+    "collection_interval_minutes": 60,
+    "processing_interval_minutes": 120,
     "data_retention_days": 30,
     "monitoring": {
         "min_data_points": 100,
