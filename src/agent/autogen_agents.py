@@ -43,7 +43,7 @@ class AutogenAgentSystem:
     def _load_config_list(self) -> List[Dict[str, Any]]:
         """Load API configurations, automatically adding OpenRouter if key is in env."""
         config_file = self.config_path / 'llm_config.json'
-        allowed_keys = {"model", "api_key", "base_url", "api_type", "api_version", "timeout", "temperature", "max_tokens"}
+        allowed_keys = {"model", "api_key", "base_url", "api_type", "api_version", "max_tokens"}
         processed_config_list = []
         found_openrouter_in_file = False
 
