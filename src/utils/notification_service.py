@@ -7,19 +7,23 @@ import os
 import logging
 import pandas as pd
 from datetime import datetime
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
+from pathlib import Path
+import numpy as np
 
 from src.utils.mail_sender import MailSender
 from src.utils.mail_config import get_email_recipients, is_email_notification_enabled
 
 logger = logging.getLogger(__name__)
 
-def send_analysis_report(analysis_data: Dict[str, Any], recipients: List[str] = None) -> bool:
+BASE_PATH = Path(__file__).parent.parent.parent
+
+def send_analysis_report(recipients: List[str] = None) -> bool:
     """
-    Send an email notification with the analysis results.
+    Load latest dashboard data, compare with previous, generate analysis report,
+    and send it via email.
     
     Args:
-        analysis_data (Dict[str, Any]): The analysis data to include in the email
         recipients (List[str], optional): List of email recipients. 
                                           If None, uses the configured recipients.
     
@@ -36,27 +40,135 @@ def send_analysis_report(analysis_data: Dict[str, Any], recipients: List[str] = 
     if not recipients:
         logger.warning("No email recipients configured. Skipping report email.")
         return False
-    
-    # Format the sentiment data into a report
+
+    try:
+        dashboard_dir = BASE_PATH / 'dashboard' / 'public'
+        latest_file = dashboard_dir / 'processed_data.csv'
+        previous_file = dashboard_dir / 'processed_data_old.csv'
+
+        if not latest_file.exists():
+            logger.error(f"Cannot generate report: Latest data file not found at {latest_file}")
+            return False
+
+        logger.info(f"Loading latest data from {latest_file}")
+        latest_data = pd.read_csv(latest_file)
+
+        previous_data = None
+        if previous_file.exists():
+            logger.info(f"Loading previous data from {previous_file}")
+            previous_data = pd.read_csv(previous_file)
+        else:
+            logger.info(f"Previous data file not found at {previous_file}. Skipping comparison.")
+
+        sentiment_change_data = {}
+        if previous_data is not None:
+            logger.info("Detecting sentiment change...")
+            sentiment_change_data = detect_sentiment_change(latest_data, previous_data) 
+            if sentiment_change_data.get("sentiment_changed"):
+                change_direction = "Improved" if sentiment_change_data.get("sentiment_change", 0) > 0 else "Declined"
+                logger.info(f"Significant sentiment change detected: {change_direction}")
+            else:
+                logger.info("No significant sentiment change detected.")
+        
+        logger.info("Calculating metrics for the report...")
+        overall_sentiment_score = 0
+        positive_pct = 0
+        negative_pct = 0
+        neutral_pct = 0
+        positive_count = 0
+        negative_count = 0
+        neutral_count = 0
+        total_mentions = len(latest_data)
+        positive_topics = {}
+        negative_topics = {}
+        source_metrics = {}
+        
+        if total_mentions > 0 and 'sentiment_score' in latest_data.columns:
+            overall_sentiment_score = latest_data['sentiment_score'].mean()
+            
+            if 'sentiment_label' in latest_data.columns:
+                 positive_count = (latest_data['sentiment_label'] == 'positive').sum()
+                 negative_count = (latest_data['sentiment_label'] == 'negative').sum()
+                 neutral_count = total_mentions - positive_count - negative_count
+            else:
+                 positive_count = (latest_data['sentiment_score'] > 0.2).sum()
+                 negative_count = (latest_data['sentiment_score'] < -0.2).sum()
+                 neutral_count = total_mentions - positive_count - negative_count
+
+            positive_pct = (positive_count / total_mentions * 100)
+            negative_pct = (negative_count / total_mentions * 100)
+            neutral_pct = (neutral_count / total_mentions * 100)
+
+            for _, row in latest_data.iterrows():
+                keywords = row['keywords'].split(',') if isinstance(row['keywords'], str) else []
+                sentiment = row['sentiment_score']
+                
+                for keyword in keywords:
+                    keyword = keyword.strip()
+                    if not keyword:
+                        continue
+                    if sentiment > 0.2:
+                        positive_topics[keyword] = positive_topics.get(keyword, 0) + 1
+                    elif sentiment < -0.2:
+                        negative_topics[keyword] = negative_topics.get(keyword, 0) + 1
+
+            if 'source' in latest_data.columns:
+                source_groups = latest_data.groupby('source')['sentiment_score']
+                source_metrics = source_groups.agg(['mean', 'count']).to_dict('index')
+
+        analysis_data = {
+            "overall_sentiment": overall_sentiment_score,
+            "positive_mentions": positive_pct,
+            "neutral_mentions": neutral_pct,
+            "negative_mentions": negative_pct,
+            "positive_count": int(positive_count),
+            "neutral_count": int(neutral_count),
+            "negative_count": int(negative_count),
+            "total_mentions": total_mentions,
+            "positive_topics": positive_topics,
+            "negative_topics": negative_topics,
+            "source_metrics": source_metrics,
+            "insights": []
+        }
+
+        if sentiment_change_data:
+            analysis_data.update(sentiment_change_data)
+            if sentiment_change_data.get("sentiment_changed"):
+                 for topic_data in sentiment_change_data.get("new_topics", []):
+                     topic = topic_data.get("topic")
+                     count = topic_data.get("count")
+                     analysis_data["insights"].append(f"New topic detected: '{topic}' ({count} mentions)")
+                 for topic_data in sentiment_change_data.get("fading_topics", []):
+                     topic = topic_data.get("topic")
+                     prev_count = topic_data.get("previous_count")
+                     curr_count = topic_data.get("current_count")
+                     dec_text = f"reduced from {prev_count} to {curr_count}" if curr_count > 0 else f"disappeared (was {prev_count})"
+                     analysis_data["insights"].append(f"Topic declining: '{topic}' {dec_text} mentions")
+
+    except FileNotFoundError as e:
+        logger.error(f"Error loading data for report: {e}")
+        return False
+    except pd.errors.EmptyDataError:
+        logger.error(f"Error loading data for report: {latest_file} is empty.")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error preparing analysis data for report: {e}", exc_info=True)
+        return False
+
     report_content = format_analysis_report(analysis_data)
     
-    # Create a mail sender instance
     mail_sender = MailSender()
     
-    # Determine overall sentiment
-    overall_sentiment = "Positive"
     sentiment_score = analysis_data.get("overall_sentiment", 0)
-    if sentiment_score < 0:
-        overall_sentiment = "Negative"
-    elif -0.2 <= sentiment_score <= 0.2:
-        overall_sentiment = "Neutral"
+    prev_sentiment_score = analysis_data.get("previous_overall_sentiment")
+    overall_sentiment_text = "Positive" if sentiment_score > 0.2 else ("Negative" if sentiment_score < -0.2 else "Neutral")
     
-    # Add sentiment change information to subject if available
-    subject = f"Sentiment Analysis Report: {overall_sentiment} ({datetime.now().strftime('%Y-%m-%d')})"
+    subject = f"Sentiment Analysis Report: {overall_sentiment_text} ({datetime.now().strftime('%Y-%m-%d')})"
     if analysis_data.get("sentiment_changed", False):
         change_direction = "Improved" if analysis_data.get("sentiment_change", 0) > 0 else "Declined"
         subject = f"ALERT: Sentiment {change_direction} - {subject}"
     
+    logger.info(f"Sending analysis report email to: {', '.join(recipients)}")
     success = mail_sender.send_report_email(
         recipients,
         subject,
@@ -80,77 +192,173 @@ def format_analysis_report(analysis_data: Dict[str, Any]) -> str:
     Returns:
         str: Formatted HTML report content
     """
-    # Extract key metrics
     sentiment_score = analysis_data.get("overall_sentiment", 0)
+    prev_sentiment_score = analysis_data.get("previous_overall_sentiment")
     sentiment_text = "Positive" if sentiment_score > 0.2 else ("Negative" if sentiment_score < -0.2 else "Neutral")
     sentiment_color = "#28a745" if sentiment_score > 0.2 else ("#dc3545" if sentiment_score < -0.2 else "#6c757d")
     
-    # Format score as a percentage from 0-100% for display
     sentiment_percentage = round((sentiment_score + 1) * 50, 1)
     
-    # Get the insights
+    total_mentions = analysis_data.get("total_mentions", 0)
+    pos_count = analysis_data.get("positive_count", 0)
+    neg_count = analysis_data.get("negative_count", 0)
+    neu_count = analysis_data.get("neutral_count", 0)
+    pos_pct = analysis_data.get("positive_mentions", 0)
+    neg_pct = analysis_data.get("negative_mentions", 0)
+    neu_pct = analysis_data.get("neutral_mentions", 0)
+    
+    prev_pos_pct = analysis_data.get("previous_positive_mentions")
+    prev_neg_pct = analysis_data.get("previous_negative_mentions")
+    prev_neu_pct = analysis_data.get("previous_neutral_mentions")
+    
     insights = analysis_data.get("insights", [])
     insights_html = "<ul>"
-    for insight in insights[:5]:  # Show top 5 insights
-        insights_html += f"<li>{insight}</li>"
+    if insights:
+        for insight in insights[:15]:
+            insights_html += f"<li>{insight}</li>"
+    else:
+        insights_html += "<li>No specific insights generated.</li>"
     insights_html += "</ul>"
     
-    # Get positive/negative topics
     positive_topics = analysis_data.get("positive_topics", {})
     negative_topics = analysis_data.get("negative_topics", {})
     
-    positive_html = "<ul>"
-    for topic, count in sorted(positive_topics.items(), key=lambda x: x[1], reverse=True)[:5]:
-        positive_html += f"<li>{topic} ({count} mentions)</li>"
-    positive_html += "</ul>"
-    
-    negative_html = "<ul>"
-    for topic, count in sorted(negative_topics.items(), key=lambda x: x[1], reverse=True)[:5]:
-        negative_html += f"<li>{topic} ({count} mentions)</li>"
-    negative_html += "</ul>"
-    
-    # Add sentiment change section if available
+    positive_html = "<p>No prominent positive themes detected.</p>"
+    if positive_topics:
+        positive_html = '<table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;"><tr><th>Theme</th><th>Mentions</th></tr>'
+        for topic, count in sorted(positive_topics.items(), key=lambda x: x[1], reverse=True)[:10]:
+            positive_html += f'<tr><td>{topic}</td><td>{count}</td></tr>'
+        positive_html += '</table>'
+
+    negative_html = "<p>No prominent negative themes detected.</p>"
+    if negative_topics:
+        negative_html = '<table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;"><tr><th>Theme</th><th>Mentions</th></tr>'
+        for topic, count in sorted(negative_topics.items(), key=lambda x: x[1], reverse=True)[:10]:
+            negative_html += f'<tr><td>{topic}</td><td>{count}</td></tr>'
+        negative_html += '</table>'
+
     sentiment_change_html = ""
     if analysis_data.get("sentiment_changed", False):
         change_value = analysis_data.get("sentiment_change", 0)
         change_direction = "improved" if change_value > 0 else "declined"
         change_color = "#28a745" if change_value > 0 else "#dc3545"
         
-        # Format percentage changes
-        pos_change = analysis_data.get("positive_change", 0)
-        neg_change = analysis_data.get("negative_change", 0)
+        pos_change = analysis_data.get("positive_change") 
+        neg_change = analysis_data.get("negative_change")
         
+        def format_pct_change(current, previous):
+            if previous is None or current is None:
+                return "N/A"
+            change = current - previous
+            sign = '+' if change > 0 else ''
+            return f"{current:.1f}% (from {previous:.1f}%, Change: {sign}{change:.1f}pp)"
+            
+        overall_change_display = f"{sentiment_score:.3f} (from {prev_sentiment_score:.3f}, Change: {'+' if change_value > 0 else ''}{change_value:.3f})" if prev_sentiment_score is not None else f"{sentiment_score:.3f} (Previous N/A)"
+        pos_change_display = format_pct_change(pos_pct, prev_pos_pct)
+        neg_change_display = format_pct_change(neg_pct, prev_neg_pct)
+        neu_change_display = format_pct_change(neu_pct, prev_neu_pct)
+
         sentiment_change_html = f"""
         <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-left: 5px solid {change_color};">
             <h3 style="color: {change_color};">Sentiment Change Detected!</h3>
             <p>The overall sentiment has <strong>{change_direction}</strong> since the last analysis.</p>
-            <ul>
-                <li>Overall sentiment change: <strong>{abs(change_value):.2f} points {change_direction}</strong></li>
-                <li>Positive mentions: <strong>{'+' if pos_change > 0 else ''}{pos_change:.1f}%</strong></li>
-                <li>Negative mentions: <strong>{'+' if neg_change > 0 else ''}{neg_change:.1f}%</strong></li>
-            </ul>
+            <table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;">
+                <tr><th>Metric</th><th>Current (vs Previous)</th></tr>
+                <tr><td>Overall Score</td><td><strong>{overall_change_display}</strong></td></tr>
+                <tr><td>Positive Mentions</td><td><strong>{pos_change_display}</strong></td></tr>
+                <tr><td>Negative Mentions</td><td><strong>{neg_change_display}</strong></td></tr>
+                <tr><td>Neutral Mentions</td><td><strong>{neu_change_display}</strong></td></tr>
+            </table>
         </div>
         """
     
-    # Create HTML report
+    source_metrics = analysis_data.get("source_metrics", {})
+    source_html = "<p>No source-specific data available.</p>"
+    if source_metrics:
+        source_html = '<table border="1" cellpadding="5" style="border-collapse: collapse; width: 100%;"><tr><th>Source</th><th>Avg. Score</th><th>Mentions</th></tr>'
+        for source, metrics in sorted(source_metrics.items()):
+            source_html += f'<tr><td>{source}</td><td>{metrics.get("mean", 0):.3f}</td><td>{metrics.get("count", 0)}</td></tr>'
+        source_html += '</table>'
+        
     html_content = f"""
-    <h2>Sentiment Analysis Report</h2>
-    <p>Analysis completed on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-    
-    {sentiment_change_html}
-    
-    <h3>Overall Sentiment: <span style="color: {sentiment_color}">{sentiment_text} ({sentiment_percentage}%)</span></h3>
-    
-    <h3>Key Insights:</h3>
-    {insights_html}
-    
-    <h3>Top Positive Themes:</h3>
-    {positive_html}
-    
-    <h3>Top Negative Themes:</h3>
-    {negative_html}
-    
-    <p>This report was automatically generated by the Sentiment Analysis System.</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Sentiment Analysis Report</title>
+        <style>
+            body {{ font-family: sans-serif; line-height: 1.4; margin: 20px; color: #333; }}
+            table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
+            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+            th {{ background-color: #f2f2f2; }}
+            h2, h3 {{ color: #0056b3; border-bottom: 1px solid #eee; padding-bottom: 5px;}}
+        </style>
+    </head>
+    <body>
+        <h2>Sentiment Analysis Report</h2>
+        <p>Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+
+        <h3>Summary</h3>
+        <table border="1" cellpadding="5">
+            <tr><th>Metric</th><th>Current</th><th>Previous</th><th>Change</th></tr>
+            <tr>
+                <td>Overall Sentiment Score</td>
+                <td>{sentiment_score:.3f} ({sentiment_text})</td>
+                <td>{f'{prev_sentiment_score:.3f}' if prev_sentiment_score is not None else 'N/A'}</td>
+                <td>{f'{'+' if change_value > 0 else ''}{change_value:.3f}' if prev_sentiment_score is not None else 'N/A'}</td>
+            </tr>
+            <tr>
+                <td>Total Mentions</td>
+                <td>{total_mentions}</td>
+                <td>N/A</td>
+                <td>N/A</td>
+            </tr>
+             <tr>
+                <td>Positive Mentions</td>
+                <td>{pos_count} ({pos_pct:.1f}%)</td>
+                <td>{f'{prev_pos_pct:.1f}%' if prev_pos_pct is not None else 'N/A'}</td>
+                <td>{f'{'+' if pos_change > 0 else ''}{pos_change:.1f}pp' if prev_pos_pct is not None else 'N/A'}</td>
+             </tr>
+             <tr>
+                <td>Negative Mentions</td>
+                <td>{neg_count} ({neg_pct:.1f}%)</td>
+                <td>{f'{prev_neg_pct:.1f}%' if prev_neg_pct is not None else 'N/A'}</td>
+                <td>{f'{'+' if neg_change > 0 else ''}{neg_change:.1f}pp' if prev_neg_pct is not None else 'N/A'}</td>
+             </tr>
+             <tr>
+                <td>Neutral Mentions</td>
+                <td>{neu_count} ({neu_pct:.1f}%)</td>
+                <td>{f'{prev_neu_pct:.1f}%' if prev_neu_pct is not None else 'N/A'}</td>
+                <td>{f'{'+' if neu_change > 0 else ''}{neu_change:.1f}pp' if prev_neu_pct is not None else 'N/A'}</td>
+             </tr>
+        </table>
+        
+        {sentiment_change_html}
+        
+        <h3>Sentiment Distribution</h3>
+        <p>Current Score: <strong>{sentiment_score:.3f}</strong> (<span class="{sentiment_text.lower()}">{sentiment_text}</span>). Range: -1 (Negative) to +1 (Positive)</p>
+        <ul>
+            <li>Positive: {pos_count} ({pos_pct:.1f}%)</li>
+            <li>Negative: {neg_count} ({neg_pct:.1f}%)</li>
+            <li>Neutral: {neu_count} ({neu_pct:.1f}%)</li>
+        </ul>
+        
+        <h3>Key Insights & Topic Changes:</h3>
+        {insights_html}
+        
+        <h3>Top 10 Positive Themes:</h3>
+        {positive_html}
+        
+        <h3>Top 10 Negative Themes:</h3>
+        {negative_html}
+
+        <h3>Sentiment by Source</h3>
+        {source_html}
+
+        <hr style="margin-top: 30px;">
+        <p><small>This report was automatically generated by the Sentiment Analysis System.</small></p>
+    </body>
+    </html>
     """
     
     return html_content
@@ -169,38 +377,54 @@ def send_collection_notification(collection_data: Dict[str, Any], recipients: Li
     from src.utils.mail_config import NOTIFY_ON_COLLECTION
     
     if not is_email_notification_enabled() or not NOTIFY_ON_COLLECTION:
+        logger.info("Collection notifications disabled. Skipping email.")
         return False
         
     if recipients is None:
         recipients = get_email_recipients()
         
     if not recipients:
+        logger.warning("No recipients configured for collection notification.")
         return False
     
     success_rate = collection_data.get("collection_success_rate", 0) * 100
     active_sources = collection_data.get("active_sources", 0)
     total_sources = collection_data.get("total_sources", 0)
     total_records = collection_data.get("total_records", 0)
+    duration = collection_data.get("duration_seconds", 0)
     
     subject = f"Data Collection Complete: {success_rate:.1f}% Success Rate"
     message = f"""
-    <h2>Data Collection Complete</h2>
-    <p>Collection completed on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-    
-    <h3>Collection Metrics:</h3>
-    <ul>
-        <li>Success Rate: {success_rate:.1f}% ({active_sources}/{total_sources} sources)</li>
-        <li>Total Records: {total_records}</li>
-    </ul>
-    
-    <p>The data processing and analysis phase will begin shortly.</p>
+    <!DOCTYPE html>
+    <html>
+    <head><title>Collection Complete</title></head>
+    <body>
+        <h2>Data Collection Complete</h2>
+        <p>Collection process finished on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        
+        <h3>Collection Metrics:</h3>
+        <ul>
+            <li>Duration: {duration:.2f} seconds</li>
+            <li>Sources Attempted: {total_sources}</li>
+            <li>Successful Sources: {active_sources} ({success_rate:.1f}%)</li>
+            <li>Total Records Collected: {total_records}</li>
+        </ul>
+        
+        <p>The data processing and analysis phase will begin based on its schedule.</p>
+        <hr>
+        <p><small>Sentiment Analysis System Notification</small></p>
+    </body>
+    </html>
     """
     
     mail_sender = MailSender()
+    logger.info(f"Sending collection notification email to: {', '.join(recipients)}")
     success = mail_sender.send_report_email(recipients, subject, message)
     
     if success:
-        logger.info(f"Collection notification email sent successfully to {', '.join(recipients)}")
+        logger.info(f"Collection notification email sent successfully.")
+    else:
+        logger.error(f"Failed to send collection notification email.")
     
     return success
 
@@ -208,17 +432,23 @@ def detect_sentiment_change(current_data: pd.DataFrame, previous_data: pd.DataFr
                            threshold: float = 0.1) -> Dict[str, Any]:
     """
     Detect significant changes in sentiment between current and previous data.
+    Also identifies new and fading topics based on keywords.
     
     Args:
-        current_data (pd.DataFrame): The current processed data
-        previous_data (pd.DataFrame): The previous processed data
-        threshold (float): The threshold for significant change (0.1 = 10%)
+        current_data (pd.DataFrame): The current processed data (needs 'sentiment_score', optionally 'sentiment_label', 'keywords')
+        previous_data (pd.DataFrame): The previous processed data (needs 'sentiment_score', optionally 'sentiment_label', 'keywords')
+        threshold (float): The minimum absolute change in overall sentiment score to be considered significant.
     
     Returns:
-        Dict[str, Any]: Dictionary with change information
+        Dict[str, Any]: Dictionary with change information including:
+            sentiment_changed (bool): True if overall sentiment change exceeds threshold.
+            sentiment_change (float): The difference in mean sentiment score (current - previous).
+            positive_change (float): Percentage point change in positive mentions.
+            negative_change (float): Percentage point change in negative mentions.
+            neutral_change (float): Percentage point change in neutral mentions.
+            new_topics (List[Dict]): List of {'topic': str, 'count': int} for new topics.
+            fading_topics (List[Dict]): List of {'topic': str, 'previous_count': int, 'current_count': int} for fading topics.
     """
-    import pandas as pd
-    
     result = {
         "sentiment_changed": False,
         "sentiment_change": 0,
@@ -229,90 +459,82 @@ def detect_sentiment_change(current_data: pd.DataFrame, previous_data: pd.DataFr
         "fading_topics": []
     }
     
-    # Check if both dataframes have sentiment data
     if 'sentiment_score' not in current_data.columns or 'sentiment_score' not in previous_data.columns:
+        logger.warning("Cannot detect sentiment change: 'sentiment_score' column missing in one or both dataframes.")
         return result
+    if current_data.empty or previous_data.empty:
+         logger.warning("Cannot detect sentiment change: One or both dataframes are empty.")
+         return result
+
+    current_sentiment = np.mean(current_data['sentiment_score'])
+    previous_sentiment = np.mean(previous_data['sentiment_score'])
     
-    # Calculate overall sentiment scores
-    current_sentiment = current_data['sentiment_score'].mean() if len(current_data) > 0 else 0
-    previous_sentiment = previous_data['sentiment_score'].mean() if len(previous_data) > 0 else 0
-    
-    # Calculate sentiment change
     sentiment_change = current_sentiment - previous_sentiment
+    result["sentiment_change"] = sentiment_change
     
-    # Calculate percentage of positive, negative, and neutral mentions
     def get_sentiment_percentages(df):
         total = len(df)
         if total == 0:
             return {"positive": 0, "negative": 0, "neutral": 0}
-            
+        
         if 'sentiment_label' in df.columns:
-            # If we have categorical labels
             positive = len(df[df['sentiment_label'] == 'positive']) / total * 100
             negative = len(df[df['sentiment_label'] == 'negative']) / total * 100
-            neutral = len(df[df['sentiment_label'] == 'neutral']) / total * 100
-        else:
-            # Calculate from numeric scores
+            neutral = 100 - positive - negative
+        elif 'sentiment_score' in df.columns:
             positive = len(df[df['sentiment_score'] > 0.2]) / total * 100
             negative = len(df[df['sentiment_score'] < -0.2]) / total * 100
             neutral = 100 - positive - negative
+        else:
+            return {"positive": 0, "negative": 0, "neutral": 0}
             
         return {"positive": positive, "negative": negative, "neutral": neutral}
     
     current_percentages = get_sentiment_percentages(current_data)
     previous_percentages = get_sentiment_percentages(previous_data)
     
-    # Calculate percentage changes
-    positive_change = current_percentages["positive"] - previous_percentages["positive"]
-    negative_change = current_percentages["negative"] - previous_percentages["negative"]
-    neutral_change = current_percentages["neutral"] - previous_percentages["neutral"]
+    result["positive_change"] = current_percentages["positive"] - previous_percentages["positive"]
+    result["negative_change"] = current_percentages["negative"] - previous_percentages["negative"]
+    result["neutral_change"] = current_percentages["neutral"] - previous_percentages["neutral"]
     
-    # Check if the change is significant
-    significant_change = (abs(sentiment_change) >= threshold or 
-                         abs(positive_change) >= threshold*100 or 
-                         abs(negative_change) >= threshold*100)
+    result["sentiment_changed"] = abs(sentiment_change) >= threshold
     
-    result["sentiment_changed"] = significant_change
-    result["sentiment_change"] = sentiment_change
-    result["positive_change"] = positive_change
-    result["negative_change"] = negative_change
-    result["neutral_change"] = neutral_change
-    
-    # Detect topic changes if keywords column exists
     if 'keywords' in current_data.columns and 'keywords' in previous_data.columns:
-        # Get all keywords from current and previous data
-        current_keywords = {}
-        previous_keywords = {}
-        
-        # Process current keywords
-        for _, row in current_data.iterrows():
-            if isinstance(row.get('keywords'), str):
-                for keyword in row['keywords'].split(','):
-                    keyword = keyword.strip()
-                    if keyword:
-                        current_keywords[keyword] = current_keywords.get(keyword, 0) + 1
-        
-        # Process previous keywords
-        for _, row in previous_data.iterrows():
-            if isinstance(row.get('keywords'), str):
-                for keyword in row['keywords'].split(','):
-                    keyword = keyword.strip()
-                    if keyword:
-                        previous_keywords[keyword] = previous_keywords.get(keyword, 0) + 1
-        
-        # Find new topics (in current but not in previous)
-        for keyword, count in current_keywords.items():
-            if keyword not in previous_keywords and count >= 3:  # At least 3 mentions
-                result["new_topics"].append({"topic": keyword, "count": count})
-        
-        # Find fading topics (in previous but disappeared or significantly reduced)
-        for keyword, prev_count in previous_keywords.items():
-            curr_count = current_keywords.get(keyword, 0)
-            if prev_count >= 3 and (curr_count == 0 or curr_count < prev_count * 0.5):
-                result["fading_topics"].append({
-                    "topic": keyword, 
-                    "previous_count": prev_count,
-                    "current_count": curr_count
-                })
-    
+        try:
+            def get_keyword_counts(series):
+                keyword_counts = {}
+                for keywords_str in series.dropna().astype(str):
+                     if keywords_str:
+                          for keyword in keywords_str.split(','):
+                              keyword = keyword.strip()
+                              if keyword:
+                                  keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
+                return keyword_counts
+
+            current_keywords = get_keyword_counts(current_data['keywords'])
+            previous_keywords = get_keyword_counts(previous_data['keywords'])
+            
+            for keyword, count in current_keywords.items():
+                if keyword not in previous_keywords and count >= 3: 
+                    result["new_topics"].append({"topic": keyword, "count": count})
+            
+            for keyword, prev_count in previous_keywords.items():
+                curr_count = current_keywords.get(keyword, 0)
+                if prev_count >= 3 and (curr_count == 0 or curr_count < prev_count * 0.5):
+                    result["fading_topics"].append({
+                        "topic": keyword, 
+                        "previous_count": prev_count,
+                        "current_count": curr_count
+                    })
+            result["new_topics"].sort(key=lambda x: x['count'], reverse=True)
+            result["fading_topics"].sort(key=lambda x: x['previous_count'], reverse=True)
+
+        except Exception as topic_err:
+            logger.error(f"Error detecting topic changes: {topic_err}", exc_info=True)
+            result["new_topics"] = []
+            result["fading_topics"] = []
+            
+    else:
+         logger.warning("Cannot detect topic changes: 'keywords' column missing in one or both dataframes.")
+
     return result 

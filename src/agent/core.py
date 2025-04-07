@@ -16,6 +16,8 @@ import queue
 import asyncio
 import re
 import threading
+from src.utils.mail_config import is_email_notification_enabled, get_email_recipients, NOTIFY_ON_PROCESSING
+from src.utils.notification_service import send_analysis_report
 from .brain import AgentBrain
 from .autogen_agents import AutogenAgentSystem
 
@@ -245,6 +247,9 @@ class SentimentAnalysisAgent:
                     with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
                         json.dump(self.config, f, indent=4)
 
+            # Return the success status of the task function
+            return self.task_status.get('last_run', {}).get(task_name, {}).get('success', False)
+
     def _run_collect_and_process(self):
         """Run collection and processing in sequence"""
         # Run collection for all sources
@@ -259,121 +264,19 @@ class SentimentAnalysisAgent:
             from src.utils.mail_config import NOTIFY_ON_ANALYSIS, get_email_recipients
             
             if NOTIFY_ON_ANALYSIS and processing_success:
-                logger.info("Analysis notifications enabled and processing successful. Checking for sentiment changes...")
+                logger.info("Analysis notifications enabled and processing successful. Triggering report email...")
                 try:
-                    # Load data for comparison from the dashboard directory
-                    dashboard_dir = self.base_path / 'dashboard' / 'public'
-                    latest_file = dashboard_dir / 'processed_data.csv' # Path to current dashboard file
-                    previous_file = dashboard_dir / 'processed_data_old.csv' # Path to previous dashboard file
-
-                    if not latest_file.exists():
-                         logger.warning(f"Cannot send analysis notification: {latest_file.name} not found in dashboard/public.")
-                         return # Exit if no latest data
-                         
-                    latest_data = pd.read_csv(latest_file)
-                    previous_data = pd.read_csv(previous_file) if previous_file.exists() else None
-                    
-                    if previous_data is None:
-                         logger.info(f"Previous data file ({previous_file.name}) not found. Cannot detect changes for first run.")
-                         sentiment_changed = False
-                         sentiment_change_data = {}
-                    else:
-                         # Detect sentiment change
-                         sentiment_changed, sentiment_change_data = detect_sentiment_change(latest_data, previous_data)
-                    
-                    if sentiment_changed:
-                        logger.info(f"Significant sentiment change detected: {sentiment_change_data.get('change_direction')} by {abs(sentiment_change_data.get('change_value', 0)):.2f} points")
-                    else:
-                        logger.info("No significant sentiment change detected.")
-
-                    # Calculate necessary stats for report
-                    # ... (existing code for positive/negative counts, percentages, topics)
-                    positive_count = (latest_data['sentiment_label'] == 'positive').sum()
-                    negative_count = (latest_data['sentiment_label'] == 'negative').sum()
-                    neutral_count = len(latest_data) - positive_count - negative_count
-                    
-                    # Calculate percentages
-                    total = len(latest_data)
-                    positive_pct = (positive_count / total * 100) if total > 0 else 0
-                    negative_pct = (negative_count / total * 100) if total > 0 else 0
-                    neutral_pct = (neutral_count / total * 100) if total > 0 else 0
-                    
-                    # Extract top topics by sentiment
-                    positive_topics = {}
-                    negative_topics = {}
-                    
-                    if 'keywords' in latest_data.columns and 'sentiment_score' in latest_data.columns:
-                        for _, row in latest_data.iterrows():
-                            keywords = row['keywords'].split(',') if isinstance(row['keywords'], str) else []
-                            sentiment = row['sentiment_score']
-                            
-                            for keyword in keywords:
-                                keyword = keyword.strip()
-                                if not keyword:
-                                    continue
-                                    
-                                if sentiment > 0.2:
-                                    positive_topics[keyword] = positive_topics.get(keyword, 0) + 1
-                                elif sentiment < -0.2:
-                                    negative_topics[keyword] = negative_topics.get(keyword, 0) + 1
-                    
-                    # Get insights from autogen if available
-                    insights = []
-                    if hasattr(self, 'autogen_system') and hasattr(self.autogen_system, 'latest_insights'):
-                        insights = self.autogen_system.latest_insights
-                    
-                    # Add new topics and fading topics to insights if available
-                    if sentiment_changed:
-                        # Add new topics
-                        for topic_data in sentiment_change_data.get("new_topics", []):
-                            topic = topic_data.get("topic")
-                            count = topic_data.get("count")
-                            insights.append(f"New topic detected: '{topic}' with {count} mentions")
-                        
-                        # Add fading topics
-                        for topic_data in sentiment_change_data.get("fading_topics", []):
-                            topic = topic_data.get("topic")
-                            prev_count = topic_data.get("previous_count")
-                            curr_count = topic_data.get("current_count")
-                            if curr_count == 0:
-                                insights.append(f"Topic no longer mentioned: '{topic}' (previously {prev_count} mentions)")
-                            else:
-                                insights.append(f"Topic declining: '{topic}' reduced from {prev_count} to {curr_count} mentions")
-                    
-                    # Prepare report data
-                    logger.info("Preparing analysis report data...") # Log before prep
-                    analysis_data = {
-                        "overall_sentiment": latest_data['sentiment_score'].mean() if 'sentiment_score' in latest_data.columns else 0,
-                        "positive_mentions": positive_pct,
-                        "neutral_mentions": neutral_pct,
-                        "negative_mentions": negative_pct,
-                        "total_mentions": total,
-                        "positive_topics": positive_topics,
-                        "negative_topics": negative_topics,
-                        "insights": insights
-                    }
-                    
-                    # Add sentiment change data if available
-                    if sentiment_changed:
-                        analysis_data.update(sentiment_change_data)
-                    
-                    # Send report email
+                    # Send report email (function now handles data loading/comparison)
                     recipients = get_email_recipients()
-                    logger.info(f"Sending analysis report email to: {recipients}") # Log before sending
-                    send_analysis_report(analysis_data, recipients)
-                    logger.info("Analysis report email sent successfully.") # Log after sending
-                    
-                    # After successful processing and notification, the file rotation already handles the state.
-                    # No need to copy files here manually as we are reading the dashboard files directly.
-                    # try:
-                    #     import shutil
-                    #     shutil.copy2(latest_file, previous_file) # This was incorrect logic
-                    #     logger.info(f"Successfully copied {latest_file.name} to {previous_file.name} for next comparison.")
-                    # except Exception as copy_err:
-                    #     logger.error(f"Failed to copy latest data to previous data file: {copy_err}")
+                    if recipients:
+                        logger.info(f"Attempting to send analysis report email to: {recipients}")
+                        send_analysis_report(recipients)
+                        logger.info("Analysis report email triggered successfully.") 
+                    else:
+                        logger.warning("Analysis notifications enabled, but no recipients configured.")
                         
                 except Exception as e:
-                    logger.error(f"Error during analysis notification preparation or sending: {str(e)}", exc_info=True)
+                    logger.error(f"Error triggering analysis notification email: {str(e)}", exc_info=True)
             elif not NOTIFY_ON_ANALYSIS:
                  logger.info("Analysis notifications are disabled (NOTIFY_ON_ANALYSIS=False). Skipping notification.")
             elif not processing_success:
