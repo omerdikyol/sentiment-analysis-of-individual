@@ -305,7 +305,7 @@ def format_analysis_report(analysis_data: Dict[str, Any]) -> str:
                 <td>Overall Sentiment Score</td>
                 <td>{sentiment_score:.3f} ({sentiment_text})</td>
                 <td>{f'{prev_sentiment_score:.3f}' if prev_sentiment_score is not None else 'N/A'}</td>
-                <td>{f'{'+' if change_value > 0 else ''}{change_value:.3f}' if prev_sentiment_score is not None else 'N/A'}</td>
+                <td>{ f'{change_value:+.3f}' if prev_sentiment_score is not None else 'N/A' }</td>
             </tr>
             <tr>
                 <td>Total Mentions</td>
@@ -317,19 +317,19 @@ def format_analysis_report(analysis_data: Dict[str, Any]) -> str:
                 <td>Positive Mentions</td>
                 <td>{pos_count} ({pos_pct:.1f}%)</td>
                 <td>{f'{prev_pos_pct:.1f}%' if prev_pos_pct is not None else 'N/A'}</td>
-                <td>{f'{'+' if pos_change > 0 else ''}{pos_change:.1f}pp' if prev_pos_pct is not None else 'N/A'}</td>
+                <td>{ f'{pos_change:+.1f}pp' if prev_pos_pct is not None else 'N/A' }</td>
              </tr>
              <tr>
                 <td>Negative Mentions</td>
                 <td>{neg_count} ({neg_pct:.1f}%)</td>
                 <td>{f'{prev_neg_pct:.1f}%' if prev_neg_pct is not None else 'N/A'}</td>
-                <td>{f'{'+' if neg_change > 0 else ''}{neg_change:.1f}pp' if prev_neg_pct is not None else 'N/A'}</td>
+                <td>{ f'{neg_change:+.1f}pp' if prev_neg_pct is not None else 'N/A' }</td>
              </tr>
              <tr>
                 <td>Neutral Mentions</td>
                 <td>{neu_count} ({neu_pct:.1f}%)</td>
                 <td>{f'{prev_neu_pct:.1f}%' if prev_neu_pct is not None else 'N/A'}</td>
-                <td>{f'{'+' if neu_change > 0 else ''}{neu_change:.1f}pp' if prev_neu_pct is not None else 'N/A'}</td>
+                <td>{ f'{neu_change:+.1f}pp' if prev_neu_pct is not None else 'N/A' }</td>
              </tr>
         </table>
         
