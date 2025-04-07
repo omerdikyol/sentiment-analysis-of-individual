@@ -24,7 +24,8 @@ const SentimentData = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:8000/latest-data');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await axios.get(`${apiUrl}/latest-data`);
       if (response.data.status === 'success') {
         setData(response.data.data);
         setLastUpdate(response.data.timestamp);

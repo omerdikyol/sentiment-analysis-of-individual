@@ -21,7 +21,7 @@ import axios from 'axios';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { format, formatDistanceToNow } from 'date-fns';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 interface AgentStatus {
   is_busy: boolean;
