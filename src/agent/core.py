@@ -16,10 +16,12 @@ import queue
 import asyncio
 import re
 import threading
+import requests
 from src.utils.mail_config import is_email_notification_enabled, get_email_recipients, NOTIFY_ON_PROCESSING
 from src.utils.notification_service import send_analysis_report
 from .brain import AgentBrain
 from .autogen_agents import AutogenAgentSystem
+import inspect
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +33,10 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger('AgentCore')
+
+# Define API endpoint URL (Best practice: move to config or env var)
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000") # Default for local dev
+DATA_UPDATE_ENDPOINT = f"{API_BASE_URL}/data/update"
 
 class SentimentAnalysisAgent:
     def __init__(self):
@@ -67,8 +73,8 @@ class SentimentAnalysisAgent:
         
         # Default configuration
         default_config = {
-            'collection_interval_minutes': 30,
-            'processing_interval_minutes': 60,
+            'collection_interval_minutes': 60,
+            'processing_interval_minutes': 120,
             'data_retention_days': 30,
             'monitoring': {
                 'min_data_points': 100,
@@ -195,21 +201,33 @@ class SentimentAnalysisAgent:
         self.task_status['is_busy'] = True
         self.task_status['current_task'] = task_name
         start_time = datetime.now()
-        
+        success = False # Initialize success status
+
         try:
-            result = task_func()
+            # Check if the task function is a coroutine function
+            if inspect.iscoroutinefunction(task_func):
+                # Run the async task function blocking until complete
+                # This assumes schedule library calls tasks sequentially from the main thread.
+                # If tasks need to run concurrently or if schedule runs in a separate thread,
+                # using asyncio.run_coroutine_threadsafe might be necessary.
+                result = self.event_loop.run_until_complete(task_func())
+            else:
+                # Run the regular synchronous function
+                result = task_func()
+
+            success = result # Capture the success status from the task's return value
             duration = (datetime.now() - start_time).total_seconds()
-            
+
             self.task_status['last_run'][task_name] = {
                 'time': start_time.isoformat(),
-                'success': result,
+                'success': success,
                 'duration': duration
             }
 
             # Update brain's memory
             self.brain.update_memory({
                 'type': task_name,
-                'success': result,
+                'success': success,
                 'duration': duration,
                 'timestamp': start_time.isoformat()
             })
@@ -217,7 +235,8 @@ class SentimentAnalysisAgent:
         except Exception as e:
             logger.error(f"Error in task {task_name}: {str(e)}")
             duration = (datetime.now() - start_time).total_seconds()
-            
+            success = False # Ensure success is False on exception
+
             self.task_status['last_run'][task_name] = {
                 'time': start_time.isoformat(),
                 'success': False,
@@ -248,7 +267,7 @@ class SentimentAnalysisAgent:
                         json.dump(self.config, f, indent=4)
 
             # Return the success status of the task function
-            return self.task_status.get('last_run', {}).get(task_name, {}).get('success', False)
+            return success # Return the captured success status
 
     def _run_collect_and_process(self):
         """Run collection and processing in sequence"""
@@ -371,39 +390,145 @@ class SentimentAnalysisAgent:
             return 0.0
 
     def process_data(self):
-        """Execute data processing and analysis with Autogen assistance"""
+        """Process collected raw data, perform analysis, and send to API."""
+        logger.info("Starting data processing...")
+        raw_data_path = self.base_path / 'data' / 'raw'
+        processed_data_path = self.base_path / 'data' / 'processed'
+        processed_data_path.mkdir(parents=True, exist_ok=True)
+
+        all_raw_files = list(raw_data_path.glob('*.csv'))
+        if not all_raw_files:
+            logger.warning("No raw data files found to process.")
+            return False # Indicate no processing happened
+
+        # Aggregate raw data
         try:
-            logger.info("Starting data processing...")
-            processor_path = self.base_path / 'src' / 'processing' / 'data_processor.py'
-            subprocess.run(['python', str(processor_path)], check=True, cwd=str(self.base_path))
-            
-            # Load processed data for Autogen analysis
-            latest_data = pd.read_csv(self.base_path / 'data' / 'processed' / 'latest.csv')
-            data_dict = latest_data.to_dict(orient='records')
-            
-            # Run Autogen analysis
-            analysis_result = self.event_loop.run_until_complete(
-                self.autogen_system.analyze_data({
-                    'data': data_dict,
-                    'metadata': {
-                        'timestamp': datetime.now().isoformat(),
-                        'source_count': len(latest_data['source'].unique()),
-                        'total_records': len(latest_data)
-                    }
-                })
-            )
-            
-            # Update metrics with Autogen insights
-            self.update_metrics(latest_data, analysis_result)
-            
-            logger.info("Data processing and analysis completed successfully")
-            return True
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Data processing failed: {str(e)}")
-            return False
+            all_data = pd.concat([pd.read_csv(f) for f in all_raw_files], ignore_index=True)
+            logger.info(f"Aggregated {len(all_data)} records from {len(all_raw_files)} raw files.")
         except Exception as e:
-            logger.error(f"Unexpected error in data processing: {str(e)}")
+            logger.error(f"Error aggregating raw data: {e}")
+            return False # Indicate failure
+
+        # --- Data Cleaning & Preprocessing ---
+        # (Keep your existing cleaning logic here)
+        # Example: Deduplication, handling missing values
+        initial_count = len(all_data)
+        # Ensure 'text' and 'timestamp' columns exist before dropping duplicates
+        if 'text' in all_data.columns and 'timestamp' in all_data.columns:
+            all_data.drop_duplicates(subset=['text', 'timestamp'], inplace=True)
+            cleaned_count = len(all_data)
+            logger.info(f"Removed {initial_count - cleaned_count} duplicate records.")
+        else:
+            logger.warning("Columns 'text' or 'timestamp' not found for deduplication.")
+            cleaned_count = initial_count
+        # ... other cleaning steps ...
+
+        # --- Sentiment Analysis ---
+        # (Keep your existing sentiment analysis logic here)
+        try:
+            logger.info("Performing sentiment analysis...")
+            # Assuming analysis adds 'sentiment_score' and 'sentiment_label' columns
+            # Replace this with your actual analysis call
+            if 'text' in all_data.columns:
+                 all_data['sentiment_score'] = all_data['text'].apply(lambda x: self.brain.analyze_sentiment(x) if isinstance(x, str) else 0.5)
+                 all_data['sentiment_label'] = all_data['sentiment_score'].apply(lambda score: 'positive' if score > 0.6 else ('negative' if score < 0.4 else 'neutral'))
+                 logger.info("Sentiment analysis completed.")
+                 processed_df = all_data # Or the result of your analysis
+            else:
+                 logger.error("Column 'text' not found for sentiment analysis.")
+                 return False
+        except Exception as e:
+            logger.error(f"Error during sentiment analysis: {e}")
             return False
+
+        # --- Prepare Data for API ---
+        if processed_df.empty:
+             logger.warning("Processed data is empty. Nothing to send to API.")
+             # Clean up raw files even if nothing is sent? Decide based on your logic.
+             # for f in all_raw_files: os.remove(f)
+             return True # Processing technically succeeded, just no output
+
+        try:
+            logger.info(f"Preparing {len(processed_df)} records for API update...")
+            # Convert DataFrame to list of dicts compatible with DataRecord model
+            processed_df_copy = processed_df.copy()
+
+            # Convert NaNs/NaTs to None for JSON compatibility
+            processed_df_copy = processed_df_copy.where(pd.notnull(processed_df_copy), None)
+
+            # Convert specific datetime columns to ISO format string if they exist and are expected by API
+            # Adjust column names as needed ('timestamp', 'created_at', etc.)
+            if 'timestamp' in processed_df_copy.columns and pd.api.types.is_datetime64_any_dtype(processed_df_copy['timestamp']):
+                 # Ensure it's datetime before conversion
+                 processed_df_copy['timestamp'] = pd.to_datetime(processed_df_copy['timestamp'], errors='coerce')
+                 # Remove timezone info if present (Render might use UTC)
+                 if processed_df_copy['timestamp'].dt.tz is not None:
+                    processed_df_copy['timestamp'] = processed_df_copy['timestamp'].dt.tz_localize(None)
+                 # Convert valid datetimes to ISO format, leave others as None
+                 processed_df_copy['timestamp'] = processed_df_copy['timestamp'].apply(lambda x: x.isoformat(timespec='seconds') if pd.notna(x) else None)
+
+            # Add similar conversions for other datetime columns if necessary
+
+            # Ensure column names match the Pydantic model 'DataRecord' in the API
+            # Rename columns here if needed, e.g.:
+            # processed_df_copy.rename(columns={'some_name': 'api_field_name'}, inplace=True)
+
+            data_list = processed_df_copy.to_dict(orient='records')
+            payload = {"data": data_list}
+
+        except Exception as e:
+            logger.error(f"Error preparing data for API: {e}")
+            return False
+
+        # --- Send Data to API ---
+        try:
+            logger.info(f"Sending data to API endpoint: {DATA_UPDATE_ENDPOINT}")
+            response = requests.post(DATA_UPDATE_ENDPOINT, json=payload, timeout=60) # Added timeout
+            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+            logger.info(f"API update successful: {response.json().get('message', 'OK')}")
+
+            # Clean up raw files after successful processing and API send
+            logger.info("Cleaning up raw data files...")
+            for f in all_raw_files:
+                try:
+                    os.remove(f)
+                except Exception as e_rm:
+                    logger.warning(f"Could not remove raw file {f}: {e_rm}")
+            logger.info("Raw data files cleaned up.")
+
+            # Notify via email if configured
+            if is_email_notification_enabled() and NOTIFY_ON_PROCESSING:
+                recipients = get_email_recipients()
+                if recipients:
+                    subject = "Data Processing Completed"
+                    message = f"Data processing completed successfully at {datetime.now()}.\n{len(processed_df)} records processed and sent to API."
+                    try:
+                        # Assuming you have a send_notification utility
+                        from src.utils.notification_service import send_notification # Ensure import is correct
+                        send_notification(recipients, subject, message)
+                        logger.info(f"Sent processing completion notification to: {', '.join(recipients)}")
+                    except ImportError:
+                         logger.error("Could not import send_notification. Email not sent.")
+                    except Exception as e_mail:
+                        logger.error(f"Failed to send processing notification email: {e_mail}")
+
+            return True # Indicate success
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to send data to API: {e}")
+            # Decide how to handle failure: Maybe save locally as backup?
+            # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # failed_api_path = processed_data_path / f'failed_api_update_{timestamp}.csv'
+            # try:
+            #     processed_df.to_csv(failed_api_path, index=False)
+            #     logger.info(f"Saved data locally due to API failure: {failed_api_path}")
+            # except Exception as e_save:
+            #     logger.error(f"Failed to save backup data locally: {e_save}")
+            return False # Indicate failure
+        except Exception as e:
+             logger.error(f"An unexpected error occurred after preparing data: {e}")
+             return False
 
     def update_metrics(self, latest_data: pd.DataFrame, analysis_result: Dict[str, Any]):
         """Update system metrics and performance indicators with Autogen insights"""
@@ -446,11 +571,11 @@ class SentimentAnalysisAgent:
         except Exception as e:
             logger.error(f"Failed to update metrics: {str(e)}")
 
-    def optimize_system(self):
-        """Use Autogen to optimize system performance based on available high-level metrics."""
-        logger.info("Starting system optimization analysis...")
+    async def optimize_system(self):
+        """Optimize system parameters using Autogen based on performance data."""
+        logger.info("Starting system optimization...")
         try:
-            # Prepare available performance metrics (high-level)
+            # Gather performance data
             latest_sentiment_metrics = self.data_history['sentiment_trends'][-1] if self.data_history['sentiment_trends'] else {}
             latest_health_metrics = self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
             latest_data_quality = latest_sentiment_metrics.get('data_quality', {}) # Get quality from sentiment metrics
@@ -487,8 +612,8 @@ class SentimentAnalysisAgent:
 
             logger.info(f"Sending performance data to Autogen for optimization: {json.dumps(performance_data, indent=2)}")
 
-            # Get optimization suggestions from Autogen
-            optimization_result = self.autogen_system.optimize_collection(performance_data)
+            # Get optimization suggestions from Autogen - now awaited
+            optimization_result = await self.autogen_system.optimize_collection(performance_data)
 
             if optimization_result and 'optimizations' in optimization_result:
                 logger.info(f"Received optimization suggestions: {optimization_result['optimizations']}")

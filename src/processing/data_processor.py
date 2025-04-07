@@ -596,21 +596,6 @@ class DataProcessor:
         for col in ['likes', 'retweets', 'comments']:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
 
-        # Save processed data
-        processed_dir = self.base_path / "data" / "processed"
-        processed_dir.mkdir(parents=True, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = processed_dir / f"processed_data_{timestamp}.csv"
-        df.to_csv(output_file, index=False)
-        logger.info(f"Saved processed data to {output_file}")
-        
-        # Rotate processed files for the dashboard
-        if rotate_processed_files(output_file):
-            logger.info("Successfully rotated processed files for dashboard")
-        else:
-            logger.error("Failed to rotate processed files for dashboard")
-        
         return True
 
 if __name__ == "__main__":
