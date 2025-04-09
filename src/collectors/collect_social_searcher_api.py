@@ -21,6 +21,8 @@ def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last
     
     # API Key - provided by the user
     api_key = os.getenv("SOCIAL_SEARCHER_API_KEY")
+    if not api_key:
+        raise ValueError("SOCIAL_SEARCHER_API_KEY must be set in .env file")
     
     # Ensure output directory exists
     if output_file is None:
@@ -93,7 +95,9 @@ def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last
                             response = requests.get(api_url, params=params)
                             
                             # Debug output
-                            safe_url = response.url.replace(api_key, 'API_KEY_HIDDEN')
+                            safe_url = response.url
+                            if api_key:
+                                safe_url = safe_url.replace(api_key, 'API_KEY_HIDDEN')
                             print(f"    API URL: {safe_url}")
                             print(f"    Status code: {response.status_code}")
                             

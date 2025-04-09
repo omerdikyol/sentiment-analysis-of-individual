@@ -1,8 +1,8 @@
-"""Initial migration: Create sentiment_data table
+"""Create sentiment_data table from model
 
-Revision ID: 8b71acf086db
+Revision ID: 1ec1754aea46
 Revises: 
-Create Date: 2025-04-07 20:10:49.360377
+Create Date: 2025-04-09 20:58:26.874468
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8b71acf086db'
+revision: str = '1ec1754aea46'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

@@ -14,7 +14,7 @@ from alembic import context
 # Add these lines to import your Base and models
 from src.api.database import Base  # Import Base from your database setup
 # Or directly import your models if Base isn't easily accessible
-# from src.api import models # Make sure models define Base = declarative_base()
+from src.api import models # Make sure models define Base = declarative_base()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -29,6 +29,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+from src.api import models # Add this line to explicitly load models
 target_metadata = Base.metadata # Add this line
 
 # other values from the config, defined by the needs of env.py,
