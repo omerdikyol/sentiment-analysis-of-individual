@@ -791,19 +791,29 @@ class DataService {
   }
 
   async getEmailConfig() {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Use env var or default
+    const endpoint = `${apiUrl}/email/config`;
     try {
-      const response = await fetch('/api/email/config');
+      console.log(`Fetching email config from: ${endpoint}`);
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch email configuration: ${response.status} ${response.statusText}`);
+        // Attempt to get error detail from JSON response
+        let errorBody = `Failed to fetch email configuration: ${response.status} ${response.statusText}`;
+        try {
+            const errorJson = await response.json();
+            errorBody = errorJson.detail || errorBody;
+        } catch(e) { /* Ignore if not JSON */ }
+        throw new Error(errorBody);
       }
       
-      return await response.json();
+      // Assuming the response is the config object itself now
+      return await response.json(); 
     } catch (error) {
       console.error('Error fetching email configuration:', error);
-      
-      // Return default configuration
+      // Return default configuration on error
       return {
+        provider: "mailersend", // Default to mailersend
         recipients: [],
         notifyOnCollection: false,
         notifyOnProcessing: false,
@@ -814,8 +824,11 @@ class DataService {
   }
 
   async saveEmailConfig(config) {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Use env var or default
+    const endpoint = `${apiUrl}/email/config`;
     try {
-      const response = await fetch('/api/email/config', {
+       console.log(`Saving email config to: ${endpoint}`);
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -824,13 +837,20 @@ class DataService {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to save email configuration: ${response.status} ${response.statusText}`);
+         // Attempt to get error detail from JSON response
+        let errorBody = `Failed to save email configuration: ${response.status} ${response.statusText}`;
+        try {
+            const errorJson = await response.json();
+            errorBody = errorJson.detail || errorBody;
+        } catch(e) { /* Ignore if not JSON */ }
+        throw new Error(errorBody);
       }
       
-      return await response.json();
+      return await response.json(); // Return the success response from API
     } catch (error) {
       console.error('Error saving email configuration:', error);
-      throw error;
+      // Re-throw the specific error message
+      throw error; 
     }
   }
 

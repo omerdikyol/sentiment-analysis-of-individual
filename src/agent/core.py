@@ -26,6 +26,10 @@ import inspect
 from src.processing.sentiment_analyzer import ImprovedSentimentAnalyzer
 from src.processing.data_processor import DataProcessor
 
+# Add necessary DB imports
+from sqlalchemy.orm import sessionmaker, Session 
+from src.api.models import TargetIndividualConfiguration # Import the model
+
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,
@@ -42,78 +46,211 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000") # Default for 
 DATA_UPDATE_ENDPOINT = f"{API_BASE_URL}/data/update"
 
 class SentimentAnalysisAgent:
-    def __init__(self):
-        self.base_path = Path(__file__).parent.parent.parent
-        self.config = self.load_config()
-        self.brain = AgentBrain(self.base_path / 'config')
-        self.autogen_system = AutogenAgentSystem(self.base_path / 'config')
-        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
-        self.data_processor = DataProcessor()
-        self.data_history: Dict[str, List[Any]] = {
-            'sentiment_trends': [],
-            'data_quality_metrics': [],
-            'system_health': []
-        }
-        self.initialize_directories()
-        self.collection_scripts = self.discover_collection_scripts()
-        self.command_queue = queue.Queue()
-        self.is_running = True
-        self.current_task = None
-        self.task_status = {
-            'is_busy': False,
-            'current_task': None,
-            'last_run': {},
-            'next_run': {},
-            'suggestions': []
-        }
-        self.event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.event_loop)
-        
-    def load_config(self) -> dict:
-        """Load configuration from config.json or create default"""
-        config_path = self.base_path / 'config' / 'default_config.json'
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                return json.load(f)
-        
-        # Default configuration
+    """Core agent responsible for data collection, processing, analysis, and scheduling."""
+
+    def __init__(self, db_factory: sessionmaker, config_path="config/agent_config.json"):
+        """
+        Initialize the agent.
+
+        Args:
+            db_factory (sessionmaker): SQLAlchemy session factory.
+            config_path (str): Path to the agent's configuration file.
+        """
+        self.db_factory = db_factory
+        self.config_path = Path(config_path)
+        self.config = self.load_config() # Load config from file (excluding target)
+        self.status = "idle"
+        self.last_run_times = {"collect": None, "process": None, "cleanup": None}
+        self.data_history = {"collected": [], "processed": [], "sentiment_trends": [], "events": []}
+        self.agent_registry = {} # Placeholder for Autogen integration
+        self.brain = None # Placeholder for Brain integration
+        self.stop_event = threading.Event()
+        self.scheduler_thread = None
+
+        # Ensure the config directory exists
+        self.config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Placeholder: Initialize Brain/Autogen if needed
+        # self.brain = Brain(...)
+        # self.initialize_autogen_agents()
+
+        logger.info(f"Agent initialized. Config loaded from {self.config_path}.")
+        logger.info(f"Database session factory provided: {db_factory}")
+
+    def load_config(self) -> Dict[str, Any]:
+        """Load agent configuration from JSON file, excluding the 'target' key."""
         default_config = {
-            'collection_interval_minutes': 60,
-            'processing_interval_minutes': 120,
-            'data_retention_days': 30,
-            'monitoring': {
-                'min_data_points': 100,
-                'max_duplicate_ratio': 0.2,
-                'sentiment_threshold': 0.7
-            },
-            'sources': {
-                'x': True,
-                'news': True,
-                'mention': True,
-                'social_searcher': True,
-                'instagram': False,  # Not implemented yet
-                'linkedin': False    # Not implemented yet
-            },
-            'target': {
-                'individual_name': 'Sheikh Tamim bin Hamad Al Thani',
-                'query_variations': [
-                    'Sheikh Tamim bin Hamad Al Thani',
-                    'Sheikh Tamim',
-                    'Tamim bin Hamad',
-                    'Qatar Emir',
-                    'Qatar ruler',
-                    'Qatar leader',
-                    'Tamim Qatar',
-                    'Sheikh Tamim bin Hamad'
-                ]
-            },
-            'adaptive_scheduling': True,
-            'auto_optimization': True
+            "collection_interval_minutes": 60,
+            "processing_interval_minutes": 120,
+            "data_retention_days": 30,
+            "sentiment_model": "default",
+            "analysis_level": "medium",
+            "sources": {"twitter": True, "news": True, "blogs": False},
+            "keywords": ["important person"], # General keywords, not target specific
+            "adaptive_scheduling": True,
+            "auto_optimization": True,
+            "rate_limits": {"twitter": 100, "news": 50}
+            # 'target' key is intentionally omitted - fetched from DB
         }
+        try:
+            if self.config_path.exists():
+                with open(self.config_path, 'r') as f:
+                    loaded_conf = json.load(f)
+                    # Explicitly remove 'target' if it exists from old file
+                    loaded_conf.pop('target', None) 
+                    # Merge with defaults, loaded keys take precedence
+                    # We should ensure defaults cover all *expected* keys now
+                    merged_config = default_config.copy()
+                    merged_config.update(loaded_conf)
+                    return merged_config
+            else:
+                logger.warning(f"Config file {self.config_path} not found. Using default configuration.")
+                # Save default config if file doesn't exist
+                with open(self.config_path, 'w') as f:
+                    json.dump(default_config, f, indent=4)
+                return default_config
+        except Exception as e:
+            logger.error(f"Error loading config from {self.config_path}: {e}. Using default configuration.", exc_info=True)
+            return default_config
+
+    def _get_latest_target_config(self, db: Session) -> Optional[TargetIndividualConfiguration]:
+        """Fetches the latest target config model object from DB."""
+        try:
+            # Query directly for the model object
+            return db.query(TargetIndividualConfiguration).order_by(TargetIndividualConfiguration.created_at.desc()).first()
+        except Exception as e:
+            logger.error(f"Error getting target config for agent: {e}", exc_info=True)
+            return None
+            
+    # --- Example of using target config ---
+    def collect_data(self):
+        """Collect data based on configuration (including target)."""
+        self.status = "collecting"
+        logger.info("Starting data collection cycle...")
         
-        with open(config_path, 'w') as f:
-            json.dump(default_config, f, indent=4)
-        return default_config
+        target_name = "Default Target" # Default if DB fails or no config
+        query_variations = []
+        
+        try:
+            with self.db_factory() as db:
+                target_config = self._get_latest_target_config(db)
+                if target_config:
+                    target_name = target_config.individual_name
+                    query_variations = target_config.query_variations
+                    logger.info(f"Using target config: {target_name}, queries: {query_variations}")
+                else:
+                     logger.warning("No target individual configuration found in database. Using defaults.")
+
+            # Use target_name and query_variations along with self.config['sources'], self.config['keywords'] etc. 
+            # in your data collection logic (Twitter API, News API calls etc.)
+            # Placeholder for actual data collection
+            time.sleep(5) # Simulate work
+            collected_count = len(query_variations) * 10 # Example
+            logger.info(f"Data collection cycle finished for '{target_name}'. Collected {collected_count} items.")
+            self.data_history["collected"].append({"timestamp": time.time(), "count": collected_count})
+            self.last_run_times["collect"] = time.time()
+
+        except Exception as e:
+            logger.error(f"Error during data collection: {e}", exc_info=True)
+        finally:
+            self.status = "idle"
+            
+    # Update other methods like process_data, run_analysis etc. similarly 
+    # if they need the target configuration. Create a DB session using 
+    # 'with self.db_factory() as db:' and call self._get_latest_target_config(db).
+
+    # --- Command Execution ---
+    # update_config needs to change as 'target' is no longer managed here
+    def execute_command(self, command: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Execute a command on the agent."""
+        params = params or {}
+        logger.info(f"Executing command: {command} with params: {params}")
+        try:
+            if command == "start":
+                self.start()
+                return {"success": True, "message": "Agent started"}
+            elif command == "stop":
+                self.stop()
+                return {"success": True, "message": "Agent stopped"}
+            elif command == "status":
+                return {"success": True, "data": self.get_status()}
+            # Update config - remove target handling
+            elif command == "update_config":
+                # Remove 'target' from params if present, as it's handled by API/DB now
+                params.pop('target', None) 
+                if not params:
+                     return {"success": False, "message": "No valid configuration parameters provided for update."}
+                self.config.update(params)
+                self._save_config() # Save the updated config (without target)
+                # Maybe re-initialize parts of the agent if needed based on config change?
+                logger.info(f"Agent configuration updated (excluding target): {params}")
+                return {"success": True, "message": "Agent configuration updated successfully (target is managed separately via API)."}
+            elif command == "get_config":
+                 # Return current config (which no longer includes target)
+                 return {"success": True, "data": self.config}
+            elif command == "run_collection":
+                # You might want to ensure this runs in a separate thread or async
+                self.collect_data()
+                return {"success": True, "message": "Collection task triggered."}
+            elif command == "run_processing":
+                # Similar thread/async consideration for processing
+                self.process_data() # Assuming this method exists
+                return {"success": True, "message": "Processing task triggered."}
+            # Add other commands as needed
+            else:
+                return {"success": False, "message": f"Unknown command: {command}"}
+        except Exception as e:
+            logger.error(f"Error executing command {command}: {e}", exc_info=True)
+            return {"success": False, "message": str(e)}
+
+    def _save_config(self):
+        """Save the current agent configuration (excluding target) to the JSON file."""
+        try:
+            # Ensure target is not accidentally saved
+            config_to_save = self.config.copy()
+            config_to_save.pop('target', None) 
+            with open(self.config_path, 'w') as f:
+                json.dump(config_to_save, f, indent=4, default=str)
+            logger.info(f"Agent configuration saved to {self.config_path}")
+        except Exception as e:
+            logger.error(f"Failed to save config to {self.config_path}: {e}", exc_info=True)
+
+    # --- Placeholder methods for agent lifecycle and tasks ---
+    def start(self):
+        # Logic to start the agent's main loop/scheduler
+        logger.info("Agent starting...")
+        self.stop_event.clear()
+        # Example: Start scheduler thread if using 'schedule' library
+        # self.scheduler_thread = threading.Thread(target=self._run_scheduler)
+        # self.scheduler_thread.start()
+        pass # Add actual start logic
+
+    def stop(self):
+        # Logic to gracefully stop the agent
+        logger.info("Agent stopping...")
+        self.stop_event.set()
+        # Example: Wait for threads to join
+        # if self.scheduler_thread:
+        #     self.scheduler_thread.join()
+        pass # Add actual stop logic
+
+    def process_data(self):
+        # Placeholder for the data processing logic
+        logger.info("Processing data...")
+        # Remember to use 'with self.db_factory() as db:' if DB access is needed
+        pass
+
+    def get_status(self) -> dict:
+        # Placeholder for getting detailed agent status
+        return {
+            "status": self.status,
+            "last_run_times": self.last_run_times,
+            # Add more relevant status info
+        }
+
+    # ... rest of the agent methods ...
+    # Ensure methods like 'process_data', 'run_analysis' etc.
+    # use the 'with self.db_factory() as db:' pattern if they need target config.
 
     def get_status(self) -> dict:
         """Get current agent status with brain insights"""
@@ -121,7 +258,7 @@ class SentimentAnalysisAgent:
         
         # Get brain suggestions
         metrics = {
-            'data_quality': self.data_history['data_quality_metrics'][-1] if self.data_history['data_quality_metrics'] else {},
+            'data_quality': self.data_history['sentiment_trends'][-1] if self.data_history['sentiment_trends'] else {},
             'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
         }
         suggestions = self.brain.suggest_improvements(metrics)
@@ -346,53 +483,6 @@ class SentimentAnalysisAgent:
         ]
         for directory in directories:
             (self.base_path / directory).mkdir(parents=True, exist_ok=True)
-
-    def collect_data(self):
-        """Execute data collection using the centralized collector script with brain monitoring"""
-        try:
-            logger.info(f"\n{'='*80}\nStarting Data Collection Process\n{'='*80}")
-            collector_script = self.base_path / 'src' / 'collectors' / 'run_collectors.py'
-            
-            # Run the centralized collector script
-            logger.info("Launching centralized collector script...")
-            start_time = time.time()
-            
-            # Run the centralized collector script, allowing its output to stream to the console
-            logger.info("Launching centralized collector script (output will stream below)...")
-            start_time = time.time()
-            
-            # Removed capture_output=True and text=True to allow real-time output
-            # Added '-u' flag to force unbuffered output from the subprocess
-            result = subprocess.run(
-                ['python', '-u', str(collector_script)], # Added -u flag
-                check=True,
-                cwd=str(self.base_path) 
-                # stdout and stderr should now stream directly to the console without buffering
-            )
-            
-            collection_duration = time.time() - start_time
-            logger.info(f"Collection script execution completed in {collection_duration:.2f}s")
-            
-            # Removed the redundant post-collection analysis block.
-            # The data processor will handle loading and analyzing all raw files later.
-            # Success is determined by the subprocess completing without error (check=True).
-            return True
-
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Centralized data collection script failed with exit code {e.returncode}")
-            return False
-        except Exception as e:
-            logger.error(f"Unexpected error in centralized collection: {str(e)}", exc_info=True)
-            return False
-
-    def _get_memory_usage(self) -> float:
-        """Get current memory usage of the process"""
-        try:
-            import psutil
-            process = psutil.Process()
-            return process.memory_percent()
-        except:
-            return 0.0
 
     def process_data(self):
         """Process collected raw data, perform analysis, and send to API."""
@@ -796,7 +886,7 @@ class SentimentAnalysisAgent:
 
                 # Save updated config if changes were made (e.g., frequency)
                 if new_frequency is not None: # Check if frequency was actually updated
-                    self.save_config()
+                    self._save_config()
                     logger.info("Configuration saved after applying optimizations.")
 
                 logger.info("System optimization processing completed.")

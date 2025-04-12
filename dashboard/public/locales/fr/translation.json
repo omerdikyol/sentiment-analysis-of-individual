@@ -583,6 +583,9 @@
     "errorMessage": "Erreur lors de l'enregistrement de la configuration",
     "nameRequiredError": "Le nom de l'individu cible est requis",
     "variationRequiredError": "Le nom de la variation est requis",
-    "duplicateVariationError": "Cette variation existe déjà"
+    "duplicateVariationError": "Cette variation existe déjà",
+    "noNameSet": "Nom non défini",
+    "noVariations": "Aucune variation",
+    "loadError": "Erreur de chargement"
   }
-} 
+}

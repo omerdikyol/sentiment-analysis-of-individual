@@ -1,5 +1,6 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, MetaData, Index, Text, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, MetaData, Index, Text, Boolean, ForeignKey, UniqueConstraint, JSON
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship, declarative_base
 import datetime
 
 # Import Base from database.py
@@ -115,3 +116,27 @@ class SentimentData(Base):
 
 # Example usage (not needed in models.py itself):
 # record = SentimentData(run_timestamp=datetime.datetime.now(), original_id='xyz', text='Test', ...) 
+
+# New Models for Configuration Management
+
+class EmailConfiguration(Base):
+    __tablename__ = 'email_configurations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String, nullable=False)
+    smtp_server = Column(String, nullable=False)
+    enabled = Column(Boolean, default=False, nullable=False)
+    recipients = Column(JSON, nullable=True)
+    notify_on_collection = Column(Boolean, default=False, nullable=False)
+    notify_on_processing = Column(Boolean, default=False, nullable=False)
+    notify_on_analysis = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class TargetIndividualConfiguration(Base):
+    __tablename__ = 'target_individual_configurations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    individual_name = Column(String, nullable=False)
+    # Storing list of strings as JSON
+    query_variations = Column(JSON, nullable=False) 
+    created_at = Column(DateTime(timezone=True), server_default=func.now()) 

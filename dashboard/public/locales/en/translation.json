@@ -598,6 +598,9 @@
     "errorMessage": "Error saving configuration",
     "nameRequiredError": "Target individual name is required",
     "variationRequiredError": "Variation name is required",
-    "duplicateVariationError": "This variation already exists"
+    "duplicateVariationError": "This variation already exists",
+    "noNameSet": "Name not set",
+    "noVariations": "No variations",
+    "loadError": "Load error"
   }
 } 

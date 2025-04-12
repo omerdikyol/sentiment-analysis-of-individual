@@ -11,11 +11,14 @@ import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 import sys
+from typing import Optional, List
 
 # Add the project root to the path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.utils.mail_sender import MailSender
+# Add DB imports
+from sqlalchemy.orm import sessionmaker, Session
 
 # Set up logging
 logging.basicConfig(
@@ -27,24 +30,32 @@ logger = logging.getLogger(__name__)
 class ReportScheduler:
     """
     Handles scheduling and sending of periodic sentiment analysis reports.
+    Requires a database session factory for MailSender.
     """
     
-    def __init__(self, recipients=None):
+    def __init__(self, db_factory: sessionmaker, recipients: Optional[List[str]] = None):
         """
         Initialize the report scheduler.
         
         Args:
-            recipients (list, optional): List of email recipients for reports.
+            db_factory (sessionmaker): SQLAlchemy session factory.
+            recipients (Optional[List[str]], optional): List of email recipients for reports.
+                                                    If None, will try env var or default to empty.
         """
-        self.mail_sender = MailSender()
-        self.recipients = recipients or []
+        self.db_factory = db_factory
+        self.mail_sender = MailSender() # MailSender itself only holds credentials now
+        self.recipients = recipients if recipients is not None else []
         self.stop_event = threading.Event()
         self.scheduler_thread = None
         
-        # Load recipients from environment if available
-        env_recipients = os.getenv("REPORT_RECIPIENTS")
-        if env_recipients and not self.recipients:
-            self.recipients = [r.strip() for r in env_recipients.split(",")]
+        # Load recipients from environment only if not provided explicitly
+        if not self.recipients:
+            env_recipients = os.getenv("REPORT_RECIPIENTS")
+            if env_recipients:
+                self.recipients = [r.strip() for r in env_recipients.split(",")]
+                logger.info(f"Loaded recipients from env var REPORT_RECIPIENTS: {self.recipients}")
+            else:
+                logger.warning("No explicit recipients provided and REPORT_RECIPIENTS env var not set.")
     
     def add_recipient(self, email):
         """Add an email recipient to the list."""
@@ -58,174 +69,57 @@ class ReportScheduler:
             self.recipients.remove(email)
             logger.info(f"Removed recipient: {email}")
     
-    def send_daily_report(self):
-        """Send a daily sentiment analysis report."""
+    def _send_report_with_db(self, subject_template: str, report_content: str):
+        """Internal helper to send report using a DB session."""
         if not self.recipients:
-            logger.warning("No recipients configured for daily report")
+            logger.warning(f"No recipients configured for report: {subject_template}")
             return
-        
+            
+        try:
+            with self.db_factory() as db:
+                success = self.mail_sender.send_report_email(
+                    db=db,
+                    recipients=self.recipients, # Use recipients held by scheduler instance
+                    subject=subject_template, 
+                    report_content=report_content
+                )
+                if success:
+                    logger.info(f"Report '{subject_template}' sent successfully to {len(self.recipients)} recipients")
+                else:
+                    logger.error(f"Failed to send report: {subject_template}")
+        except Exception as e:
+            logger.error(f"Error sending report '{subject_template}': {e}", exc_info=True)
+
+    def send_daily_report(self):
+        """Generate and send a daily sentiment analysis report."""
         logger.info("Generating daily sentiment report...")
-        
-        # Generate report content - this would typically come from your analysis system
-        # For now, we'll use placeholder content
         yesterday = datetime.now() - timedelta(days=1)
         date_str = yesterday.strftime("%B %d, %Y")
-        
-        report_content = f"""
-        <h2>Daily Sentiment Analysis Report</h2>
-        <p>Analysis date: {date_str}</p>
-        
-        <h3>Daily Sentiment Score: 6.8/10 (Moderately Positive)</h3>
-        
-        <h3>Today's Activity:</h3>
-        <ul>
-            <li>Total mentions: 142</li>
-            <li>Positive: 87 (61%)</li>
-            <li>Neutral: 38 (27%)</li>
-            <li>Negative: 17 (12%)</li>
-        </ul>
-        
-        <h3>Key Trends:</h3>
-        <p>Sentiment has remained stable compared to yesterday, with a slight 
-        increase in positive mentions related to the recent public appearance.</p>
-        
-        <h3>Top Sources:</h3>
-        <ul>
-            <li>Twitter: 78 mentions</li>
-            <li>News articles: 31 mentions</li>
-            <li>Blogs: 22 mentions</li>
-            <li>Other social media: 11 mentions</li>
-        </ul>
-        """
-        
-        success = self.mail_sender.send_report_email(
-            self.recipients,
-            f"Daily Sentiment Report - {date_str}",
-            report_content
-        )
-        
-        if success:
-            logger.info(f"Daily report sent successfully to {len(self.recipients)} recipients")
-        else:
-            logger.error("Failed to send daily report")
+        subject = f"Daily Sentiment Report - {date_str}"
+        # ... (generate actual report_content based on analysis) ...
+        report_content = f"<h2>Daily Report {date_str}</h2><p>Content placeholder...</p>"
+        self._send_report_with_db(subject, report_content)
     
     def send_weekly_report(self):
-        """Send a weekly sentiment analysis report."""
-        if not self.recipients:
-            logger.warning("No recipients configured for weekly report")
-            return
-        
+        """Generate and send a weekly sentiment analysis report."""
         logger.info("Generating weekly sentiment report...")
-        
-        # Get date range for the past week
         today = datetime.now()
         week_ago = today - timedelta(days=7)
         date_range = f"{week_ago.strftime('%B %d')} - {today.strftime('%B %d, %Y')}"
-        
-        report_content = f"""
-        <h2>Weekly Sentiment Analysis Report</h2>
-        <p>Analysis period: {date_range}</p>
-        
-        <h3>Weekly Sentiment Score: 7.3/10 (Positive)</h3>
-        
-        <h3>Week Summary:</h3>
-        <ul>
-            <li>Total mentions: 843</li>
-            <li>Positive: 529 (63%)</li>
-            <li>Neutral: 231 (27%)</li>
-            <li>Negative: 83 (10%)</li>
-        </ul>
-        
-        <h3>Week-over-Week Change:</h3>
-        <p>Overall sentiment improved by 8% compared to last week. 
-        Negative mentions decreased by 5 percentage points.</p>
-        
-        <h3>Key Events Affecting Sentiment:</h3>
-        <ul>
-            <li>Charity Gala Appearance (May 3): Positive impact</li>
-            <li>Economic Policy Announcement (May 5): Mixed reception</li>
-            <li>International Summit (May 6-7): Overall positive</li>
-        </ul>
-        
-        <h3>Recommendations:</h3>
-        <p>Based on this week's analysis, we recommend highlighting charitable 
-        initiatives and international cooperation in upcoming communications.</p>
-        """
-        
-        success = self.mail_sender.send_report_email(
-            self.recipients,
-            f"Weekly Sentiment Report - {date_range}",
-            report_content
-        )
-        
-        if success:
-            logger.info(f"Weekly report sent successfully to {len(self.recipients)} recipients")
-        else:
-            logger.error("Failed to send weekly report")
+        subject = f"Weekly Sentiment Report - {date_range}"
+        # ... (generate actual report_content based on analysis) ...
+        report_content = f"<h2>Weekly Report {date_range}</h2><p>Content placeholder...</p>"
+        self._send_report_with_db(subject, report_content)
     
     def send_monthly_report(self):
-        """Send a monthly sentiment analysis report."""
-        if not self.recipients:
-            logger.warning("No recipients configured for monthly report")
-            return
-        
+        """Generate and send a monthly sentiment analysis report."""
         logger.info("Generating monthly sentiment report...")
-        
-        # Get month information
         today = datetime.now()
         month_name = today.strftime("%B %Y")
-        
-        report_content = f"""
-        <h2>Monthly Sentiment Analysis Report</h2>
-        <p>Analysis period: {month_name}</p>
-        
-        <h3>Monthly Sentiment Score: 7.5/10 (Strongly Positive)</h3>
-        
-        <h3>Month Summary:</h3>
-        <ul>
-            <li>Total mentions: 3,247</li>
-            <li>Positive: 2,143 (66%)</li>
-            <li>Neutral: 847 (26%)</li>
-            <li>Negative: 257 (8%)</li>
-        </ul>
-        
-        <h3>Month-over-Month Change:</h3>
-        <p>Overall sentiment improved by 12% compared to last month.
-        This represents the highest positive sentiment score in the past 6 months.</p>
-        
-        <h3>Top Performing Topics:</h3>
-        <ul>
-            <li>International Relations: 9.2/10</li>
-            <li>Economic Initiatives: 8.5/10</li>
-            <li>Charitable Work: 8.3/10</li>
-            <li>Public Appearances: 7.8/10</li>
-        </ul>
-        
-        <h3>Areas for Improvement:</h3>
-        <ul>
-            <li>Policy Explanations: 5.6/10</li>
-            <li>Media Interviews: 6.2/10</li>
-        </ul>
-        
-        <h3>Strategic Recommendations:</h3>
-        <p>Based on this month's analysis, we recommend focusing on:</p>
-        <ol>
-            <li>Continuing to emphasize international cooperation</li>
-            <li>Providing more context for policy decisions</li>
-            <li>Increasing presence in carefully selected media appearances</li>
-        </ol>
-        """
-        
-        success = self.mail_sender.send_report_email(
-            self.recipients,
-            f"Monthly Sentiment Report - {month_name}",
-            report_content
-        )
-        
-        if success:
-            logger.info(f"Monthly report sent successfully to {len(self.recipients)} recipients")
-        else:
-            logger.error("Failed to send monthly report")
+        subject = f"Monthly Sentiment Report - {month_name}"
+        # ... (generate actual report_content based on analysis) ...
+        report_content = f"<h2>Monthly Report {month_name}</h2><p>Content placeholder...</p>"
+        self._send_report_with_db(subject, report_content)
     
     def schedule_reports(self, daily_time="08:00", weekly_day="Monday", monthly_day=1):
         """

@@ -584,6 +584,9 @@
     "errorMessage": "خطأ في حفظ التكوين",
     "nameRequiredError": "اسم الفرد المستهدف مطلوب",
     "variationRequiredError": "اسم التنويع مطلوب",
-    "duplicateVariationError": "هذا التنويع موجود بالفعل"
+    "duplicateVariationError": "هذا التنويع موجود بالفعل",
+    "noNameSet": "الاسم غير محدد",
+    "noVariations": "لا توجد اختلافات",
+    "loadError": "خطأ في التحميل"
 }
 }

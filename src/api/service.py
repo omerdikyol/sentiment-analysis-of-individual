@@ -1,5 +1,6 @@
-from fastapi import FastAPI, WebSocket, HTTPException, BackgroundTasks, Depends
+from fastapi import FastAPI, WebSocket, HTTPException, BackgroundTasks, Depends, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import json
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
@@ -13,14 +14,14 @@ import logging
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from . import models, database
-from .database import engine, get_db
+from .database import SessionLocal, engine, get_db
 
 # Import the agent
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from agent.core import SentimentAnalysisAgent
-from utils.mail_sender import MailSender, send_notification
+from utils.mail_sender import MailSender
 from utils.scheduled_reports import ReportScheduler
 
 # --- Create tables on startup (or use Alembic) ---
@@ -41,7 +42,12 @@ app.add_middleware(
 )
 
 # Initialize agent
-agent = SentimentAnalysisAgent()
+try:
+    agent = SentimentAnalysisAgent(db_factory=SessionLocal)
+except Exception as e:
+    logger.error(f"Failed to initialize SentimentAnalysisAgent: {e}", exc_info=True)
+    # Decide how to handle this error - exit, run without agent?
+    agent = None # Or a dummy agent
 
 # Store active WebSocket connections
 active_connections: List[WebSocket] = []
@@ -391,153 +397,182 @@ class TestEmailRequest(BaseModel):
     recipient: EmailStr
 
 @app.post("/email/send")
-async def send_email(request: EmailNotificationRequest):
-    """Send a simple email notification"""
+async def send_email(request: EmailNotificationRequest, db: Session = Depends(get_db)):
+    """Send an email using the configured mail sender, requires DB session."""
     try:
+        # Pass the db session to mail_sender
         success = mail_sender.send_email(
-            request.recipients, 
-            request.subject, 
-            request.message
+            db=db,
+            recipients=request.recipients,
+            subject=request.subject,
+            message=request.message # Assuming send_email handles message param correctly
         )
         if success:
             return {"status": "success", "message": "Email sent successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to send email")
+            # Mail sender logs errors, return a generic failure
+            raise HTTPException(status_code=500, detail="Failed to send email. Check logs for details.")
     except Exception as e:
+        logger.error(f"Error in /email/send endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-# Add new endpoints for email configuration
 @app.get("/email/config")
-async def get_email_config():
-    """Get the current email notification configuration"""
+async def get_email_config(db: Session = Depends(get_db)):
+    """Get the current email notification configuration from the database"""
     try:
-        from utils.mail_config import get_email_recipients, is_email_notification_enabled, get_email_provider
-        from utils.mail_config import NOTIFY_ON_COLLECTION, NOTIFY_ON_PROCESSING, NOTIFY_ON_ANALYSIS
+        latest_config = db.query(models.EmailConfiguration).order_by(models.EmailConfiguration.created_at.desc()).first()
         
-        config = {
-            "provider": get_email_provider(),
-            "recipients": get_email_recipients(),
-            "enabled": is_email_notification_enabled(),
-            "notifyOnCollection": NOTIFY_ON_COLLECTION,
-            "notifyOnProcessing": NOTIFY_ON_PROCESSING,
-            "notifyOnAnalysis": NOTIFY_ON_ANALYSIS
-        }
+        if not latest_config:
+            # Return default values if no configuration is found
+            default_config = EmailConfig( 
+                provider="mailersend",
+                recipients=[], 
+                enabled=False,
+                notifyOnCollection=False,
+                notifyOnProcessing=False,
+                notifyOnAnalysis=True
+            )
+            return JSONResponse(status_code=status.HTTP_200_OK, content=default_config.dict())
+            
+        # Convert DB model to Pydantic model
+        config_data = EmailConfig(
+            # Ensure provider from DB is returned, which should be 'mailersend' after a POST
+            provider=latest_config.provider, 
+            recipients=latest_config.recipients if latest_config.recipients else [], 
+            enabled=latest_config.enabled,
+            notifyOnCollection=latest_config.notify_on_collection,
+            notifyOnProcessing=latest_config.notify_on_processing,
+            notifyOnAnalysis=latest_config.notify_on_analysis
+        )
         
-        return {"status": "success", "data": config}
+        return JSONResponse(status_code=status.HTTP_200_OK, content=config_data.dict())
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_message = f"Failed to retrieve email configuration: {str(e)}"
+        logger.error(f"Error getting email config: {e}", exc_info=True)
+        # Return a JSON response with the error detail
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            content={"detail": error_message}
+        )
 
 @app.post("/email/config")
-async def update_email_config(config: EmailConfig):
-    """Update the email notification configuration"""
+async def update_email_config(config: EmailConfig, db: Session = Depends(get_db)):
+    """Update the email notification configuration by adding a new record to the database.
+       Assumes MailerSend is the provider based on .env credentials.
+    """
     try:
-        import os
-        from pathlib import Path
-        from dotenv import load_dotenv, set_key
+        # Hardcode provider and SMTP server for MailerSend based on .env config
+        provider_name = "mailersend"
+        smtp_server = "smtp.mailersend.net" # From .env
+        
+        # Ignore config.provider from request, always use mailersend
 
-        env_path = Path("config/.env")
+        # Create new configuration record in the database, including recipients
+        new_config = models.EmailConfiguration(
+            provider=provider_name, # Always mailersend
+            smtp_server=smtp_server, # Always mailersend server
+            enabled=config.enabled,
+            recipients=config.recipients, 
+            notify_on_collection=config.notifyOnCollection,
+            notify_on_processing=config.notifyOnProcessing,
+            notify_on_analysis=config.notifyOnAnalysis
+        )
+        db.add(new_config)
+        db.commit()
+        db.refresh(new_config)
         
-        # Load current .env file
-        load_dotenv(env_path)
-        
-        # Update the values
-        set_key(env_path, "EMAIL_PROVIDER", config.provider)
-        set_key(env_path, "EMAIL_RECIPIENTS", ",".join(config.recipients))
-        set_key(env_path, "EMAIL_NOTIFICATION_ENABLED", str(config.enabled).lower())
-        set_key(env_path, "NOTIFY_ON_COLLECTION", str(config.notifyOnCollection).lower())
-        set_key(env_path, "NOTIFY_ON_PROCESSING", str(config.notifyOnProcessing).lower())
-        set_key(env_path, "NOTIFY_ON_ANALYSIS", str(config.notifyOnAnalysis).lower())
-        
-        # Set correct SMTP server based on provider
-        if config.provider.lower() == "protonmail":
-            set_key(env_path, "SMTP_SERVER", "smtp.protonmail.ch")
-        elif config.provider.lower() == "gmail":
-            set_key(env_path, "SMTP_SERVER", "smtp.gmail.com")
-        
-        # Refresh mail sender with new settings
-        mail_sender.email_provider = config.provider.lower()
-        mail_sender.smtp_server = os.getenv("SMTP_SERVER", "smtp.protonmail.ch" if config.provider.lower() == "protonmail" else "smtp.gmail.com")
-        
-        return {"status": "success", "message": "Email configuration updated successfully"}
+        return {"status": "success", "message": "Email configuration updated successfully (using MailerSend)", "new_config_id": new_config.id}
+    # Removed HTTPException check for unsupported provider as it's fixed now
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        db.rollback()
+        logger.error(f"Error updating email config: {e}", exc_info=True)
+        # Return JSON error response
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            content={"detail": f"Failed to update email configuration: {str(e)}"}
+        )
 
 @app.post("/email/test")
-async def send_test_email(request: TestEmailRequest):
-    """Send a test email to verify configuration"""
+async def send_test_email(request: TestEmailRequest, db: Session = Depends(get_db)):
+    """Send a test email to verify configuration, requires DB session."""
     try:
+        # Pass the db session to mail_sender
         success = mail_sender.send_email(
-            request.recipient,
-            "Test Email from Sentiment Analysis System",
-            "This is a test email to verify that your email configuration is working correctly."
+            db=db, 
+            recipients=[request.recipient], # send_email expects a list
+            subject="Test Email from Sentiment Analysis System",
+            body="This is a test email to verify that your email configuration is working correctly."
         )
         if success:
             return {"status": "success", "message": "Test email sent successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to send test email")
+            raise HTTPException(status_code=500, detail="Failed to send test email. Check logs for details.")
     except Exception as e:
+        logger.error(f"Error in /email/test endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/email/protonmail-test")
-async def test_protonmail_connection(request: TestEmailRequest):
-    """Test specifically the ProtonMail connection"""
+async def test_protonmail_connection(request: TestEmailRequest, db: Session = Depends(get_db)):
+    """Test specifically the ProtonMail connection, requires DB session."""
+    # This test seems less relevant now as the server is fetched from DB. 
+    # Keeping structure but relying on DB config.
     try:
-        original_provider = mail_sender.email_provider
-        original_server = mail_sender.smtp_server
-        original_port = mail_sender.smtp_port
+        # We don't need to manually set provider/server anymore.
+        # mail_sender.send_email will fetch the latest config (which includes the server)
         
-        mail_sender.email_provider = "protonmail"
-        mail_sender.smtp_server = "smtp.protonmail.ch"
-        mail_sender.smtp_port = 587
+        success = mail_sender.send_email(
+            db=db,
+            recipients=[request.recipient],
+            subject="DB Config Test from Sentiment Analysis System", # Changed subject slightly
+            body="This is a test email sent using the configuration currently stored in the database."
+        )
         
-        try:
-            success = mail_sender.send_email(
-                request.recipient,
-                "ProtonMail Test from Sentiment Analysis System",
-                "This is a test email sent via ProtonMail to verify your configuration."
-            )
-            if not success:
-                raise HTTPException(status_code=500, detail="Failed to send email via ProtonMail")
-        finally:
-            mail_sender.email_provider = original_provider
-            mail_sender.smtp_server = original_server
-            mail_sender.smtp_port = original_port
-            
-        return {"status": "success", "message": "ProtonMail test successful"}
+        if success:
+            return {"status": "success", "message": "Test email sent successfully using DB configuration"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to send test email using DB configuration. Check logs.")
             
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"ProtonMail test failed: {str(e)}")
+        logger.error(f"Error in /email/protonmail-test endpoint: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}")
 
 @app.post("/email/send-report")
-async def send_report_email(request: ReportEmailRequest):
-    """Send a formatted report email"""
+async def send_report_email(request: ReportEmailRequest, db: Session = Depends(get_db)):
+    """Send a formatted report email, requires DB session."""
     try:
         attachment = request.attachment_path if request.include_attachment else None
+        # Pass the db session to mail_sender
         success = mail_sender.send_report_email(
-            request.recipients,
-            request.subject,
-            request.report_content,
-            attachment
+            db=db,
+            recipients=request.recipients,
+            subject=request.subject,
+            report_content=request.report_content,
+            report_file=attachment
         )
         if success:
             return {"status": "success", "message": "Report email sent successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to send report email")
+            raise HTTPException(status_code=500, detail="Failed to send report email. Check logs.")
     except Exception as e:
+        logger.error(f"Error in /email/send-report endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/email/schedule")
-async def schedule_reports(config: ScheduleConfig, background_tasks: BackgroundTasks):
-    """Configure and start the email report scheduler"""
+async def schedule_reports(config: ScheduleConfig, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    """Configure and start the email report scheduler, requires DB factory."""
     global report_scheduler
     
     try:
         # Stop existing scheduler if running
         if report_scheduler:
+            logger.info("Stopping existing report scheduler...")
             report_scheduler.stop()
         
-        # Create new scheduler with updated configuration
-        report_scheduler = ReportScheduler(mail_sender, config.recipients)
+        logger.info(f"Creating new report scheduler with recipients: {config.recipients}")
+        # Create new scheduler with DB factory and updated configuration (recipients)
+        report_scheduler = ReportScheduler(db_factory=SessionLocal, recipients=config.recipients)
+        
         report_scheduler.schedule_reports(
             daily_time=config.daily_time,
             weekly_day=config.weekly_day,
@@ -545,19 +580,17 @@ async def schedule_reports(config: ScheduleConfig, background_tasks: BackgroundT
         )
         
         # Start scheduler in background
-        background_tasks.add_task(start_scheduler)
+        # Ensure start_scheduler function uses the global report_scheduler
+        logger.info("Adding scheduler start task to background...")
+        background_tasks.add_task(start_scheduler) 
         
         return {
             "status": "success", 
             "message": "Report scheduler configured and started",
-            "config": {
-                "recipients": config.recipients,
-                "daily_time": config.daily_time,
-                "weekly_day": config.weekly_day,
-                "monthly_day": config.monthly_day
-            }
+            "config": config.dict()
         }
     except Exception as e:
+        logger.error(f"Error configuring scheduler: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/email/schedule/status")
@@ -589,85 +622,104 @@ async def stop_scheduler():
     return {"status": "success", "message": "Scheduler stopped successfully"}
 
 def start_scheduler():
-    """Start the report scheduler"""
+    """Start the report scheduler (called by background task)."""
     global report_scheduler
     if report_scheduler:
         try:
-             # Assuming start() runs the schedule loop in a thread
+             logger.info("Starting report scheduler thread...")
              report_scheduler.start() 
-             logger.info("Report scheduler started.")
+             logger.info("Report scheduler started successfully.")
         except Exception as e:
              logger.error(f"Failed to start report scheduler thread: {e}", exc_info=True)
 
-# Add new models for target individual management
+# Update model for target individual management
 class TargetIndividualConfig(BaseModel):
     individual_name: str
     query_variations: List[str]
 
 @app.get("/target")
-async def get_target_individual():
-    """Get the current target individual configuration"""
-    config = agent.config
-    if 'target' not in config:
-        # Return default or error message
-        return {
-            "status": "success", 
-            "data": {"individual_name": "Default", "query_variations": []}, # Provide a default
-            "message": "Target individual not explicitly configured; using defaults."
-        }
-    
-    return {
-        "status": "success",
-        "data": config['target']
-    }
+async def get_target_individual(db: Session = Depends(get_db)):
+    """Get the current target individual configuration from the database"""
+    try:
+        latest_config = db.query(models.TargetIndividualConfiguration).order_by(models.TargetIndividualConfiguration.created_at.desc()).first()
+        
+        if not latest_config:
+            # Return default values if no configuration is found
+            default_data = TargetIndividualConfig(individual_name="Default", query_variations=[]).dict()
+            return JSONResponse(content={"status": "success", "data": default_data})
+            
+        # Convert DB model to Pydantic model
+        config_data = TargetIndividualConfig(
+            individual_name=latest_config.individual_name,
+            query_variations=latest_config.query_variations # Assumes query_variations is stored as JSON
+        )
+        
+        # Return explicit success structure
+        return JSONResponse(content={"status": "success", "data": config_data.dict()})
+    except Exception as e:
+        logger.error(f"Error getting target config: {e}", exc_info=True)
+        # Keep raising HTTPException on error
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve target individual configuration: {str(e)}")
 
 @app.post("/target")
-async def update_target_individual(target_config: TargetIndividualConfig):
-    """Update the target individual configuration"""
+async def update_target_individual(target_config: TargetIndividualConfig, db: Session = Depends(get_db)):
+    """Update the target individual configuration by adding a new record to the database"""
     try:
-        updated_config = {'target': target_config.dict()}
-        result = agent.execute_command('update_config', updated_config)
+        # Create new configuration record in the database
+        new_config = models.TargetIndividualConfiguration(
+            individual_name=target_config.individual_name,
+            query_variations=target_config.query_variations # Store as JSON
+        )
+        db.add(new_config)
+        db.commit()
+        db.refresh(new_config)
         
-        if not result['success']:
-            raise HTTPException(status_code=400, detail=result['message'])
+        # TODO: Determine if agent needs to be explicitly notified or if it reads 
+        # from DB directly. If agent holds state, it might need an update call.
+        # E.g., agent.update_target_config(new_config)
         
-        # Avoid blocking: get target data directly from request if possible
+        # Broadcast the update via websocket
         await broadcast_update({
             'type': 'target_update',
-            'data': updated_config['target']
+            'data': target_config.dict() # Send the newly set config
         })
         
         return {
             "status": "success", 
             "message": "Target individual configuration updated successfully",
-            "data": updated_config['target']
+            "new_config_id": new_config.id,
+            "data": target_config.dict()
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        db.rollback()
+        logger.error(f"Error updating target config: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update target individual configuration: {str(e)}")
 
 @app.on_event("startup")
 async def startup_event():
     global report_scheduler
-    # Optional: Run Alembic upgrade programmatically on startup?
-    # try:
-    #     print("Running Alembic upgrades...")
-    #     from alembic.config import Config
-    #     from alembic import command
-    #     alembic_cfg = Config("src/alembic.ini") # Adjust path if needed
-    #     command.upgrade(alembic_cfg, "head")
-    #     print("Alembic upgrades completed.")
-    # except Exception as e:
-    #     print(f"Alembic upgrade failed: {e}")
-
-    # Initialize scheduler (existing logic, ensure ReportScheduler init is correct)
+    logger.info("API Service starting up...")
+    # Initialize scheduler at startup, passing DB factory 
+    # Starts without specific recipients - they are configured via API
     try:
-       report_scheduler = ReportScheduler(mail_sender) # Assuming constructor only needs mail_sender
-       start_scheduler() # Start the scheduler loop
+        logger.info("Initializing report scheduler at startup...")
+        report_scheduler = ReportScheduler(db_factory=SessionLocal)
+        # Optional: Start scheduler immediately? Or wait for config?
+        # start_scheduler() # Uncomment if you want it running by default
+        logger.info("Report scheduler initialized.")
     except Exception as e:
-        logger.error(f"Failed to initialize or start report scheduler: {e}", exc_info=True)
+        logger.error(f"Failed to initialize report scheduler at startup: {e}", exc_info=True)
 
-    print("API Service started. Database connection configured.")
-    # Removed initial data loading from CSV
+    # Optional: Start the agent if it has a background loop
+    if agent and hasattr(agent, 'start'):
+        try:
+             logger.info("Starting SentimentAnalysisAgent background tasks...")
+             agent.start() # Assuming agent has a start method for its loops
+             logger.info("SentimentAnalysisAgent started.")
+        except Exception as e:
+             logger.error(f"Failed to start SentimentAnalysisAgent: {e}", exc_info=True)
+
+    logger.info("API Service startup complete.")
 
 def start():
     """Start the API service"""

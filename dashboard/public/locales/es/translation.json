@@ -584,6 +584,9 @@
     "errorMessage": "Error al guardar la configuración",
     "nameRequiredError": "El nombre del individuo objetivo es requerido",
     "variationRequiredError": "El nombre de la variación es requerido",
-    "duplicateVariationError": "Esta variación ya existe"
+    "duplicateVariationError": "Esta variación ya existe",
+    "noNameSet": "Nombre no establecido",
+    "noVariations": "Sin variaciones",
+    "loadError": "Error al cargar"
   }
 } 

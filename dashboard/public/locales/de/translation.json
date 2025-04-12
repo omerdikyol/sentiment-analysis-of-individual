@@ -584,6 +584,9 @@
     "errorMessage": "Fehler beim Speichern der Konfiguration",
     "nameRequiredError": "Der Name der Zielperson ist erforderlich",
     "variationRequiredError": "Der Name der Variation ist erforderlich",
-    "duplicateVariationError": "Diese Variation existiert bereits"
+    "duplicateVariationError": "Diese Variation existiert bereits",
+    "noNameSet": "Name nicht festgelegt",
+    "noVariations": "Keine Variationen",
+    "loadError": "Ladefehler"
   }
 } 

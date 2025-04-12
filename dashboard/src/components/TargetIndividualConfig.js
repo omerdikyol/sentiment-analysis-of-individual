@@ -42,19 +42,27 @@ const TargetIndividualConfig = () => {
     const loadTargetConfig = async () => {
       try {
         setIsLoading(true);
+        console.log("Attempting to load target config...");
         const response = await DataService.getTargetIndividual();
         
+        console.log("Received response from GET /target:", response);
+
         if (response.status === 'success' && response.data) {
+          console.log("Load successful, data found:", response.data);
           setTargetConfig({
             individual_name: response.data.individual_name || '',
             query_variations: response.data.query_variations || []
           });
+          setError(null);
         } else {
+          console.error("Load failed or data structure incorrect. Response:", response);
           setError(response.message || t('target.loadError'));
+          setTargetConfig({ individual_name: '', query_variations: [] });
         }
       } catch (err) {
+        console.error("Error caught during loadTargetConfig:", err);
         setError(t('target.loadError'));
-        console.error('Error loading target config:', err);
+        setTargetConfig({ individual_name: '', query_variations: [] });
       } finally {
         setIsLoading(false);
       }
