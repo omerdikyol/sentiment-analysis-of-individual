@@ -22,10 +22,11 @@ from src.utils.notification_service import send_analysis_report
 from .brain import AgentBrain
 from .autogen_agents import AutogenAgentSystem
 import inspect
+from src.processing.sentiment_analyzer import ImprovedSentimentAnalyzer
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler('logs/agent.log'),
@@ -44,6 +45,7 @@ class SentimentAnalysisAgent:
         self.config = self.load_config()
         self.brain = AgentBrain(self.base_path / 'config')
         self.autogen_system = AutogenAgentSystem(self.base_path / 'config')
+        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
         self.data_history: Dict[str, List[Any]] = {
             'sentiment_trends': [],
             'data_quality_metrics': [],
@@ -391,6 +393,7 @@ class SentimentAnalysisAgent:
 
     def process_data(self):
         """Process collected raw data, perform analysis, and send to API."""
+        # --- [RESTORED] Original data processing logic --- 
         logger.info("Starting data processing...")
         raw_data_path = self.base_path / 'data' / 'raw'
         processed_data_path = self.base_path / 'data' / 'processed'
@@ -403,90 +406,224 @@ class SentimentAnalysisAgent:
 
         # Aggregate raw data
         try:
-            all_data = pd.concat([pd.read_csv(f) for f in all_raw_files], ignore_index=True)
-            logger.info(f"Aggregated {len(all_data)} records from {len(all_raw_files)} raw files.")
+            # Read CSVs individually and parse dates afterwards
+            all_data_list = []
+            potential_date_columns = ['published_date', 'date', 'published_at', 'timestamp'] # Possible date column names across all formats
+            
+            logger.info(f"Reading and processing {len(all_raw_files)} raw files...")
+            for f in all_raw_files:
+                try:
+                    # Read without initial date parsing
+                    df = pd.read_csv(f, on_bad_lines='warn')
+                    logger.debug(f"Read {len(df)} rows from {f.name}. Columns: {list(df.columns)}")
+                    
+                    # Identify and parse existing date columns for this specific file
+                    dates_to_parse_in_this_df = [col for col in potential_date_columns if col in df.columns]
+                    if dates_to_parse_in_this_df:
+                        logger.debug(f"Attempting to parse date columns {dates_to_parse_in_this_df} in {f.name}")
+                        for date_col in dates_to_parse_in_this_df:
+                            df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+                            # Check how many dates failed parsing (optional)
+                            parse_failures = df[date_col].isna().sum() - (df[date_col].isnull().sum() if date_col in df else 0) # Count new NaNs more safely
+                            if parse_failures > 0:
+                                 logger.warning(f"Could not parse {parse_failures} values in column '{date_col}' from {f.name}")
+                    else:
+                         logger.debug(f"No standard date columns found in {f.name}")
+                         
+                    all_data_list.append(df)
+                    
+                except pd.errors.EmptyDataError:
+                     logger.warning(f"Raw file {f.name} is empty. Skipping.")
+                except Exception as e_read:
+                    logger.warning(f"Could not read or process file {f.name}: {e_read}. Skipping file.")
+            
+            if not all_data_list:
+                 logger.error("No valid raw data could be aggregated from any files.")
+                 return False
+                 
+            # Concatenate all processed dataframes
+            all_data = pd.concat(all_data_list, ignore_index=True)
+            logger.info(f"Successfully aggregated {len(all_data)} records from {len(all_data_list)} non-empty files.")
+
         except Exception as e:
-            logger.error(f"Error aggregating raw data: {e}")
+            logger.error(f"Error aggregating raw data: {e}", exc_info=True)
             return False # Indicate failure
 
         # --- Data Cleaning & Preprocessing ---
-        # (Keep your existing cleaning logic here)
-        # Example: Deduplication, handling missing values
         initial_count = len(all_data)
-        # Ensure 'text' and 'timestamp' columns exist before dropping duplicates
-        if 'text' in all_data.columns and 'timestamp' in all_data.columns:
-            all_data.drop_duplicates(subset=['text', 'timestamp'], inplace=True)
-            cleaned_count = len(all_data)
-            logger.info(f"Removed {initial_count - cleaned_count} duplicate records.")
+        # Define potential identifier columns for deduplication
+        # Use 'url' or 'text' + 'timestamp'/'published_date' as potential keys
+        dedup_subset = []
+        if 'url' in all_data.columns:
+             dedup_subset.append('url')
+        elif 'text' in all_data.columns:
+             dedup_subset.append('text')
+             # Try to find a reliable timestamp column for deduplication
+             if 'published_date' in all_data.columns:
+                 dedup_subset.append('published_date')
+             elif 'timestamp' in all_data.columns:
+                 dedup_subset.append('timestamp')
+             elif 'date' in all_data.columns:
+                 dedup_subset.append('date')
+        
+        if dedup_subset:
+             try:
+                # Ensure subset columns actually exist before dropping
+                valid_dedup_subset = [col for col in dedup_subset if col in all_data.columns]
+                if valid_dedup_subset:
+                     all_data.drop_duplicates(subset=valid_dedup_subset, inplace=True, keep='first')
+                     cleaned_count = len(all_data)
+                     logger.info(f"Removed {initial_count - cleaned_count} duplicate records based on {valid_dedup_subset}.")
+                else:
+                     logger.warning(f"Could not perform deduplication, subset columns {dedup_subset} not found after aggregation.")
+                     cleaned_count = initial_count
+             except KeyError:
+                 # This shouldn't happen with the check above, but keep for safety
+                 logger.warning(f"KeyError during deduplication using {valid_dedup_subset}. Columns might not exist after aggregation.")
+                 cleaned_count = initial_count # Assume no duplicates removed
         else:
-            logger.warning("Columns 'text' or 'timestamp' not found for deduplication.")
-            cleaned_count = initial_count
+             logger.warning("Could not determine suitable columns for deduplication (e.g., 'url' or 'text' + timestamp).")
+             cleaned_count = initial_count
         # ... other cleaning steps ...
 
         # --- Sentiment Analysis ---
-        # (Keep your existing sentiment analysis logic here)
         try:
             logger.info("Performing sentiment analysis...")
-            # Assuming analysis adds 'sentiment_score' and 'sentiment_label' columns
-            # Replace this with your actual analysis call
             if 'text' in all_data.columns:
-                 all_data['sentiment_score'] = all_data['text'].apply(lambda x: self.brain.analyze_sentiment(x) if isinstance(x, str) else 0.5)
-                 all_data['sentiment_label'] = all_data['sentiment_score'].apply(lambda score: 'positive' if score > 0.6 else ('negative' if score < 0.4 else 'neutral'))
+                 # Apply the analyzer once and get the tuple (label, score)
+                 sentiment_results = all_data['text'].apply(
+                    lambda x: self.sentiment_analyzer.analyze(x) if isinstance(x, str) and pd.notna(x) else ('neutral', 0.5)
+                 )
+                 # Assign label and score from the results
+                 all_data['sentiment_label'] = sentiment_results.apply(lambda res: res[0])
+                 all_data['sentiment_score'] = sentiment_results.apply(lambda res: res[1])
                  logger.info("Sentiment analysis completed.")
-                 processed_df = all_data # Or the result of your analysis
+                 processed_df = all_data # Use the modified DataFrame
             else:
                  logger.error("Column 'text' not found for sentiment analysis.")
+                 # Decide if processing should continue without sentiment - for now, let's stop.
                  return False
         except Exception as e:
-            logger.error(f"Error during sentiment analysis: {e}")
+            logger.error(f"Error during sentiment analysis: {e}", exc_info=True)
             return False
 
         # --- Prepare Data for API ---
         if processed_df.empty:
-             logger.warning("Processed data is empty. Nothing to send to API.")
-             # Clean up raw files even if nothing is sent? Decide based on your logic.
-             # for f in all_raw_files: os.remove(f)
+             logger.warning("Processed data is empty after cleaning/analysis. Nothing to send to API.")
+             # Clean up raw files? Let's do it here as well.
+             logger.info("Cleaning up raw data files as processed data is empty...")
+             for f in all_raw_files:
+                 try: os.remove(f)
+                 except Exception: pass
              return True # Processing technically succeeded, just no output
 
         try:
             logger.info(f"Preparing {len(processed_df)} records for API update...")
-            # Convert DataFrame to list of dicts compatible with DataRecord model
             processed_df_copy = processed_df.copy()
 
-            # Convert NaNs/NaTs to None for JSON compatibility
+            # **Rename identifier column to 'id' for the API payload**
+            if 'original_id' in processed_df_copy.columns:
+                processed_df_copy.rename(columns={'original_id': 'id'}, inplace=True)
+                logger.info("Renamed DataFrame column 'original_id' to 'id' for API.")
+            elif 'post_id' in processed_df_copy.columns and 'id' not in processed_df_copy.columns:
+                processed_df_copy.rename(columns={'post_id': 'id'}, inplace=True)
+                logger.info("Renamed DataFrame column 'post_id' to 'id' for API as 'original_id' was missing.")
+            elif 'id' not in processed_df_copy.columns:
+                 logger.warning("Column 'id', 'original_id', or 'post_id' not found in processed data. API might require an 'id'.")
+                 # Optionally add an 'id' column with None if strictly required by API
+                 # processed_df_copy['id'] = None
+
+            # **Ensure 'id' column is string type**
+            if 'id' in processed_df_copy.columns:
+                 logger.debug(f"Converting 'id' column to string type. Original dtype: {processed_df_copy['id'].dtype}")
+                 # Use astype(str) which handles numbers; None/NaN becomes 'None'/'nan' string
+                 processed_df_copy['id'] = processed_df_copy['id'].astype(str)
+                 # Replace 'nan' string resulting from NaN conversion with None if necessary 
+                 # (Depends if API allows 'nan' string or requires actual null/None)
+                 # processed_df_copy['id'] = processed_df_copy['id'].replace('nan', None)
+                 logger.debug(f"Converted 'id' column to string type. New dtype: {processed_df_copy['id'].dtype}")
+            else:
+                 logger.warning("Could not convert 'id' to string as column doesn't exist.")
+
+            # **Convert ALL specified datetime columns to ISO format string**
+            datetime_cols = ['published_date', 'date', 'published_at', 'timestamp'] # Match DataRecord fields + legacy timestamp
+            for col in datetime_cols:
+                if col in processed_df_copy.columns:
+                    # Ensure column is actually datetime type (it should be if parsing worked)
+                    if pd.api.types.is_datetime64_any_dtype(processed_df_copy[col]):
+                         logger.debug(f"Processing datetime column '{col}'.")
+                         # Remove timezone info if present (API/DB expects naive)
+                         if hasattr(processed_df_copy[col].dt, 'tz') and processed_df_copy[col].dt.tz is not None:
+                            processed_df_copy[col] = processed_df_copy[col].dt.tz_localize(None)
+                            logger.debug(f"Made column '{col}' timezone-naive.")
+                            
+                         # Convert valid datetimes to ISO format, leave NaT/None as None
+                         processed_df_copy[col] = processed_df_copy[col].apply(
+                            lambda x: x.isoformat(timespec='seconds') if pd.notna(x) else None
+                         )
+                         logger.debug(f"Converted column '{col}' to ISO format string for API.")
+                    else:
+                         # If the column exists but isn't datetime, it might be strings that failed parsing earlier
+                         # We'll nullify them to avoid sending bad data to the API
+                         logger.warning(f"Column '{col}' exists but is not datetime type ({processed_df_copy[col].dtype}). Nullifying values for API.")
+                         processed_df_copy[col] = None 
+                else:
+                     logger.debug(f"Expected datetime column '{col}' not found in DataFrame. Skipping conversion.")
+
+            # **Convert NaNs/NaTs to None for JSON compatibility (handles all columns)**
+            # This is crucial for numeric/boolean columns that might have NaNs
             processed_df_copy = processed_df_copy.where(pd.notnull(processed_df_copy), None)
+            logger.debug("Converted remaining NaN/NaT values to None for JSON compatibility.")
 
-            # Convert specific datetime columns to ISO format string if they exist and are expected by API
-            # Adjust column names as needed ('timestamp', 'created_at', etc.)
-            if 'timestamp' in processed_df_copy.columns and pd.api.types.is_datetime64_any_dtype(processed_df_copy['timestamp']):
-                 # Ensure it's datetime before conversion
-                 processed_df_copy['timestamp'] = pd.to_datetime(processed_df_copy['timestamp'], errors='coerce')
-                 # Remove timezone info if present (Render might use UTC)
-                 if processed_df_copy['timestamp'].dt.tz is not None:
-                    processed_df_copy['timestamp'] = processed_df_copy['timestamp'].dt.tz_localize(None)
-                 # Convert valid datetimes to ISO format, leave others as None
-                 processed_df_copy['timestamp'] = processed_df_copy['timestamp'].apply(lambda x: x.isoformat(timespec='seconds') if pd.notna(x) else None)
+            # Select only columns that match the DataRecord model fields to avoid sending extra data
+            # Get fields from the DataRecord model (requires importing it or defining the list)
+            # For simplicity, define the list here based on service.py DataRecord
+            expected_api_fields = [
+                'title', 'description', 'content', 'url', 'published_date', 'source',
+                'source_url', 'query', 'language', 'platform', 'date', 'text',
+                'file_source', 'id', 'alert_id', 'published_at', 'source_type',
+                'country', 'favorite', 'tone', 'source_name', 'parent_url', 'parent_id',
+                'children', 'direct_reach', 'cumulative_reach', 'domain_reach', 'tags',
+                'score', 'alert_name', 'type', 'post_id', 'retweets', 'likes',
+                'user_location', 'comments', 'user_name', 'user_handle', 'user_avatar',
+                'sentiment_label', 'sentiment_score'
+            ]
+            
+            # Filter DataFrame columns to only include expected fields
+            columns_to_send = [col for col in expected_api_fields if col in processed_df_copy.columns]
+            processed_df_for_api = processed_df_copy[columns_to_send]
+            logger.info(f"Filtered DataFrame to include {len(columns_to_send)} columns matching API model.")
 
-            # Add similar conversions for other datetime columns if necessary
-
-            # Ensure column names match the Pydantic model 'DataRecord' in the API
-            # Rename columns here if needed, e.g.:
-            # processed_df_copy.rename(columns={'some_name': 'api_field_name'}, inplace=True)
-
-            data_list = processed_df_copy.to_dict(orient='records')
+            # Convert the filtered DataFrame to list of dicts
+            data_list = processed_df_for_api.to_dict(orient='records')
             payload = {"data": data_list}
+            
+            # --- DEBUGGING: Log first few records of the payload (KEEP THIS) ---
+            try:
+                 log_sample_size = min(3, len(data_list))
+                 if log_sample_size > 0:
+                     logger.debug(f"Sample of first {log_sample_size} records being sent to API:")
+                     for i in range(log_sample_size):
+                         # Use json.dumps for cleaner representation of None vs NaN etc.
+                         logger.debug(f"Record {i+1}: {json.dumps(data_list[i], indent=2, default=str)}")
+                 else:
+                     logger.debug("Payload contains no records.")
+            except Exception as log_e:
+                 logger.error(f"Error logging payload sample: {log_e}")
+            # --- END DEBUGGING ---
 
         except Exception as e:
-            logger.error(f"Error preparing data for API: {e}")
+            logger.error(f"Error preparing data for API: {e}", exc_info=True)
             return False
 
         # --- Send Data to API ---
         try:
-            logger.info(f"Sending data to API endpoint: {DATA_UPDATE_ENDPOINT}")
-            response = requests.post(DATA_UPDATE_ENDPOINT, json=payload, timeout=60) # Added timeout
+            logger.info(f"Sending {len(data_list)} records to API endpoint: {DATA_UPDATE_ENDPOINT}")
+            response = requests.post(DATA_UPDATE_ENDPOINT, json=payload, timeout=120) 
             response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
 
-            logger.info(f"API update successful: {response.json().get('message', 'OK')}")
+            api_response_json = response.json()
+            logger.info(f"API update successful: {api_response_json.get('message', 'OK')}")
 
             # Clean up raw files after successful processing and API send
             logger.info("Cleaning up raw data files...")
@@ -502,9 +639,8 @@ class SentimentAnalysisAgent:
                 recipients = get_email_recipients()
                 if recipients:
                     subject = "Data Processing Completed"
-                    message = f"Data processing completed successfully at {datetime.now()}.\n{len(processed_df)} records processed and sent to API."
+                    message = f"Data processing completed successfully at {datetime.now()}.\n{len(processed_df)} records processed and sent to API ({api_response_json.get('message', 'OK')})."
                     try:
-                        # Assuming you have a send_notification utility
                         from src.utils.notification_service import send_notification # Ensure import is correct
                         send_notification(recipients, subject, message)
                         logger.info(f"Sent processing completion notification to: {', '.join(recipients)}")
@@ -517,17 +653,25 @@ class SentimentAnalysisAgent:
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send data to API: {e}")
+            # Log the specific error if possible
+            if e.response is not None:
+                 try:
+                     error_detail = e.response.json()
+                     logger.error(f"API Error Response Body: {json.dumps(error_detail, indent=2)}")
+                 except json.JSONDecodeError:
+                     logger.error(f"API Error Response Body (non-JSON): {e.response.text}")
             # Decide how to handle failure: Maybe save locally as backup?
-            # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            # failed_api_path = processed_data_path / f'failed_api_update_{timestamp}.csv'
-            # try:
-            #     processed_df.to_csv(failed_api_path, index=False)
-            #     logger.info(f"Saved data locally due to API failure: {failed_api_path}")
-            # except Exception as e_save:
-            #     logger.error(f"Failed to save backup data locally: {e_save}")
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            failed_api_path = processed_data_path / f'failed_api_update_{timestamp_str}.csv'
+            try:
+                # Save the data *before* it was converted to dict list
+                processed_df.to_csv(failed_api_path, index=False)
+                logger.info(f"Saved data locally due to API failure: {failed_api_path}")
+            except Exception as e_save:
+                logger.error(f"Failed to save backup data locally: {e_save}")
             return False # Indicate failure
         except Exception as e:
-             logger.error(f"An unexpected error occurred after preparing data: {e}")
+             logger.error(f"An unexpected error occurred after preparing data: {e}", exc_info=True)
              return False
 
     def update_metrics(self, latest_data: pd.DataFrame, analysis_result: Dict[str, Any]):
@@ -782,5 +926,7 @@ def parse_delay_to_seconds(delay_str: str) -> Optional[int]:
 
 if __name__ == "__main__":
     agent = SentimentAnalysisAgent()
+    logger.info("Performing initial data collection and processing...")
+    agent._run_collect_and_process()  # Run collection and processing once at the start
     logger.info("Starting agent's main loop...")
     agent.run()

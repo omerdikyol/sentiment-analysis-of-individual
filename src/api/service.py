@@ -58,16 +58,48 @@ report_scheduler = None
 # =============================
 
 class DataRecord(BaseModel):
-    # Define the structure of a single data record based on your CSV columns
-    # Example:
-    id: Optional[str] = None
-    text: Optional[str] = None
-    sentiment_score: Optional[float] = None
-    sentiment_label: Optional[str] = None
+    # Updated to match SentimentData model fields derived from CSV header
+    title: Optional[str] = None
+    description: Optional[str] = None
+    content: Optional[str] = None
+    url: Optional[str] = None
+    published_date: Optional[datetime] = None
+    source: Optional[str] = None
+    source_url: Optional[str] = None
+    query: Optional[str] = None
+    language: Optional[str] = None
     platform: Optional[str] = None
-    timestamp: Optional[datetime] = None
-    # Add other fields as per your actual CSV structure
-    # Make fields Optional if they might be missing
+    date: Optional[datetime] = None # Specific 'date' field
+    text: Optional[str] = None
+    file_source: Optional[str] = None
+    id: Optional[str] = None # This corresponds to 'original_id' in the DB model
+    alert_id: Optional[int] = None
+    published_at: Optional[datetime] = None # Specific 'published_at' field
+    source_type: Optional[str] = None
+    country: Optional[str] = None
+    favorite: Optional[bool] = None
+    tone: Optional[str] = None
+    source_name: Optional[str] = None
+    parent_url: Optional[str] = None
+    parent_id: Optional[str] = None
+    children: Optional[int] = None
+    direct_reach: Optional[int] = None
+    cumulative_reach: Optional[int] = None
+    domain_reach: Optional[int] = None
+    tags: Optional[str] = None # Consider Union[List[str], str] or just str
+    score: Optional[float] = None # General score
+    alert_name: Optional[str] = None
+    type: Optional[str] = None # 'type' field
+    post_id: Optional[str] = None
+    retweets: Optional[int] = None
+    likes: Optional[int] = None
+    user_location: Optional[str] = None
+    comments: Optional[int] = None
+    user_name: Optional[str] = None
+    user_handle: Optional[str] = None
+    user_avatar: Optional[str] = None
+    sentiment_label: Optional[str] = None
+    sentiment_score: Optional[float] = None
 
 class DataUpdateRequest(BaseModel):
     data: List[DataRecord]
@@ -136,31 +168,74 @@ async def update_data(request: DataUpdateRequest, db: Session = Depends(get_db))
         db_objects = []
 
         for record in new_records:
-            # Convert timestamp string back to datetime if necessary
-            record_timestamp = None
-            if record.timestamp:
-                 if isinstance(record.timestamp, str):
-                      try:
-                          # Attempt ISO format parsing, handling potential 'Z' timezone
-                          record_timestamp = datetime.fromisoformat(record.timestamp.replace('Z', '+00:00'))
-                      except ValueError:
-                          logger.warning(f"Could not parse timestamp: {record.timestamp}. Setting to None.")
-                          record_timestamp = None # Or handle error differently
-                 elif isinstance(record.timestamp, datetime):
-                      record_timestamp = record.timestamp
-            
-            # Ensure timezone is naive if DB column (DateTime(timezone=False)) is naive
-            if record_timestamp and record_timestamp.tzinfo:
-                record_timestamp = record_timestamp.replace(tzinfo=None)
+            # Helper function to parse and clean datetime fields
+            def parse_datetime(dt_input: Optional[Any]) -> Optional[datetime]:
+                if dt_input is None:
+                    return None
+                parsed_dt = None
+                if isinstance(dt_input, str):
+                    try:
+                        # Handle potential 'Z' timezone indicator
+                        parsed_dt = datetime.fromisoformat(dt_input.replace('Z', '+00:00'))
+                    except ValueError:
+                        logger.warning(f"Could not parse timestamp: {dt_input}. Setting to None.")
+                        return None
+                elif isinstance(dt_input, datetime):
+                    parsed_dt = dt_input
+                else:
+                     logger.warning(f"Unexpected type for timestamp: {type(dt_input)}. Setting to None.")
+                     return None
+                
+                # Ensure timezone is naive for DB storage
+                if parsed_dt and parsed_dt.tzinfo:
+                    return parsed_dt.replace(tzinfo=None)
+                return parsed_dt
 
+            # Map DataRecord fields to SentimentData model columns
             db_obj = models.SentimentData(
                 run_timestamp=current_run_time,
-                original_id=record.id, # Use the 'id' field from the request
-                text=record.text,
-                sentiment_score=record.sentiment_score,
-                sentiment_label=record.sentiment_label,
+                # Map all fields from DataRecord to SentimentData
+                title=record.title,
+                description=record.description,
+                content=record.content,
+                url=record.url,
+                published_date=parse_datetime(record.published_date),
+                source=record.source,
+                source_url=record.source_url,
+                query=record.query,
+                language=record.language,
                 platform=record.platform,
-                timestamp=record_timestamp # Use parsed datetime
+                date=parse_datetime(record.date), # Specific 'date' field
+                text=record.text,
+                file_source=record.file_source,
+                original_id=record.id, # Map request 'id' to DB 'original_id'
+                alert_id=record.alert_id,
+                published_at=parse_datetime(record.published_at), # Specific 'published_at'
+                source_type=record.source_type,
+                country=record.country,
+                favorite=record.favorite,
+                tone=record.tone,
+                source_name=record.source_name,
+                parent_url=record.parent_url,
+                parent_id=record.parent_id,
+                children=record.children,
+                direct_reach=record.direct_reach,
+                cumulative_reach=record.cumulative_reach,
+                domain_reach=record.domain_reach,
+                tags=record.tags, # Assuming tags is a string; adjust if it's list/JSON
+                score=record.score,
+                alert_name=record.alert_name,
+                type=record.type,
+                post_id=record.post_id,
+                retweets=record.retweets,
+                likes=record.likes,
+                user_location=record.user_location,
+                comments=record.comments,
+                user_name=record.user_name,
+                user_handle=record.user_handle,
+                user_avatar=record.user_avatar,
+                sentiment_label=record.sentiment_label,
+                sentiment_score=record.sentiment_score
             )
             db_objects.append(db_obj)
 
