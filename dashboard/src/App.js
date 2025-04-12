@@ -92,6 +92,8 @@ import { LanguageProvider } from './contexts/LanguageContext';
 
 const DRAWER_WIDTH = 240;
 const COLLAPSED_DRAWER_WIDTH = 72;
+const MAX_DAILY_POINTS = 90; // Threshold for switching to weekly aggregation
+const MAX_WEEKLY_POINTS = 180; // Threshold for switching to monthly aggregation
 
 // Create theme
 const theme = createTheme({
@@ -362,6 +364,7 @@ function App() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(!isMobile);
   const [mobileMenuAnchorEl, setMobileMenuAnchorEl] = useState(null);
+  const [aggregationPeriod, setAggregationPeriod] = useState('day'); // 'day', 'week', or 'month'
   
   // Mobile menu handlers
   const handleMobileMenuOpen = (event) => {
@@ -422,10 +425,31 @@ function App() {
     
     console.log('Filtered raw data:', filteredRawData);
     
-    // Recalculate metrics and charts with filtered data
+    // Decide on aggregation based on data density
+    let currentMentionsByDate, currentSentimentByDate;
+    let currentAggregationPeriod = 'day';
+    const dates = filteredRawData.map(item => DataService.ensureValidDate(item.date)).filter(Boolean);
+    const uniqueDays = new Set(dates).size;
+
+    if (uniqueDays > MAX_WEEKLY_POINTS) {
+      currentAggregationPeriod = 'month';
+      console.log(`Aggregating data by ${currentAggregationPeriod} (${uniqueDays} days > ${MAX_WEEKLY_POINTS})`);
+      currentMentionsByDate = DataService.aggregateMentionsByPeriod(filteredRawData, currentAggregationPeriod);
+      currentSentimentByDate = DataService.aggregateSentimentByPeriod(filteredRawData, currentAggregationPeriod);
+    } else if (uniqueDays > MAX_DAILY_POINTS) {
+        currentAggregationPeriod = 'week';
+        console.log(`Aggregating data by ${currentAggregationPeriod} (${uniqueDays} days > ${MAX_DAILY_POINTS})`);
+        currentMentionsByDate = DataService.aggregateMentionsByPeriod(filteredRawData, currentAggregationPeriod);
+        currentSentimentByDate = DataService.aggregateSentimentByPeriod(filteredRawData, currentAggregationPeriod);
+    } else {
+        console.log(`Using daily data (${uniqueDays} days <= ${MAX_DAILY_POINTS})`);
+        currentMentionsByDate = DataService.getMentionsByDate(filteredRawData);
+        currentSentimentByDate = DataService.getSentimentByDate(filteredRawData);
+    }
+    setAggregationPeriod(currentAggregationPeriod);
+    
+    // Recalculate other metrics and charts with filtered data
     const metrics = DataService.calculateMetrics(filteredRawData);
-    const mentionsByDate = DataService.getMentionsByDate(filteredRawData);
-    const sentimentByDate = DataService.getSentimentByDate(filteredRawData);
     const topSentiment = DataService.getTopSentiment(filteredRawData, 5);
     const bottomSentiment = DataService.getBottomSentiment(filteredRawData, 5);
     const mentionsByPlatform = DataService.getMentionsByPlatform(filteredRawData);
@@ -436,8 +460,8 @@ function App() {
       ...data,
       rawData: filteredRawData,
       metrics,
-      mentionsByDate,
-      sentimentByDate,
+      mentionsByDate: currentMentionsByDate,
+      sentimentByDate: currentSentimentByDate,
       topSentiment,
       bottomSentiment,
       mentionsByPlatform,
@@ -771,12 +795,12 @@ function App() {
                             <Grid container spacing={3}>
                               <Grid item xs={12} md={6}>
                                 <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                                  <MentionLineChart mentionsByDate={filteredData?.mentionsByDate} />
+                                  <MentionLineChart mentionsByDate={filteredData?.mentionsByDate} aggregationPeriod={aggregationPeriod} />
                                 </Paper>
                               </Grid>
                               <Grid item xs={12} md={6}>
                                 <Paper elevation={0} sx={{ p: 2, height: '100%' }}>
-                                  <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate} />
+                                  <SentimentLineChart sentimentByDate={filteredData?.sentimentByDate} aggregationPeriod={aggregationPeriod} />
                                 </Paper>
                               </Grid>
                               <Grid item xs={12} md={6}>
@@ -931,7 +955,7 @@ function App() {
                         </Grid>
                       )
                     } />
-                    <Route path="/sentiment-data" element={<SentimentDataPage />} />
+                    <Route path="/sentiment-data" element={<SentimentDataPage data={filteredData?.rawData || []} />} />
                     <Route path="/emotional-analysis" element={<EmotionalAnalysis />} />
                     <Route path="/geographical-insights" element={<GeographicalInsights />} />
                     <Route path="/platform-sentiment" element={<PlatformSentiment />} />

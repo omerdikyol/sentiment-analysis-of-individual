@@ -18,7 +18,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const MentionLineChart = ({ mentionsByDate }) => {
+const MentionLineChart = ({ mentionsByDate, aggregationPeriod }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -58,6 +58,37 @@ const MentionLineChart = ({ mentionsByDate }) => {
     }
   };
 
+  // Helper function to format date based on aggregation
+  const formatTick = (dateStr) => {
+    const date = new Date(dateStr);
+    if (aggregationPeriod === 'month') {
+      // Format as Month YYYY (e.g., Jan 2024)
+      return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    } else if (aggregationPeriod === 'week') {
+      // Format as Week starting M/D (e.g., Wk 1/15)
+      // Note: Recharts labelFormatter for tooltip might show the start date of the period
+      return `Wk ${date.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`;
+    } else {
+      // Default: M/D/YYYY
+      return date.toLocaleDateString();
+    }
+  };
+  
+  // Helper function for tooltip label
+  const formatTooltipLabel = (label) => {
+    const date = new Date(label);
+     if (aggregationPeriod === 'month') {
+      return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    } else if (aggregationPeriod === 'week') {
+      // Show the week range if possible, otherwise just the start date
+      const endDate = new Date(date);
+      endDate.setDate(date.getDate() + 6);
+      return `Week: ${date.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
   const renderChart = (containerHeight = '100%', clickable = false) => (
     <ResponsiveContainer width="100%" height={containerHeight}>
       <AreaChart
@@ -73,7 +104,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="date"
-          tickFormatter={(date) => new Date(date).toLocaleDateString()}
+          tickFormatter={formatTick}
           angle={-60}
           textAnchor="end"
           height={60}
@@ -88,7 +119,7 @@ const MentionLineChart = ({ mentionsByDate }) => {
           }}
           cursor={clickable ? { stroke: '#ccc', strokeWidth: 2 } : undefined}
           formatter={(value) => [value, t('general.mentions')]}
-          labelFormatter={(label) => new Date(label).toLocaleDateString()}
+          labelFormatter={formatTooltipLabel}
         />
         <Area
           type="monotone"

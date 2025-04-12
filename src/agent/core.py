@@ -4,6 +4,7 @@ import schedule
 import logging
 from datetime import datetime, timedelta
 import pandas as pd
+import numpy as np
 from typing import Dict, List, Any, Callable, Optional
 import json
 from pathlib import Path
@@ -23,6 +24,7 @@ from .brain import AgentBrain
 from .autogen_agents import AutogenAgentSystem
 import inspect
 from src.processing.sentiment_analyzer import ImprovedSentimentAnalyzer
+from src.processing.data_processor import DataProcessor
 
 # Configure logging
 logging.basicConfig(
@@ -46,6 +48,7 @@ class SentimentAnalysisAgent:
         self.brain = AgentBrain(self.base_path / 'config')
         self.autogen_system = AutogenAgentSystem(self.base_path / 'config')
         self.sentiment_analyzer = ImprovedSentimentAnalyzer()
+        self.data_processor = DataProcessor()
         self.data_history: Dict[str, List[Any]] = {
             'sentiment_trends': [],
             'data_quality_metrics': [],
@@ -420,13 +423,17 @@ class SentimentAnalysisAgent:
                     # Identify and parse existing date columns for this specific file
                     dates_to_parse_in_this_df = [col for col in potential_date_columns if col in df.columns]
                     if dates_to_parse_in_this_df:
-                        logger.debug(f"Attempting to parse date columns {dates_to_parse_in_this_df} in {f.name}")
+                        logger.debug(f"Attempting to parse date columns {dates_to_parse_in_this_df} in {f.name} using custom parser.")
                         for date_col in dates_to_parse_in_this_df:
-                            df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-                            # Check how many dates failed parsing (optional)
-                            parse_failures = df[date_col].isna().sum() - (df[date_col].isnull().sum() if date_col in df else 0) # Count new NaNs more safely
+                            # Apply custom parser
+                            df[date_col] = df[date_col].apply(self.data_processor.parse_date)
+                            # Check how many dates failed parsing (optional) - result will be None
+                            parse_failures = df[date_col].isnull().sum() # Count None values
+                            original_count = len(df[date_col])
+                            # We need a baseline of non-null before parsing to calculate actual failures
+                            # This is tricky as the input could be mixed types. Let's just log null count.
                             if parse_failures > 0:
-                                 logger.warning(f"Could not parse {parse_failures} values in column '{date_col}' from {f.name}")
+                                 logger.debug(f"Column '{date_col}' in {f.name} has {parse_failures}/{original_count} null/unparsed values after custom parsing.")
                     else:
                          logger.debug(f"No standard date columns found in {f.name}")
                          
@@ -573,7 +580,12 @@ class SentimentAnalysisAgent:
             # **Convert NaNs/NaTs to None for JSON compatibility (handles all columns)**
             # This is crucial for numeric/boolean columns that might have NaNs
             processed_df_copy = processed_df_copy.where(pd.notnull(processed_df_copy), None)
-            logger.debug("Converted remaining NaN/NaT values to None for JSON compatibility.")
+            logger.debug("Converted NaN/NaT values to None using .where().")
+
+            # **Additionally, replace np.inf, -np.inf, and potentially explicit np.nan with None**
+            # This covers cases .where might miss or if NaN representation is unusual
+            processed_df_copy = processed_df_copy.replace([np.inf, -np.inf, np.nan], None)
+            logger.debug("Replaced np.inf, -np.inf, and np.nan with None using .replace().")
 
             # Select only columns that match the DataRecord model fields to avoid sending extra data
             # Get fields from the DataRecord model (requires importing it or defining the list)

@@ -13,7 +13,7 @@ import {
 import { useLocation } from 'react-router-dom';
 import SentimentDataTable from './SentimentDataTable';
 
-const SentimentDataPage = () => {
+const SentimentDataPage = ({ data }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const sentimentFilter = location.state?.sentimentFilter || null;
@@ -119,6 +119,7 @@ const SentimentDataPage = () => {
       
       <Box id="sentiment-data-table" sx={{ mb: 4 }}>
         <SentimentDataTable 
+          data={data}
           initialSentimentFilter={sentimentFilter}
           initialSourceFilter={sourceFilter}
           initialDateFilter={dateFilter}

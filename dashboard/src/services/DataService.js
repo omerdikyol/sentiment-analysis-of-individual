@@ -1,39 +1,65 @@
 import Papa from 'papaparse';
 
+// Helper function to get the start of the week (Monday) for a given date
+const getStartOfWeek = (date) => {
+  const d = new Date(date);
+  const day = d.getDay(); // Sunday - Saturday : 0 - 6
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0); // Reset time to start of the day
+  return monday.toISOString().split('T')[0]; // Return YYYY-MM-DD
+};
+
+// Helper function to get the start of the month for a given date
+const getStartOfMonth = (date) => {
+  const d = new Date(date);
+  d.setDate(1); // Set day to the 1st
+  d.setHours(0, 0, 0, 0); // Reset time to start of the day
+  return d.toISOString().split('T')[0]; // Return YYYY-MM-DD
+};
+
 class DataService {
   async loadData() {
+    // Fetch from API instead of CSV
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Use env var or default
+    const endpoint = `${apiUrl}/latest-data`;
+
     try {
-      console.log('Attempting to load data from processed_data.csv');
-      const response = await fetch('./processed_data.csv');
+      console.log(`Attempting to load data from API: ${endpoint}`);
+      const response = await fetch(endpoint);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+        // Try to get error message from API response body
+        let errorBody = `HTTP error! status: ${response.status} ${response.statusText}`;
+        try {
+          const errorJson = await response.json();
+          errorBody = errorJson.detail || errorBody; // FastAPI often puts error in 'detail'
+        } catch (jsonError) {
+          // Ignore if response body is not JSON
+        }
+        throw new Error(`Failed to fetch data from API: ${errorBody}`);
       }
       
-      const csvText = await response.text();
-      console.log('CSV data loaded, length:', csvText.length);
-      
-      return new Promise((resolve, reject) => {
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          dynamicTyping: true,
-          complete: (results) => {
-            console.log('Papa parse complete, rows:', results.data.length);
-            if (results.errors && results.errors.length > 0) {
-              console.warn('Parser errors:', results.errors);
-            }
-            resolve(this.processData(results.data));
-          },
-          error: (error) => {
-            console.error('Papa parse error:', error);
-            reject(error);
-          }
-        });
-      });
+      const apiResult = await response.json();
+      console.log('API response received:', apiResult.status);
+
+      if (apiResult.status === 'success' && apiResult.data) {
+        console.log('API data loaded, records:', apiResult.data.length);
+        // The processData function expects an array of records
+        // The API returns { status: 'success', data: [...], timestamp: '...' }
+        return this.processData(apiResult.data); 
+      } else {
+        console.error('API call did not return successful status or data:', apiResult);
+        // Return an empty structure matching what processData would return on failure
+        return this.processData([]); // Process empty array to get default structure
+        // Or throw an error: throw new Error(`API error: ${apiResult.message || 'No data found'}`);
+      }
+
     } catch (error) {
-      console.error('Error loading data:', error);
-      throw error;
+      console.error('Error loading data from API:', error);
+      // Consider returning the empty structure here as well for consistency
+      // return this.processData([]);
+      throw error; // Re-throw the error so calling components know about the failure
     }
   }
 
@@ -861,6 +887,87 @@ class DataService {
       console.error('Error updating target individual configuration:', error);
       return { status: 'error', message: error.message };
     }
+  }
+
+  // Aggregates mentions by week or month
+  aggregateMentionsByPeriod(data, period) {
+    if (!data || data.length === 0) return [];
+
+    const aggregated = {};
+    const getPeriodKey = period === 'week' ? getStartOfWeek : getStartOfMonth;
+
+    data.forEach(row => {
+      const validDate = this.ensureValidDate(row.date);
+      if (!validDate) return; // Skip if date is invalid
+
+      const periodKey = getPeriodKey(validDate);
+      if (!aggregated[periodKey]) {
+        aggregated[periodKey] = { count: 0 };
+      }
+      aggregated[periodKey].count++;
+    });
+
+    // Convert to array and sort by date
+    return Object.entries(aggregated)
+      .map(([date, values]) => ({ date, count: values.count }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+
+  // Aggregates sentiment data by week or month
+  aggregateSentimentByPeriod(data, period) {
+    if (!data || data.length === 0) return [];
+
+    const aggregated = {};
+    const getPeriodKey = period === 'week' ? getStartOfWeek : getStartOfMonth;
+
+    data.forEach(row => {
+      const validDate = this.ensureValidDate(row.date);
+      if (!validDate) return; // Skip if date is invalid
+
+      const periodKey = getPeriodKey(validDate);
+      if (!aggregated[periodKey]) {
+        aggregated[periodKey] = {
+          positive: 0,
+          negative: 0,
+          neutral: 0,
+          totalScore: 0,
+          count: 0
+        };
+      }
+
+      const sentimentScore = parseFloat(row.sentiment_score);
+      const sentimentLabel = (row.sentiment_label || '').toLowerCase();
+      let sentimentCategory;
+
+      if (sentimentLabel && ['positive', 'negative', 'neutral'].includes(sentimentLabel)) {
+          sentimentCategory = sentimentLabel;
+      } else if (!isNaN(sentimentScore)) {
+          if (sentimentScore > 0.2) sentimentCategory = 'positive';
+          else if (sentimentScore < -0.2) sentimentCategory = 'negative';
+          else sentimentCategory = 'neutral';
+      } else {
+          sentimentCategory = 'neutral'; // Default if no label or score
+      }
+
+
+      aggregated[periodKey][sentimentCategory]++;
+      if (!isNaN(sentimentScore)) {
+        aggregated[periodKey].totalScore += sentimentScore;
+      }
+      aggregated[periodKey].count++;
+    });
+
+    // Convert to array, calculate averages, and sort by date
+    return Object.entries(aggregated)
+      .map(([date, values]) => ({
+        date,
+        positive: values.positive,
+        negative: values.negative,
+        neutral: values.neutral,
+        avgScore: values.count > 0 ? (values.totalScore / values.count) : 0,
+        totalMentionsInPeriod: values.count // Keep track of total mentions in the period
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
   }
 }
 

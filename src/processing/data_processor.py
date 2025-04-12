@@ -7,7 +7,7 @@ import re
 import logging
 import sys
 from pathlib import Path
-from sentiment_analyzer import ImprovedSentimentAnalyzer
+from .sentiment_analyzer import ImprovedSentimentAnalyzer
 from dateutil import parser
 from difflib import SequenceMatcher
 
@@ -76,33 +76,39 @@ class DataProcessor:
             twitter_pattern = r'[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+[+]\d{4}\s+\d{4}'
             if re.match(twitter_pattern, date_str):
                 parsed_date = datetime.strptime(date_str, '%a %b %d %H:%M:%S +0000 %Y')
-                return parsed_date.strftime('%Y-%m-%d')
+                return parsed_date
             
             # Handle standard datetime format with 5-digit timezone (e.g., 2025-03-31 10:57:46 +00000)
             if re.match(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+[+]\d{5}', date_str):
                 # Remove timezone info since we only need the date
                 base_date = date_str.split('+')[0].strip()
                 parsed_date = datetime.strptime(base_date, '%Y-%m-%d %H:%M:%S')
-                return parsed_date.strftime('%Y-%m-%d')
+                return parsed_date
             
             # Handle ISO format with timezone (e.g., 2025-03-21T12:19:52.000Z)
             if 'T' in date_str and ('Z' in date_str or '+' in date_str):
                 parsed_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                return parsed_date.strftime('%Y-%m-%d')
+                # Make naive if timezone info exists (as DB expects naive)
+                if parsed_date.tzinfo:
+                    return parsed_date.replace(tzinfo=None)
+                return parsed_date
             
             # Handle custom format (e.g., 04:19 09 Mar 2025)
             if re.match(r'\d{2}:\d{2}\s+\d{2}\s+[A-Za-z]{3}\s+\d{4}', date_str):
                 parsed_date = datetime.strptime(date_str, '%H:%M %d %b %Y')
-                return parsed_date.strftime('%Y-%m-%d')
+                return parsed_date
             
             # Handle standard datetime format (e.g., 2025-03-14 16:17:49)
             if re.match(r'\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}', date_str):
                 parsed_date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
-                return parsed_date.strftime('%Y-%m-%d')
+                return parsed_date
             
             # Try parsing with dateutil as fallback
             parsed_date = parser.parse(date_str)
-            return parsed_date.strftime('%Y-%m-%d')
+            # Make naive if timezone info exists (as DB expects naive)
+            if parsed_date.tzinfo:
+                return parsed_date.replace(tzinfo=None)
+            return parsed_date
         except Exception as e:
             logger.warning(f"Could not parse date '{date_str}': {str(e)}")
             return None

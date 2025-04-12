@@ -38,10 +38,8 @@ import {
 } from '@mui/icons-material';
 import Papa from 'papaparse';
 
-const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter = null, initialDateFilter = null, initialCountryFilter = null, initialTextFilter = null }) => {
+const SentimentDataTable = ({ data: rawData, initialSentimentFilter = null, initialSourceFilter = null, initialDateFilter = null, initialCountryFilter = null, initialTextFilter = null }) => {
   const { t } = useTranslation();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,87 +52,6 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
   const [countryFilter, setCountryFilter] = useState(initialCountryFilter);
   const [textFilter, setTextFilter] = useState(initialTextFilter);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/processed_data.csv');
-        const csvText = await response.text();
-        
-        Papa.parse(csvText, {
-          header: true,
-          complete: (results) => {
-            console.log('CSV parsing complete, rows:', results.data.length);
-            
-            const processedData = results.data
-              .filter(row => row && row.text && row.text.trim() !== '')
-              .map(row => {
-                // Debug date values
-                console.log('Processing row date:', row.date);
-                
-                // Process location data
-                let country = row.country;
-                if (!country || country === 'Unknown' || country === 'unknown' || country === '') {
-                  // Country detection logic
-                  const content = (row.text || row.content || '').toLowerCase();
-                  // Set default country if detection fails
-                  country = 'Qatar';
-                  
-                  // Try to detect country from content
-                  if (content.includes('qatar') || content.includes('doha')) {
-                    country = 'Qatar';
-                  } else if (content.includes('uae') || content.includes('dubai') || content.includes('abu dhabi')) {
-                    country = 'UAE';
-                  } else if (content.includes('uk') || content.includes('united kingdom') || content.includes('britain') || content.includes('london')) {
-                    country = 'UK';
-                  } else if (content.includes('us') || content.includes('united states') || content.includes('america')) {
-                    country = 'US';
-                  }
-                }
-
-                // Debug date formatting
-                let formattedDate = 'Unknown';
-                try {
-                  formattedDate = formatDate(row.date || row.published_date);
-                  console.log('Formatted date result:', row.date, '=>', formattedDate);
-                } catch (e) {
-                  console.error('Error formatting date:', e);
-                }
-
-                return {
-                  date: formattedDate,
-                  source: row.source_name || row.source || 'Unknown',
-                  platform: row.platform || 'Unknown',
-                  sentiment: row.sentiment_label || 'Unknown',
-                  content: row.content || row.text || row.description || '',
-                  author: row.user_name || row.user_handle || 'Unknown',
-                  sentimentScore: parseFloat(row.sentiment_score) || 0,
-                  location: country || 'Qatar', // Use determined country
-                  country: country || 'Qatar',
-                  // Store original data for detailed view
-                  originalData: { ...row }
-                };
-              });
-            
-            console.log('Processed data rows:', processedData.length);
-            setData(processedData);
-            setFilteredData(processedData);
-            setLoading(false);
-          },
-          error: (error) => {
-            console.error('Error parsing CSV:', error);
-            setLoading(false);
-          }
-        });
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Helper function to format date
   const formatDate = (dateString) => {
     if (!dateString) return t('general.unknown');
     
@@ -148,9 +65,44 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
     }
   };
 
+  const processedData = React.useMemo(() => {
+    if (!rawData) return [];
+    console.log('Processing rawData prop, records:', rawData.length);
+    return rawData
+      .filter(row => row && row.text && row.text.trim() !== '') // Ensure basic validity
+      .map(row => {
+        // Date formatting - reuse existing logic if needed, or simplify
+        let formattedDate = 'Unknown';
+        try {
+            const dateObj = new Date(row.date || row.published_date || row.published_at);
+            if (!isNaN(dateObj.getTime())) {
+                formattedDate = dateObj.toLocaleDateString();
+            }
+        } catch (e) {
+            console.error('Error formatting date:', e);
+        }
+
+        // Use data directly from the rawData object
+        return {
+          date: formattedDate,
+          source: row.source_name || row.source || 'Unknown',
+          platform: row.platform || 'Unknown',
+          sentiment: row.sentiment_label || 'Unknown',
+          content: row.content || row.text || row.description || '',
+          author: row.user_name || row.user_handle || 'Unknown',
+          sentimentScore: parseFloat(row.sentiment_score) || 0,
+          location: row.country || 'Unknown', // Use country from data
+          country: row.country || 'Unknown',
+          url: row.url || '#', // Add URL if available
+          // Store original data for detailed view
+          originalData: { ...row }
+        };
+      });
+  }, [rawData, t]);
+
   useEffect(() => {
     if (searchTerm || sentimentFilter || sourceFilter || dateFilter || countryFilter || textFilter) {
-      const filtered = data.filter(item => {
+      const filtered = processedData.filter(item => {
         // Apply sentiment filter if it exists
         if (sentimentFilter && item.sentiment && 
             item.sentiment.toLowerCase() !== sentimentFilter.toLowerCase()) {
@@ -208,9 +160,9 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
       setFilteredData(filtered);
       setPage(0);
     } else {
-      setFilteredData(data);
+      setFilteredData(processedData);
     }
-  }, [searchTerm, data, sentimentFilter, sourceFilter, dateFilter, countryFilter, textFilter]);
+  }, [searchTerm, processedData, sentimentFilter, sourceFilter, dateFilter, countryFilter, textFilter]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -273,7 +225,7 @@ const SentimentDataTable = ({ initialSentimentFilter = null, initialSourceFilter
     setTextFilter(null);
   };
 
-  if (loading) {
+  if (!processedData.length) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
         <CircularProgress />

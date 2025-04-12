@@ -24,7 +24,7 @@ const formatDate = (dateString) => {
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
 };
 
-const SentimentLineChart = ({ sentimentByDate }) => {
+const SentimentLineChart = ({ sentimentByDate, aggregationPeriod }) => {
   const [animatedData, setAnimatedData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -46,6 +46,32 @@ const SentimentLineChart = ({ sentimentByDate }) => {
       });
     }
   }, [sentimentByDate]);
+
+  // Helper function to format date based on aggregation
+  const formatTick = (dateStr) => {
+    const date = new Date(dateStr);
+    if (aggregationPeriod === 'month') {
+      return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    } else if (aggregationPeriod === 'week') {
+      return `Wk ${date.toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+  
+  // Helper function for tooltip label
+  const formatTooltipLabel = (label) => {
+    const date = new Date(label);
+     if (aggregationPeriod === 'month') {
+      return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    } else if (aggregationPeriod === 'week') {
+      const endDate = new Date(date);
+      endDate.setDate(date.getDate() + 6);
+      return `Week: ${date.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   const handleCardClick = () => {
     setIsModalOpen(true);
@@ -88,7 +114,7 @@ const SentimentLineChart = ({ sentimentByDate }) => {
     if (active && payload && payload.length) {
       try {
         // Find the data point that matches the label
-        const dataPoint = animatedData.find(item => item.formattedDate === label);
+        const dataPoint = animatedData.find(item => formatTooltipLabel(item.date) === label);
         
         return (
           <Box
@@ -144,7 +170,8 @@ const SentimentLineChart = ({ sentimentByDate }) => {
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
         <XAxis
-          dataKey="formattedDate"
+          dataKey="date"
+          tickFormatter={formatTick}
           angle={-45}
           textAnchor="end"
           height={60}
