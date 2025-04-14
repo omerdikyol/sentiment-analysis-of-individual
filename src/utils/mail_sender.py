@@ -23,26 +23,27 @@ logger = logging.getLogger(__name__)
 class MailSender:
     """
     Utility class for sending emails. 
-    Loads credentials from .env, gets server/status from DB.
+    Loads credentials AND server config from .env, gets status/recipients from DB.
     """
     
     def __init__(self):
-        """Initialize email credentials from environment variables."""
-        # Load only credentials and sender info from .env
+        """Initialize email configuration from environment variables."""
+        # Load SMTP configuration from .env
+        self.smtp_server = os.getenv("EMAIL_SERVER")
         self.smtp_port = int(os.getenv("EMAIL_PORT", 587)) # Default to 587 if not set
         self.smtp_username = os.getenv("EMAIL_USERNAME")
         self.smtp_password = os.getenv("EMAIL_PASSWORD")
         self.sender_email = os.getenv("EMAIL_SENDER")
         
-        # Basic validation for credentials
-        if not all([self.smtp_port, self.smtp_username, self.smtp_password, self.sender_email]):
+        # Basic validation for SMTP configuration
+        if not all([self.smtp_server, self.smtp_port, self.smtp_username, self.smtp_password, self.sender_email]):
             logger.warning(
-                "Email credential configuration incomplete. Check EMAIL_PORT, "
-                "EMAIL_USERNAME, EMAIL_PASSWORD, and EMAIL_SENDER in src/api/.env file."
+                "Email SMTP configuration incomplete in src/api/.env file. Check EMAIL_SERVER, "
+                "EMAIL_PORT, EMAIL_USERNAME, EMAIL_PASSWORD, and EMAIL_SENDER."
             )
-            self.valid_credentials = False
+            self.valid_config = False
         else:
-            self.valid_credentials = True
+            self.valid_config = True
             
     def _get_latest_config(self, db: Session) -> Optional[EmailConfiguration]:
         """Helper function to get the latest email config from DB"""
@@ -68,44 +69,42 @@ class MailSender:
         Returns:
             bool: True if sent successfully, False otherwise.
         """
-        if not self.valid_credentials:
-            logger.error("Cannot send email: SMTP credentials configuration is incomplete or invalid.")
+        # Use config loaded from .env file first
+        if not self.valid_config:
+            logger.error("Cannot send email: SMTP configuration in src/api/.env is incomplete or invalid.")
             return False
             
-        # Fetch latest config from DB (needed for enabled status, server, and maybe recipients)
-        latest_config = self._get_latest_config(db)
+        # Fetch latest config from DB (needed ONLY for enabled status and maybe recipients)
+        latest_db_config = self._get_latest_config(db)
         
-        if not latest_config:
+        if not latest_db_config:
             logger.error("Cannot send email: Failed to retrieve email configuration from database.")
             return False
             
-        if not latest_config.enabled:
-            logger.info("Email notifications are disabled in the current configuration. Skipping send.")
+        # Check if email sending is enabled in DB
+        if not latest_db_config.enabled:
+            logger.info("Email notifications are disabled in the current DB configuration. Skipping send.")
             return False
             
         # Determine recipients list
         final_recipients = []
         if recipients: # Use explicitly provided list if available
             final_recipients = recipients
-        elif latest_config.recipients: # Otherwise, use list from DB config
-            final_recipients = latest_config.recipients
+        elif latest_db_config.recipients: # Otherwise, use list from DB config
+            final_recipients = latest_db_config.recipients
         
         if not final_recipients:
             logger.warning("Cannot send email: No recipients specified explicitly or found in DB configuration.")
             return False
             
-        # Use the SMTP server from the fetched config
-        smtp_server = latest_config.smtp_server
-        if not smtp_server:
-             logger.error("Cannot send email: SMTP server address not found in the current configuration.")
-             return False
-
-        # Ensure recipients is a list of strings
-        if isinstance(final_recipients, str): # Should not happen if using List[str] type hint, but safety check
-            final_recipients = [final_recipients]
-        elif not isinstance(final_recipients, list):
-             logger.error(f"Cannot send email: Invalid format for recipients: {final_recipients}")
-             return False
+        # Log the configuration being used for debugging
+        username_masked = self.smtp_username[:3] + '***' if self.smtp_username else 'None'
+        logger.info(f"Attempting to send email via SMTP:")
+        logger.info(f"  Server: {self.smtp_server}") # Use self.smtp_server from .env
+        logger.info(f"  Port: {self.smtp_port}")
+        logger.info(f"  Username: {username_masked}")
+        logger.info(f"  Sender: {self.sender_email}")
+        logger.info(f"  Recipients: {', '.join(final_recipients)}")
 
         try:
             # Create message
@@ -131,8 +130,8 @@ class MailSender:
                     except Exception as e:
                         logger.error(f"Failed to attach file {file_path}: {str(e)}")
             
-            # Send email using configured SMTP settings
-            with smtplib.SMTP(smtp_server, self.smtp_port) as server:
+            # Send email using configured SMTP settings from .env
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server: # Use self.smtp_server
                 server.starttls()
                 server.login(self.smtp_username, self.smtp_password)
                 server.send_message(msg)

@@ -459,19 +459,21 @@ async def get_email_config(db: Session = Depends(get_db)):
 @app.post("/email/config")
 async def update_email_config(config: EmailConfig, db: Session = Depends(get_db)):
     """Update the email notification configuration by adding a new record to the database.
-       Assumes MailerSend is the provider based on .env credentials.
+       SMTP server configuration is now read ONLY from src/api/.env by MailSender.
     """
     try:
-        # Hardcode provider and SMTP server for MailerSend based on .env config
-        provider_name = "mailersend"
-        smtp_server = "smtp.mailersend.net" # From .env
-        
-        # Ignore config.provider from request, always use mailersend
+        # SMTP server address is NOT configured here anymore. It's read from .env by MailSender.
+        # We still need a provider name for informational purposes in the DB, 
+        # but it doesn't affect sending logic which relies on .env.
+        provider_name = "env_configured" # Indicate config comes from .env
 
-        # Create new configuration record in the database, including recipients
+        # Ignore config.provider from request
+
+        # Create new configuration record in the database for status and recipients.
+        # Do NOT save smtp_server here.
         new_config = models.EmailConfiguration(
-            provider=provider_name, # Always mailersend
-            smtp_server=smtp_server, # Always mailersend server
+            provider=provider_name, 
+            # smtp_server is intentionally omitted here.
             enabled=config.enabled,
             recipients=config.recipients, 
             notify_on_collection=config.notifyOnCollection,
@@ -482,8 +484,7 @@ async def update_email_config(config: EmailConfig, db: Session = Depends(get_db)
         db.commit()
         db.refresh(new_config)
         
-        return {"status": "success", "message": "Email configuration updated successfully (using MailerSend)", "new_config_id": new_config.id}
-    # Removed HTTPException check for unsupported provider as it's fixed now
+        return {"status": "success", "message": "Email configuration (status/recipients) updated successfully. SMTP settings are read from environment.", "new_config_id": new_config.id}
     except Exception as e:
         db.rollback()
         logger.error(f"Error updating email config: {e}", exc_info=True)

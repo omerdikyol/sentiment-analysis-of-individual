@@ -18,14 +18,16 @@ import {
   Alert,
   Chip,
   Grid,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Mail as MailIcon,
   Save as SaveIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Send as SendIcon
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +43,7 @@ const EmailConfig = () => {
   const [notifyOnAnalysis, setNotifyOnAnalysis] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -137,6 +140,44 @@ const EmailConfig = () => {
     }
   };
 
+  // Handler for sending a test email
+  const handleSendTestEmail = async () => {
+    if (emails.length === 0) {
+      setSnackbar({
+        open: true,
+        message: t('emailConfig.noRecipientForTest', 'Please add at least one recipient email first.'),
+        severity: 'warning'
+      });
+      return;
+    }
+
+    const testRecipient = emails[0]; // Send to the first email in the list
+    setIsSendingTest(true);
+    try {
+      const result = await DataService.sendTestEmail(testRecipient);
+      if (result.status === 'success') {
+        setSnackbar({
+          open: true,
+          message: t('emailConfig.testEmailSuccess', `Test email sent successfully to ${testRecipient}`),
+          severity: 'success'
+        });
+      } else {
+        // Use detail from API if available, otherwise use generic message
+        const errorMessage = result.detail || result.message || 'Unknown error';
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      setSnackbar({
+        open: true,
+        message: t('emailConfig.testEmailError', `Failed to send test email: ${error.message}`),
+        severity: 'error'
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -150,7 +191,7 @@ const EmailConfig = () => {
       >
         <Typography variant="h5" component="h1" gutterBottom>
           {t('emailConfig.title')}
-          <Tooltip title={t('emailConfig.notificationSettings')}>
+          <Tooltip title={t('emailConfig.tooltip', 'Configure email notifications for different stages.')}>
             <IconButton size="small" sx={{ ml: 1 }}>
               <InfoIcon fontSize="small" />
             </IconButton>
@@ -277,11 +318,21 @@ const EmailConfig = () => {
           
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={isSendingTest ? <CircularProgress size={20} color="inherit" /> : <MailIcon />}
+              onClick={handleSendTestEmail}
+              disabled={loading || isSendingTest || emails.length === 0 || !notificationsEnabled}
+              sx={{ mr: 2 }}
+            >
+              {isSendingTest ? t('emailConfig.sending', 'Sending...') : t('emailConfig.sendTestEmail', 'Send Test Email')}
+            </Button>
+            <Button
               variant="contained"
               color="primary"
-              startIcon={<SaveIcon />}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
               onClick={handleSaveConfig}
-              disabled={loading}
+              disabled={loading || isSendingTest}
             >
               {t('emailConfig.saveSettings')}
             </Button>
@@ -295,7 +346,7 @@ const EmailConfig = () => {
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
