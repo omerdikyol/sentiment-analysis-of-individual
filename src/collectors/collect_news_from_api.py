@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import logging
 from typing import List, Dict, Any
-from query_variations import query_variations  # Import query variations
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -784,9 +783,30 @@ class NewsAPICollector:
             # logger.warning("No articles collected from any source")
             pass # Added pass to avoid indentation error
 
-def main():
-    collector = NewsAPICollector()
-    collector.collect_all(query_variations)
+def main(target_and_variations: List[str]):
+    """Main function called by run_collectors. Accepts target/variations list."""
+    if not target_and_variations:
+        print("[News API] Error: No target/query variations provided.")
+        return
+        
+    target_name = target_and_variations[0]
+    queries = target_and_variations[1:]
+    print(f"[News API] Received Target: {target_name}, Queries: {queries}")
 
+    # Instantiate the collector
+    collector = NewsAPICollector()
+    
+    # Construct the output file path
+    today = datetime.now().strftime("%Y%m%d")
+    safe_target_name = target_name.replace(" ", "_").lower()
+    output_dir = Path(__file__).parent.parent.parent / "data" / "raw"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_file = output_dir / f"news_api_{safe_target_name}_{today}.csv"
+
+    # Call the collector's collect_all method
+    collector.collect_all(queries=queries, output_file=str(output_file))
+
+# Keep __main__ block for testing
 if __name__ == "__main__":
-    main()
+    print("Running News API collector directly (without args)... Use run_collectors.py for proper execution.")
+    main([]) # Pass empty list

@@ -696,6 +696,23 @@ async def update_target_individual(target_config: TargetIndividualConfig, db: Se
         logger.error(f"Error updating target config: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to update target individual configuration: {str(e)}")
 
+@app.post("/agent/trigger-run", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_agent_run(background_tasks: BackgroundTasks):
+    """Manually triggers the agent's data collection cycle in the background."""
+    if not agent:
+        raise HTTPException(status_code=503, detail="Agent is not initialized.")
+        
+    try:
+        # Schedule the agent's collect_data method to run in the background
+        background_tasks.add_task(agent.collect_data)
+        logger.info("Manual agent data collection task added to background via API.")
+        return {"status": "success", "message": "Agent data collection triggered successfully in the background."}
+        
+    except Exception as e:
+        # This exception would likely occur during task *scheduling*, not execution
+        logger.error(f"Error scheduling agent run via API: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error scheduling agent run: {str(e)}")
+
 @app.on_event("startup")
 async def startup_event():
     global report_scheduler

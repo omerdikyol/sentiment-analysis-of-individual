@@ -18,8 +18,8 @@ import asyncio
 import re
 import threading
 import requests
-from src.utils.mail_config import is_email_notification_enabled, get_email_recipients, NOTIFY_ON_PROCESSING
-from src.utils.notification_service import send_analysis_report
+from src.utils.mail_config import NOTIFY_ON_ANALYSIS
+from src.utils.notification_service import send_analysis_report, send_processing_notification, send_collection_notification
 from .brain import AgentBrain
 from .autogen_agents import AutogenAgentSystem
 import inspect
@@ -28,7 +28,7 @@ from src.processing.data_processor import DataProcessor
 
 # Add necessary DB imports
 from sqlalchemy.orm import sessionmaker, Session 
-from src.api.models import TargetIndividualConfiguration # Import the model
+from src.api.models import TargetIndividualConfiguration, EmailConfiguration
 
 # Configure logging
 logging.basicConfig(
@@ -61,11 +61,44 @@ class SentimentAnalysisAgent:
         self.config = self.load_config() # Load config from file (excluding target)
         self.status = "idle"
         self.last_run_times = {"collect": None, "process": None, "cleanup": None}
-        self.data_history = {"collected": [], "processed": [], "sentiment_trends": [], "events": []}
+        self.data_history = {
+            "collected": [], 
+            "processed": [], 
+            "sentiment_trends": [], 
+            "events": [], 
+            "data_quality_metrics": [],
+            "system_health": []
+        }
+        
+        # --- Initialize task_status --- 
+        self.task_status = {
+            'is_busy': False,
+            'current_task': None,
+            'last_run': {
+                 # Store details of the last run for each task type
+                 'collect': None, 
+                 'process': None, 
+                 'cleanup': None,
+                 'optimize': None 
+            },
+            'suggestions': [] # Placeholder for brain suggestions
+        }
+        # --- End Initialize task_status ---
+        
         self.agent_registry = {} # Placeholder for Autogen integration
         self.brain = None # Placeholder for Brain integration
         self.stop_event = threading.Event()
         self.scheduler_thread = None
+
+        # Initialize processor and analyzer
+        self.data_processor = DataProcessor()
+        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
+
+        # --- Initialize base_path and is_running --- 
+        # Assuming core.py is in src/agent, base_path goes up three levels to project root
+        self.base_path = Path(__file__).resolve().parent.parent.parent 
+        self.is_running = True # Flag to control the main loop in run()
+        # --- End initializations ---
 
         # Ensure the config directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -74,7 +107,7 @@ class SentimentAnalysisAgent:
         # self.brain = Brain(...)
         # self.initialize_autogen_agents()
 
-        logger.info(f"Agent initialized. Config loaded from {self.config_path}.")
+        logger.info(f"Agent initialized. Config loaded from {self.config_path}. Base path: {self.base_path}")
         logger.info(f"Database session factory provided: {db_factory}")
 
     def load_config(self) -> Dict[str, Any]:
@@ -124,37 +157,139 @@ class SentimentAnalysisAgent:
             
     # --- Example of using target config ---
     def collect_data(self):
-        """Collect data based on configuration (including target)."""
+        """Collect data by running the external run_collectors.py script."""
+        logger.info("Starting data collection cycle by triggering run_collectors.py...")
         self.status = "collecting"
-        logger.info("Starting data collection cycle...")
-        
-        target_name = "Default Target" # Default if DB fails or no config
+        target_name = "Default Target"
         query_variations = []
+        collection_metrics = {
+            "start_time": datetime.now(),
+            "sources_attempted": "N/A", # Cannot determine from external script easily
+            "sources_successful": "N/A", # Cannot determine from external script easily
+            "records_collected": "N/A"  # Cannot determine from external script easily
+        }
+        collection_success = False
+        target_and_variations = [] # Initialize
         
         try:
+            # Get target config from DB
             with self.db_factory() as db:
                 target_config = self._get_latest_target_config(db)
                 if target_config:
                     target_name = target_config.individual_name
                     query_variations = target_config.query_variations
-                    logger.info(f"Using target config: {target_name}, queries: {query_variations}")
+                    logger.debug(f"[DB Target Config] Using Name: {target_name}")
+                    logger.debug(f"[DB Target Config] Using Variations: {query_variations}")
                 else:
-                     logger.warning("No target individual configuration found in database. Using defaults.")
+                    logger.warning("[DB Target Config] Not found. Using defaults.")
+                    # Keep defaults target_name = "Default Target", query_variations = []
+                    logger.debug(f"[DB Target Config] Using Name: {target_name}")
+                    logger.debug(f"[DB Target Config] Using Variations: {query_variations}")
+            
+            # --- Prepare query list and JSON encode it ---
+            target_and_variations = [target_name] + (query_variations if query_variations else [])
+            queries_json = json.dumps(target_and_variations)
+            logger.debug(f"Passing queries as JSON string: {queries_json}")
+            # --- End prepare --- 
 
-            # Use target_name and query_variations along with self.config['sources'], self.config['keywords'] etc. 
-            # in your data collection logic (Twitter API, News API calls etc.)
-            # Placeholder for actual data collection
-            time.sleep(5) # Simulate work
-            collected_count = len(query_variations) * 10 # Example
-            logger.info(f"Data collection cycle finished for '{target_name}'. Collected {collected_count} items.")
-            self.data_history["collected"].append({"timestamp": time.time(), "count": collected_count})
+            # --- Execute run_collectors.py --- 
+            script_path = self.base_path / "src" / "collectors" / "run_collectors.py"
+            if not script_path.exists():
+                 logger.error(f"Collector script not found at: {script_path}")
+                 raise FileNotFoundError(f"Collector script not found: {script_path}")
+            
+            # Construct command with --queries argument
+            command = [sys.executable, "-m", "src.collectors.run_collectors", "--queries", queries_json]
+            logger.info(f"Executing command: {' '.join(command)}") # Note: this won't show quotes around json correctly
+            
+            process = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False, 
+                cwd=self.base_path
+            )
+            
+            # Log stdout and stderr from the script
+            if process.stdout:
+                logger.info(f"run_collectors.py stdout:\n{process.stdout.strip()}")
+            if process.stderr:
+                logger.error(f"run_collectors.py stderr:\n{process.stderr.strip()}")
+            
+            if process.returncode == 0:
+                logger.info("run_collectors.py executed successfully.")
+                collection_success = True
+                collection_metrics["records_collected"] = "Unknown (External Script)"
+            else:
+                logger.error(f"run_collectors.py failed with return code {process.returncode}")
+                collection_success = False
+            # --- End Execute run_collectors.py --- 
+
+            self.data_history["collected"].append({"timestamp": time.time(), "success": collection_success})
             self.last_run_times["collect"] = time.time()
 
+        except FileNotFoundError as fnf_err:
+            logger.error(f"Error during data collection: {fnf_err}")
+            collection_success = False
         except Exception as e:
             logger.error(f"Error during data collection: {e}", exc_info=True)
+            collection_success = False
         finally:
             self.status = "idle"
+            collection_metrics["end_time"] = datetime.now()
+            collection_metrics["duration_seconds"] = (collection_metrics["end_time"] - collection_metrics["start_time"]).total_seconds()
+            # Approximation - success rate cannot be calculated accurately here
+            collection_metrics["collection_success_rate"] = 1.0 if collection_success else 0.0 
+
+        # --- Send Collection Notification (Using DB Config) ---
+        if collection_success: 
+            try:
+                recipients = []
+                notify_collection_enabled = False
+                with self.db_factory() as db:
+                    latest_email_config = db.query(EmailConfiguration).order_by(EmailConfiguration.created_at.desc()).first()
+                    # --- Add Email Config Logging ---
+                    if latest_email_config:
+                         logger.debug(f"[DB Email Config - Collection Check] Found config ID: {latest_email_config.id}")
+                         logger.debug(f"[DB Email Config - Collection Check] Enabled: {latest_email_config.enabled}")
+                         logger.debug(f"[DB Email Config - Collection Check] Notify on Collection: {latest_email_config.notify_on_collection}")
+                         logger.debug(f"[DB Email Config - Collection Check] Recipients: {latest_email_config.recipients}")
+                    else:
+                         logger.debug("[DB Email Config - Collection Check] No config found.")
+                    # --- End Email Config Logging ---
+
+                    if latest_email_config and latest_email_config.enabled:
+                        if latest_email_config.notify_on_collection:
+                            notify_collection_enabled = True
+                            if latest_email_config.recipients:
+                                recipients = latest_email_config.recipients
+                            else:
+                                logger.warning("Collection notifications enabled in DB, but no recipients configured.")
+                        else:
+                             logger.info("Collection notifications are disabled in the DB configuration (notify_on_collection=False).")
+                    # Optional: Add logging if no config found or globally disabled, similar to other notifications
+                
+                if notify_collection_enabled and recipients:
+                    logger.info(f"Attempting to send collection completion email to DB recipients: {recipients}")
+                    try:
+                        # Prepare data for the notification function (use approximated metrics)
+                        notification_data = {
+                            "collection_success_rate": collection_metrics["collection_success_rate"],
+                            "active_sources": collection_metrics["sources_successful"], # N/A
+                            "total_sources": collection_metrics["sources_attempted"], # N/A
+                            "total_records": collection_metrics["records_collected"], # N/A or Unknown
+                            "duration_seconds": collection_metrics["duration_seconds"]
+                        }
+                        send_collection_notification(notification_data, recipients, self.db_factory)
+                        logger.info("Collection completion email triggered successfully.")
+                    except Exception as e:
+                        logger.error(f"Error triggering collection completion email: {str(e)}", exc_info=True)
             
+            except Exception as e:
+                logger.error(f"Error checking DB or sending collection notification: {str(e)}", exc_info=True)
+        
+        return collection_success
+
     # Update other methods like process_data, run_analysis etc. similarly 
     # if they need the target configuration. Create a DB session using 
     # 'with self.db_factory() as db:' and call self._get_latest_target_config(db).
@@ -233,256 +368,6 @@ class SentimentAnalysisAgent:
         # if self.scheduler_thread:
         #     self.scheduler_thread.join()
         pass # Add actual stop logic
-
-    def process_data(self):
-        # Placeholder for the data processing logic
-        logger.info("Processing data...")
-        # Remember to use 'with self.db_factory() as db:' if DB access is needed
-        pass
-
-    def get_status(self) -> dict:
-        # Placeholder for getting detailed agent status
-        return {
-            "status": self.status,
-            "last_run_times": self.last_run_times,
-            # Add more relevant status info
-        }
-
-    # ... rest of the agent methods ...
-    # Ensure methods like 'process_data', 'run_analysis' etc.
-    # use the 'with self.db_factory() as db:' pattern if they need target config.
-
-    def get_status(self) -> dict:
-        """Get current agent status with brain insights"""
-        next_collection = schedule.next_run()
-        
-        # Get brain suggestions
-        metrics = {
-            'data_quality': self.data_history['sentiment_trends'][-1] if self.data_history['sentiment_trends'] else {},
-            'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
-        }
-        suggestions = self.brain.suggest_improvements(metrics)
-        
-        return {
-            **self.task_status,
-            'config': self.config,
-            'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else None,
-            'next_scheduled_run': str(next_collection) if next_collection else None,
-            'suggestions': suggestions,
-            'performance_metrics': self.brain.performance_metrics
-        }
-
-    def execute_command(self, command: str, params: dict = None) -> dict:
-        """Execute a command and return the result with brain evaluation"""
-        if self.task_status['is_busy']:
-            return {
-                'success': False,
-                'message': f"Agent is busy with task: {self.task_status['current_task']}"
-            }
-
-        try:
-            start_time = time.time()
-            result = {'success': False, 'message': ''}
-
-            if command == 'collect':
-                thread = threading.Thread(target=self._run_task, args=(self.collect_data, 'collect'))
-                thread.start()
-                result = {'success': True, 'message': 'Data collection started'}
-            
-            elif command == 'process':
-                thread = threading.Thread(target=self._run_task, args=(self.process_data, 'process'))
-                thread.start()
-                result = {'success': True, 'message': 'Data processing started'}
-            
-            elif command == 'collect_and_process':
-                thread = threading.Thread(target=self._run_collect_and_process)
-                thread.start()
-                result = {'success': True, 'message': 'Collection and processing started'}
-            
-            elif command == 'cleanup':
-                thread = threading.Thread(target=self._run_task, args=(self.cleanup_old_data, 'cleanup'))
-                thread.start()
-                result = {'success': True, 'message': 'Cleanup started'}
-            
-            elif command == 'update_config':
-                if not params:
-                    return {'success': False, 'message': 'No configuration provided'}
-                self.config.update(params)
-                with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
-                    json.dump(self.config, f, indent=4)
-                result = {'success': True, 'message': 'Configuration updated'}
-            
-            elif command == 'optimize':
-                if self.config.get('auto_optimization', True):
-                    new_config = self.brain.optimize_schedule(self.config)
-                    self.config.update(new_config)
-                    with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
-                        json.dump(self.config, f, indent=4)
-                    result = {'success': True, 'message': 'Configuration optimized'}
-                else:
-                    result = {'success': False, 'message': 'Auto-optimization is disabled'}
-            
-            else:
-                result = {'success': False, 'message': f'Unknown command: {command}'}
-
-            # Add execution time and let brain evaluate the action
-            result['duration'] = time.time() - start_time
-            score = self.brain.evaluate_action(command, result)
-            result['brain_score'] = score
-
-            return result
-            
-        except Exception as e:
-            logger.error(f"Error executing command {command}: {str(e)}")
-            error_result = {'success': False, 'message': str(e), 'duration': time.time() - start_time}
-            self.brain.evaluate_action(command, error_result)
-            return error_result
-
-    def _run_task(self, task_func, task_name):
-        """Run a task and update status with brain monitoring"""
-        self.task_status['is_busy'] = True
-        self.task_status['current_task'] = task_name
-        start_time = datetime.now()
-        success = False # Initialize success status
-
-        try:
-            # Check if the task function is a coroutine function
-            if inspect.iscoroutinefunction(task_func):
-                # Run the async task function blocking until complete
-                # This assumes schedule library calls tasks sequentially from the main thread.
-                # If tasks need to run concurrently or if schedule runs in a separate thread,
-                # using asyncio.run_coroutine_threadsafe might be necessary.
-                result = self.event_loop.run_until_complete(task_func())
-            else:
-                # Run the regular synchronous function
-                result = task_func()
-
-            success = result # Capture the success status from the task's return value
-            duration = (datetime.now() - start_time).total_seconds()
-
-            self.task_status['last_run'][task_name] = {
-                'time': start_time.isoformat(),
-                'success': success,
-                'duration': duration
-            }
-
-            # Update brain's memory
-            self.brain.update_memory({
-                'type': task_name,
-                'success': success,
-                'duration': duration,
-                'timestamp': start_time.isoformat()
-            })
-
-        except Exception as e:
-            logger.error(f"Error in task {task_name}: {str(e)}")
-            duration = (datetime.now() - start_time).total_seconds()
-            success = False # Ensure success is False on exception
-
-            self.task_status['last_run'][task_name] = {
-                'time': start_time.isoformat(),
-                'success': False,
-                'error': str(e),
-                'duration': duration
-            }
-
-            # Update brain's memory with failure
-            self.brain.update_memory({
-                'type': task_name,
-                'success': False,
-                'error': str(e),
-                'duration': duration,
-                'timestamp': start_time.isoformat()
-            })
-
-        finally:
-            self.task_status['is_busy'] = False
-            self.task_status['current_task'] = None
-
-            # Check if schedule optimization is needed
-            if self.config.get('adaptive_scheduling', True):
-                new_config = self.brain.optimize_schedule(self.config)
-                if new_config != self.config:
-                    logger.info("Updating schedule based on performance metrics")
-                    self.config = new_config
-                    with open(self.base_path / 'config' / 'default_config.json', 'w') as f:
-                        json.dump(self.config, f, indent=4)
-
-            # Return the success status of the task function
-            return success # Return the captured success status
-
-    def _run_collect_and_process(self):
-        """Run collection and processing in sequence"""
-        # Run collection for all sources
-        collection_success = self._run_task(self.collect_data, 'collect')
-        
-        # Always run processing after collection, regardless of individual collector success
-        processing_success = self._run_task(self.process_data, 'process')
-        
-        # Send email notifications if enabled
-        try:
-            from src.utils.notification_service import send_analysis_report, detect_sentiment_change
-            from src.utils.mail_config import NOTIFY_ON_ANALYSIS, get_email_recipients
-            
-            if NOTIFY_ON_ANALYSIS and processing_success:
-                logger.info("Analysis notifications enabled and processing successful. Triggering report email...")
-                try:
-                    # Send report email (function now handles data loading/comparison)
-                    recipients = get_email_recipients()
-                    if recipients:
-                        logger.info(f"Attempting to send analysis report email to: {recipients}")
-                        send_analysis_report(recipients)
-                        logger.info("Analysis report email triggered successfully.") 
-                    else:
-                        logger.warning("Analysis notifications enabled, but no recipients configured.")
-                        
-                except Exception as e:
-                    logger.error(f"Error triggering analysis notification email: {str(e)}", exc_info=True)
-            elif not NOTIFY_ON_ANALYSIS:
-                 logger.info("Analysis notifications are disabled (NOTIFY_ON_ANALYSIS=False). Skipping notification.")
-            elif not processing_success:
-                 logger.warning("Skipping analysis notification because the data processing step failed.")
-        
-        except ImportError as e:
-            logger.warning(f"Email notification module could not be imported: {str(e)}. Notifications disabled.")
-        except Exception as e:
-            logger.error(f"Error in email notification: {str(e)}", exc_info=True)
-
-    def discover_collection_scripts(self) -> Dict[str, Path]:
-        """Discover all available collection scripts"""
-        scripts = {}
-        collectors_dir = self.base_path / 'src' / 'collectors'
-        
-        # Map collector script names to config source names based on actual files
-        name_mapping = {
-            'news_apify': 'news_apify',
-            'news_from_api': 'news_from_api',
-            'rss': 'rss',
-            'social_searcher_api': 'social_searcher_api',
-            'twitter_apify': 'twitter_apify'
-        }
-        
-        # Find all Python files in the main collectors directory that start with 'collect_'
-        for script_path in collectors_dir.glob('collect_*.py'):
-            source_name = script_path.stem.replace('collect_', '')
-            if source_name in name_mapping:
-                scripts[name_mapping[source_name]] = script_path
-            
-        logger.info(f"Discovered collection scripts: {list(scripts.keys())}")
-        return scripts
-
-    def initialize_directories(self):
-        """Create necessary directories if they don't exist"""
-        directories = [
-            'data/raw',
-            'data/processed',
-            'data/metrics',
-            'logs',
-            'logs/archive',
-            'models/sentiment'
-        ]
-        for directory in directories:
-            (self.base_path / directory).mkdir(parents=True, exist_ok=True)
 
     def process_data(self):
         """Process collected raw data, perform analysis, and send to API."""
@@ -587,15 +472,20 @@ class SentimentAnalysisAgent:
         try:
             logger.info("Performing sentiment analysis...")
             if 'text' in all_data.columns:
-                 # Apply the analyzer once and get the tuple (label, score)
-                 sentiment_results = all_data['text'].apply(
-                    lambda x: self.sentiment_analyzer.analyze(x) if isinstance(x, str) and pd.notna(x) else ('neutral', 0.5)
-                 )
-                 # Assign label and score from the results
-                 all_data['sentiment_label'] = sentiment_results.apply(lambda res: res[0])
-                 all_data['sentiment_score'] = sentiment_results.apply(lambda res: res[1])
-                 logger.info("Sentiment analysis completed.")
-                 processed_df = all_data # Use the modified DataFrame
+                 # Ensure sentiment_analyzer is initialized before using it
+                 if hasattr(self, 'sentiment_analyzer') and self.sentiment_analyzer is not None:
+                     sentiment_results = all_data['text'].apply(
+                        lambda x: self.sentiment_analyzer.analyze(x) if isinstance(x, str) and pd.notna(x) else ('neutral', 0.5)
+                     )
+                     # Assign label and score from the results
+                     all_data['sentiment_label'] = sentiment_results.apply(lambda res: res[0])
+                     all_data['sentiment_score'] = sentiment_results.apply(lambda res: res[1])
+                     logger.info("Sentiment analysis completed.")
+                     processed_df = all_data # Use the modified DataFrame
+                 else:
+                     logger.error("Sentiment analyzer is not initialized. Skipping sentiment analysis.")
+                     # Decide if processing should continue without sentiment - for now, let's stop.
+                     return False
             else:
                  logger.error("Column 'text' not found for sentiment analysis.")
                  # Decide if processing should continue without sentiment - for now, let's stop.
@@ -719,39 +609,120 @@ class SentimentAnalysisAgent:
             return False
 
         # --- Send Data to API ---
+        api_call_successful = False # Flag to track success
+        api_message = "Unknown API status"
         try:
             logger.info(f"Sending {len(data_list)} records to API endpoint: {DATA_UPDATE_ENDPOINT}")
             response = requests.post(DATA_UPDATE_ENDPOINT, json=payload, timeout=120) 
-            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+            # response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
 
-            api_response_json = response.json()
-            logger.info(f"API update successful: {api_response_json.get('message', 'OK')}")
+            # Check HTTP status code first
+            if 200 <= response.status_code < 300:
+                 try:
+                     api_response_json = response.json()
+                     api_message = api_response_json.get('message', f"OK (Status {response.status_code})")
+                     # Explicit check for success key, defaulting to True if status is OK and key missing
+                     # Treat as failure ONLY if 'success' is explicitly false
+                     api_call_successful = api_response_json.get('success', True) 
+                     if api_call_successful:
+                          logger.info(f"API update successful: {api_message}")
+                     else:
+                          # API returned 2xx but 'success: false' in body
+                          logger.error(f"API returned success status ({response.status_code}) but indicated failure in response body: {api_message}")
+                          
+                 except json.JSONDecodeError:
+                      # Successful status code but couldn't parse JSON response
+                      logger.warning(f"API returned success status ({response.status_code}) but response body was not valid JSON. Treating as success based on status code.")
+                      api_message = f"OK (Status {response.status_code}, Non-JSON response)"
+                      api_call_successful = True # Assume success based on HTTP status
+            else:
+                 # Handle non-2xx status codes
+                 logger.error(f"API request failed with status code {response.status_code}.")
+                 try:
+                     error_detail = response.json()
+                     # Use .get with a default for message key
+                     api_message = error_detail.get('message', f"Error (Status {response.status_code}, JSON body present but no message)")
+                     logger.error(f"API Error Response Body: {json.dumps(error_detail, indent=2)}")
+                 except json.JSONDecodeError:
+                     api_message = f"Error (Status {response.status_code}, Non-JSON response)"
+                     logger.error(f"API Error Response Body (non-JSON): {response.text}")
+                 api_call_successful = False # Explicitly false
 
-            # Clean up raw files after successful processing and API send
-            logger.info("Cleaning up raw data files...")
-            for f in all_raw_files:
-                try:
-                    os.remove(f)
-                except Exception as e_rm:
-                    logger.warning(f"Could not remove raw file {f}: {e_rm}")
-            logger.info("Raw data files cleaned up.")
-
-            # Notify via email if configured
-            if is_email_notification_enabled() and NOTIFY_ON_PROCESSING:
-                recipients = get_email_recipients()
-                if recipients:
-                    subject = "Data Processing Completed"
-                    message = f"Data processing completed successfully at {datetime.now()}.\n{len(processed_df)} records processed and sent to API ({api_response_json.get('message', 'OK')})."
+            # --- Post-processing based on api_call_successful --- 
+            if api_call_successful:
+                # Clean up raw files only on success
+                logger.info("Cleaning up raw data files...")
+                for f in all_raw_files:
                     try:
-                        from src.utils.notification_service import send_notification # Ensure import is correct
-                        send_notification(recipients, subject, message)
-                        logger.info(f"Sent processing completion notification to: {', '.join(recipients)}")
-                    except ImportError:
-                         logger.error("Could not import send_notification. Email not sent.")
-                    except Exception as e_mail:
-                        logger.error(f"Failed to send processing notification email: {e_mail}")
+                        os.remove(f)
+                    except Exception as e_rm:
+                        logger.warning(f"Could not remove raw file {f}: {e_rm}")
+                logger.info("Raw data files cleaned up.")
 
-            return True # Indicate success
+                # Post-Processing Notifications (Using DB Config)
+                logger.info(f"Data processing finished successfully. Processed {len(processed_df)} records.") # Log success before notification check
+                try:
+                    # Check DB config for processing notifications
+                    recipients = []
+                    notify_processing_enabled = False
+                    with self.db_factory() as db:
+                        latest_email_config = db.query(EmailConfiguration).order_by(EmailConfiguration.created_at.desc()).first()
+                        # --- Add Email Config Logging ---
+                        if latest_email_config:
+                             logger.debug(f"[DB Email Config - Processing Check] Found config ID: {latest_email_config.id}")
+                             logger.debug(f"[DB Email Config - Processing Check] Enabled: {latest_email_config.enabled}")
+                             logger.debug(f"[DB Email Config - Processing Check] Notify on Processing: {latest_email_config.notify_on_processing}")
+                             logger.debug(f"[DB Email Config - Processing Check] Recipients: {latest_email_config.recipients}")
+                        else:
+                             logger.debug("[DB Email Config - Processing Check] No config found.")
+                        # --- End Email Config Logging ---
+
+                        if latest_email_config and latest_email_config.enabled:
+                            if latest_email_config.notify_on_processing:
+                                notify_processing_enabled = True
+                                if latest_email_config.recipients:
+                                    recipients = latest_email_config.recipients
+                                else:
+                                    logger.warning("Processing notifications enabled in DB, but no recipients configured.")
+                            else:
+                                logger.info("Processing notifications are disabled in the DB configuration (notify_on_processing=False).")
+                        elif not latest_email_config:
+                             logger.warning("No email configuration found in the database for processing notification check.")
+                            # else: config exists but globally disabled - already logged in _run_collect_and_process, maybe skip logging here
+
+                    # Send notification if enabled and recipients exist
+                    if notify_processing_enabled and recipients:
+                        logger.info(f"Attempting to send processing completion email to DB recipients: {recipients}")
+                        try:
+                            # Define processing_data for the notification function
+                            processing_data = {
+                                "status": "success",
+                                "processed_count": len(processed_df),
+                                "raw_file_count": len(all_raw_files),
+                                "timestamp": datetime.now().isoformat()
+                            }
+                            # Assuming send_processing_notification exists and accepts db_factory
+                            send_processing_notification(processing_data, recipients, self.db_factory)
+                            logger.info("Processing completion email triggered successfully.")
+                        except Exception as e:
+                            logger.error(f"Error triggering processing completion email: {str(e)}", exc_info=True)
+
+                except Exception as e:
+                    logger.error(f"Error checking DB or sending processing notification: {str(e)}", exc_info=True)
+            else: # API call failed (non-2xx status or explicit success:false in body)
+                 logger.error(f"Data processing failed. API Status: {api_message}")
+                 # Optionally send a failure notification here if desired
+                 # Save data locally on failure
+                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                 failed_api_path = processed_data_path / f'failed_api_update_{timestamp_str}.csv'
+                 try:
+                     # Save the data *before* it was converted to dict list
+                     processed_df.to_csv(failed_api_path, index=False)
+                     logger.info(f"Saved data locally due to API failure: {failed_api_path}")
+                 except Exception as e_save:
+                     logger.error(f"Failed to save backup data locally: {e_save}")
+            
+            return api_call_successful # Return the determined success status
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to send data to API: {e}")
@@ -775,6 +746,111 @@ class SentimentAnalysisAgent:
         except Exception as e:
              logger.error(f"An unexpected error occurred after preparing data: {e}", exc_info=True)
              return False
+
+    def _run_task(self, task_func: Callable, task_name: str) -> bool:
+        """Runs a given task function, updates status, and handles basic timing/errors."""
+        if self.task_status['is_busy']:
+            logger.warning(f"Agent is already busy with task: {self.task_status['current_task']}. Cannot start '{task_name}'.")
+            return False # Indicate task did not run
+            
+        logger.info(f"Starting task: {task_name}...")
+        self.task_status['is_busy'] = True
+        self.task_status['current_task'] = task_name
+        start_time = datetime.now()
+        success = False 
+        error_info = None
+
+        try:
+            # Assuming tasks are synchronous for now
+            # If async tasks are needed, inspect.iscoroutinefunction and event loop logic would be required here
+            result = task_func() 
+            # We assume the task function returns True on success, False or raises Exception on failure
+            if isinstance(result, bool):
+                success = result
+            else:
+                 # If task doesn't return boolean, assume success if no exception occurred
+                 success = True 
+                 logger.debug(f"Task '{task_name}' completed but did not return explicit boolean status.")
+
+        except Exception as e:
+            logger.error(f"Error during task '{task_name}': {e}", exc_info=True)
+            success = False
+            error_info = str(e)
+
+        finally:
+            duration = (datetime.now() - start_time).total_seconds()
+            self.task_status['last_run'][task_name] = {
+                'time': start_time.isoformat(),
+                'success': success,
+                'duration': duration,
+                'error': error_info
+            }
+            self.task_status['is_busy'] = False
+            self.task_status['current_task'] = None
+            logger.info(f"Finished task: {task_name}. Success: {success}. Duration: {duration:.2f}s.")
+            
+        return success # Return the success status of the task
+
+    def _run_collect_and_process(self):
+        """Run collection and processing in sequence, handling analysis notification."""
+        logger.info("Starting collect_and_process sequence...")
+        # Run collection task
+        # We use _run_task to manage status, but capture success for notification logic
+        # Assuming _run_task exists and handles setting self.status and logging
+        collection_success = self._run_task(self.collect_data, 'collect') 
+        
+        # Always run processing after collection, regardless of collection success?
+        # Or only process if collection_success? Let's assume always run for now.
+        processing_success = self._run_task(self.process_data, 'process')
+        
+        # --- Send Analysis Notification (Using DB Config) ---
+        if processing_success:
+            logger.debug("Processing task succeeded, checking for analysis notification.")
+            try:
+                recipients = []
+                notify_analysis_enabled = False
+                with self.db_factory() as db:
+                    latest_email_config = db.query(EmailConfiguration).order_by(EmailConfiguration.created_at.desc()).first()
+                    # Log the config check
+                    if latest_email_config:
+                         logger.debug(f"[DB Email Config - Analysis Check] Found config ID: {latest_email_config.id}")
+                         logger.debug(f"[DB Email Config - Analysis Check] Enabled: {latest_email_config.enabled}")
+                         logger.debug(f"[DB Email Config - Analysis Check] Notify on Analysis: {latest_email_config.notify_on_analysis}")
+                         logger.debug(f"[DB Email Config - Analysis Check] Recipients: {latest_email_config.recipients}")
+                    else:
+                         logger.debug("[DB Email Config - Analysis Check] No config found.")
+
+                    if latest_email_config and latest_email_config.enabled:
+                        if latest_email_config.notify_on_analysis:
+                             notify_analysis_enabled = True
+                             if latest_email_config.recipients:
+                                 recipients = latest_email_config.recipients
+                             else:
+                                 logger.warning("[DB Email Config - Analysis Check] Analysis notifications enabled, but no recipients configured.")
+                        else:
+                             logger.info("[DB Email Config - Analysis Check] Analysis notifications disabled in DB config.")
+                    # Add logs for other cases if needed
+
+                # Proceed only if the specific notification is enabled and recipients exist
+                if notify_analysis_enabled and recipients:
+                    logger.info(f"Attempting to send analysis report email to DB recipients: {recipients}")
+                    try:
+                        # Import here to avoid circular dependency issues if notification_service imports core
+                        from src.utils.notification_service import send_analysis_report 
+                        send_analysis_report(recipients, self.db_factory)
+                        logger.info("Analysis report email triggered successfully.") 
+                    except Exception as e:
+                         logger.error(f"Error triggering analysis notification email: {str(e)}", exc_info=True)
+                # Logging for skipped notifications is handled within the checks above
+
+            except ImportError as e:
+                logger.warning(f"Could not import notification service: {e}. Analysis notification skipped.")
+            except Exception as e:
+                logger.error(f"Error checking email configuration or sending analysis notification: {str(e)}", exc_info=True)
+        else:
+            logger.warning("Skipping analysis notification because the data processing step failed.")
+        
+        logger.info("collect_and_process sequence finished.")
 
     def update_metrics(self, latest_data: pd.DataFrame, analysis_result: Dict[str, Any]):
         """Update system metrics and performance indicators with Autogen insights"""
@@ -974,24 +1050,29 @@ class SentimentAnalysisAgent:
 
         logger.info("Agent started successfully with Autogen enhancement. Starting main loop...")
         
-        # Main loop with enhanced monitoring
-        # Initial run is now handled in the main execution block based on user input
         while self.is_running:
             schedule.run_pending()
             
-            # Let both brain and Autogen suggest improvements
-            if self.config.get('auto_optimization', True):
+            # Check if auto-optimization and brain are enabled/initialized
+            if self.config.get('auto_optimization', True) and self.brain:
                 metrics = {
                     'data_quality': self.data_history['data_quality_metrics'][-1] if self.data_history['data_quality_metrics'] else {},
                     'system_health': self.data_history['system_health'][-1] if self.data_history['system_health'] else {}
                 }
                 
-                # Combine suggestions from both systems
-                brain_suggestions = self.brain.suggest_improvements(metrics)
-                self.task_status['suggestions'] = brain_suggestions
+                # Get suggestions only if brain exists
+                try:
+                    brain_suggestions = self.brain.suggest_improvements(metrics)
+                    self.task_status['suggestions'] = brain_suggestions
+                    logger.debug(f"Brain suggestions received: {brain_suggestions}")
+                except Exception as brain_e:
+                    logger.error(f"Error getting suggestions from brain: {brain_e}", exc_info=True)
+                    self.task_status['suggestions'] = [] # Reset suggestions on error
                 
-                # Periodically run system optimization
+                # Periodically run system optimization (also depends on brain?)
+                # Consider adding `and self.brain` to this check too if optimize_system requires it.
                 if not self.task_status['is_busy'] and time.time() % 3600 < 1:  # Check every hour
+                    # Assuming optimize_system also requires the brain
                     self._run_task(self.optimize_system, 'optimize')
             
             time.sleep(1)
@@ -1027,7 +1108,22 @@ def parse_delay_to_seconds(delay_str: str) -> Optional[int]:
         return None
 
 if __name__ == "__main__":
-    agent = SentimentAnalysisAgent()
+    # Need to initialize DB connection when running directly
+    try:
+        from src.api.database import SessionLocal, engine # Import SessionLocal and engine
+        # Optional: Test connection or create tables if needed
+        # from src.api.models import Base
+        # Base.metadata.create_all(bind=engine) 
+        logger.info("Database connection initialized for standalone agent run.")
+    except ImportError as e:
+        logger.error(f"Failed to import database components: {e}. Ensure API structure is correct.")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Failed to initialize database connection: {e}")
+        sys.exit(1)
+
+    # Pass the db_factory (SessionLocal) to the agent constructor
+    agent = SentimentAnalysisAgent(db_factory=SessionLocal)
     logger.info("Performing initial data collection and processing...")
     agent._run_collect_and_process()  # Run collection and processing once at the start
     logger.info("Starting agent's main loop...")

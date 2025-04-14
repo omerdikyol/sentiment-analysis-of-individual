@@ -4,15 +4,16 @@ import os
 import time
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from query_variations import query_variations
+from typing import List
 
-def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last30days"):
+def collect_social_searcher_api(queries: List[str], output_file=None, max_pages=5, time_period="last30days"):
     """
     Collect data from Social Searcher using their API instead of scraping.
     
     Args:
+        queries: List of queries to search for
         output_file: Path to save the results
         max_pages: Maximum number of pages to fetch per query (default: 5)
         time_period: Time period to search in (default: "last30days")
@@ -40,8 +41,8 @@ def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last
     # Languages to search in
     languages = ["en", "ar", "in", "ng"]  # English, Arabic, India, Nigeria
     
-    # Try each query variation from the query_variations module
-    for query in query_variations:
+    # Try each query variation passed as argument
+    for query in queries:
         print(f"Searching for query: {query}")
         
         # Try various query formats
@@ -239,10 +240,39 @@ def collect_social_searcher_api(output_file=None, max_pages=5, time_period="last
         df.to_csv(output_file, index=False)
         print(f"Created empty '{output_file}' with headers.")
 
-def main():
-    today = datetime.now().strftime("%Y%m%d")
-    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"social_searcher_api_data_{today}.csv"
-    collect_social_searcher_api(output_file=str(output_path))
+def main(target_and_variations: List[str]):
+    """Main function called by run_collectors. Accepts target/variations list."""
+    if not target_and_variations:
+        print("[Social Searcher] Error: No target/query variations provided.")
+        return
+        
+    target_name = target_and_variations[0]
+    queries = target_and_variations[1:]
+    print(f"[Social Searcher] Received Target: {target_name}, Queries: {queries}")
+    
+    # Call fetch with the passed queries
+    posts = collect_social_searcher_api(queries=queries)
+    
+    if posts:
+        df = pd.DataFrame(posts)
+        # ... (existing dataframe processing and saving logic) ...
+        # Rename/map columns as needed
+        df.rename(columns={'text': 'content', 'posted': 'date', 'network': 'platform', 'url': 'post_url', 'query_used': 'query'}, inplace=True)
+        # Select/reorder relevant columns
+        # df = df[[...relevant columns...]]
+        
+        today = datetime.now().strftime("%Y%m%d")
+        safe_target_name = target_name.replace(" ", "_").lower()
+        output_dir = Path(__file__).parent.parent.parent / "data" / "raw"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_file = output_dir / f"social_searcher_{safe_target_name}_{today}.csv"
+        
+        # ... (append/save logic) ...
+        df.to_csv(output_file, index=False, mode='a', header=not output_file.exists())
+        print(f"[Social Searcher] Saved/Appended {len(df)} posts to {output_file}")
+    else:
+        print("[Social Searcher] No posts fetched.")
 
 if __name__ == "__main__":
-    main() 
+    print("Running Social Searcher collector directly (without args)... Use run_collectors.py for proper execution.")
+    main([]) # Pass empty list 

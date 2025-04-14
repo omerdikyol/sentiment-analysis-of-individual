@@ -4,15 +4,16 @@ import json
 import time
 from pathlib import Path
 from datetime import datetime
+from typing import List
 from dotenv import load_dotenv
 from apify_client import ApifyClient
-from query_variations import query_variations
 
-def collect_news_apify(output_file=None, language="US:en"):
+def collect_news_apify(queries: List[str], output_file=None, language="US:en"):
     """
-    Collect news data using the Apify API.
+    Collect news data using the Apify API for the given queries.
     
     Args:
+        queries (List[str]): List of query strings to search for.
         output_file: Path to save the results
         language: Language of news to search for (default: "US:en")
     """
@@ -35,9 +36,9 @@ def collect_news_apify(output_file=None, language="US:en"):
     
     all_data = []
     
-    # Process each query variation
-    for query in query_variations:
-        print(f"Searching for news about: {query}")
+    # Process each query variation passed as argument
+    for query in queries:
+        print(f"[News Apify] Searching for news about: {query}")
         
         # Prepare the Actor input
         run_input = {
@@ -46,40 +47,30 @@ def collect_news_apify(output_file=None, language="US:en"):
         }
         
         try:
-            print(f"Running Apify News Actor with query: {query}")
+            print(f"[News Apify] Running Apify News Actor with query: {query}")
             # Run the Actor and wait for it to finish
             run = client.actor("v2y7x1v2Muk1NlPyZ").call(run_input=run_input)
             
             # Fetch results from the Actor's dataset
             dataset_id = run["defaultDatasetId"]
-            print(f"Actor run completed. Dataset ID: {dataset_id}")
+            print(f"[News Apify] Actor run completed. Dataset ID: {dataset_id}")
             
             # Collect items from the dataset
             items_count = 0
             for item in client.dataset(dataset_id).iterate_items():
                 try:
                     # Print the raw item for debugging
-                    print(f"Processing news item: {item}")
+                    # print(f"Processing news item: {item}") # Optionally keep for detailed debug
                     
-                    # Extract relevant information - updated based on actual response structure
+                    # Extract relevant information
                     title = item.get("title", "unknown")
-                    url = item.get("link", "unknown")  # Field is "link" not "url"
-                    source = item.get("source", "unknown")  # Source is a string, not an object
+                    url = item.get("link", "unknown")
+                    source = item.get("source", "unknown")
                     domain = item.get("domain", "unknown")
-                    
-                    # The API doesn't provide content or description, just title
                     text = title
-                    
-                    # Published date
-                    published_date = item.get("published", "unknown")  # Field is "published"
-                    
-                    # Get image if available
+                    published_date = item.get("published", "unknown")
                     image_url = item.get("image", "unknown")
-                    
-                    # Keyword that matched
-                    keyword = item.get("keyword", "unknown")
-                    
-                    # Determine country (basic heuristic based on domain)
+                    keyword = item.get("keyword", query) # Fallback to the main query if keyword missing
                     country = "unknown"
                     if domain:
                         if domain.endswith(".qa") or "qatar" in domain.lower():
@@ -95,7 +86,6 @@ def collect_news_apify(output_file=None, language="US:en"):
                         elif domain.endswith(".in"):
                             country = "india"
                     
-                    # Append to data collection
                     all_data.append({
                         "source": "News",
                         "platform": source,
@@ -108,24 +98,24 @@ def collect_news_apify(output_file=None, language="US:en"):
                         "image_url": image_url,
                         "domain": domain,
                         "country": country,
-                        "query": keyword  # Use the keyword that matched
+                        "query": keyword
                     })
                     
                     items_count += 1
                     if items_count % 10 == 0:
-                        print(f"Processed {items_count} news items...")
+                        print(f"[News Apify] Processed {items_count} news items for query '{query}'...")
                     
                 except Exception as e:
-                    print(f"Error processing news item: {str(e)}")
+                    print(f"[News Apify] Error processing news item: {str(e)}")
                     continue
             
-            print(f"Collected {items_count} news items for query: {query}")
+            print(f"[News Apify] Collected {items_count} news items for query: {query}")
             
             # Add a small delay between queries
             time.sleep(2)
             
         except Exception as e:
-            print(f"Error running News Actor for query '{query}': {str(e)}")
+            print(f"[News Apify] Error running News Actor for query '{query}': {str(e)}")
     
     # Save the collected data
     if all_data:
@@ -135,20 +125,37 @@ def collect_news_apify(output_file=None, language="US:en"):
                 existing_df = pd.read_csv(output_file)
                 df = pd.concat([existing_df, df], ignore_index=True)
             except pd.errors.EmptyDataError:
-                print(f"Warning: The file '{output_file}' is empty. Creating a new file.")
+                print(f"[News Apify] Warning: The file '{output_file}' is empty. Creating a new file.")
         df.to_csv(output_file, index=False)
-        print(f"\nCollected {len(all_data)} total news articles. Saved to '{output_file}'.")
+        print(f"\n[News Apify] Collected {len(all_data)} total news articles. Saved to '{output_file}'.")
     else:
-        print("\nNo news articles collected.")
+        print("\n[News Apify] No news articles collected.")
         df = pd.DataFrame(columns=["source", "platform", "type", "post_id", "date", "text", "title", 
                                   "url", "image_url", "domain", "country", "query"])
         df.to_csv(output_file, index=False)
-        print(f"Created empty '{output_file}' with headers.")
+        print(f"[News Apify] Created empty '{output_file}' with headers.")
 
-def main():
+def main(target_and_variations: List[str]):
+    """Main function called by run_collectors. Accepts target/variations list."""
+    if not target_and_variations:
+         print("[News Apify] Error: No target/query variations provided.")
+         return
+         
+    target_name = target_and_variations[0]
+    queries = target_and_variations[1:]
+    print(f"[News Apify] Received Target: {target_name}, Queries: {queries}")
+    
+    # Construct output file name
     today = datetime.now().strftime("%Y%m%d")
-    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"news_apify_data_{today}.csv"
-    collect_news_apify(output_file=str(output_path))
+    # Use target name in filename for clarity, replacing spaces
+    safe_target_name = target_name.replace(" ", "_").lower()
+    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"news_apify_{safe_target_name}_{today}.csv"
+    
+    # Call the collection function with the queries
+    collect_news_apify(queries=queries, output_file=str(output_path))
 
+# Keep the __main__ block for potential direct testing, but it won't receive args
 if __name__ == "__main__":
-    main() 
+    print("Running News Apify collector directly (without args)... Use run_collectors.py for proper execution.")
+    # This direct call will likely fail or use default/empty queries now.
+    main([]) # Pass empty list for direct run scenario 

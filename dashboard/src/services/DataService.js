@@ -989,6 +989,34 @@ class DataService {
       }))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
   }
+
+  async triggerAgentRun() {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    const endpoint = `${apiUrl}/agent/trigger-run`;
+    try {
+      console.log(`Triggering agent run via: ${endpoint}`);
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = responseData.detail || `Failed to trigger agent run: ${response.status} ${response.statusText}`;
+        console.error('API Error:', errorMessage);
+        throw new Error(errorMessage);
+      }
+      
+      console.log("Agent run triggered successfully:", responseData);
+      return responseData;
+    } catch (error) {
+      console.error('Error triggering agent run:', error);
+      throw error;
+    }
+  }
 }
 
 export default new DataService();

@@ -12,14 +12,21 @@ import {
   ListItem,
   ListItemText,
   Paper,
+  Snackbar,
+  Alert,
   TextField,
   Typography,
   Grid,
-  Alert,
   CircularProgress,
   Tooltip
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Save as SaveIcon, Edit as EditIcon } from '@mui/icons-material';
+import { 
+  Add as AddIcon, 
+  Delete as DeleteIcon, 
+  Save as SaveIcon, 
+  Edit as EditIcon, 
+  PlayArrow as StartIcon
+} from '@mui/icons-material';
 import InfoIcon from '@mui/icons-material/Info';
 import DataService from '../services/DataService';
 import { useTranslation } from 'react-i18next';
@@ -31,11 +38,13 @@ const TargetIndividualConfig = () => {
     query_variations: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isTriggeringRun, setIsTriggeringRun] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [newVariation, setNewVariation] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   // Load target individual configuration
   useEffect(() => {
@@ -95,6 +104,38 @@ const TargetIndividualConfig = () => {
     }
   };
 
+  // Handle manually triggering the agent run
+  const handleTriggerRun = async () => {
+    setIsTriggeringRun(true);
+    setSnackbar({ open: false, message: '', severity: 'info' }); // Clear previous snackbar
+    try {
+      const response = await DataService.triggerAgentRun();
+      if (response.status === 'success') {
+        setSnackbar({
+           open: true,
+           message: t('target.triggerSuccess', 'Agent run successfully triggered.'), 
+           severity: 'success' 
+         });
+      } else {
+        // Error handled by DataService throwing an error
+      }
+    } catch (err) {
+       console.error('Error triggering agent run:', err);
+       setSnackbar({
+         open: true, 
+         message: t('target.triggerError', `Failed to trigger agent run: ${err.message}`), 
+         severity: 'error' 
+       });
+    } finally {
+      setIsTriggeringRun(false);
+    }
+  };
+
+  // Handle closing the snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   // Handle adding a new query variation
   const handleAddVariation = () => {
     if (newVariation.trim() !== '' && !targetConfig.query_variations.includes(newVariation.trim())) {
@@ -137,150 +178,186 @@ const TargetIndividualConfig = () => {
   };
 
   return (
-    <Card elevation={3}>
-      <CardHeader 
-        title={
-          <Typography variant="h5" component="h1" gutterBottom>
-            {t('target.title')}
-            <Tooltip title={t('target.subtitle')}>
-              <IconButton size="small" sx={{ ml: 1 }}>
-                <InfoIcon fontSize="small" />
-              </IconButton>
+    <>
+      <Card elevation={3}>
+        <CardHeader 
+          title={
+            <Typography variant="h5" component="h1" gutterBottom>
+              {t('target.title')}
+              <Tooltip title={t('target.subtitle')}>
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <InfoIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Typography>
+          }
+          action={
+            <Tooltip title={t('target.triggerTooltip', 'Manually start a data collection and processing cycle')}>
+              <span>
+                <Button 
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={isTriggeringRun ? <CircularProgress size={20} color="inherit" /> : <StartIcon />}
+                  onClick={handleTriggerRun}
+                  disabled={isLoading || isTriggeringRun}
+                >
+                  {isTriggeringRun ? t('target.triggering', 'Starting...') : t('target.triggerRun', 'Start Agent Run')}
+                </Button>
+              </span>
             </Tooltip>
-          </Typography>
-        }
-      />
-      <Divider />
-      <CardContent>
-        {isLoading && (
-          <Box display="flex" justifyContent="center" my={3}>
-            <CircularProgress />
-          </Box>
-        )}
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-        
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            {success}
-          </Alert>
-        )}
-        
-        <Grid container spacing={3}>
-          {/* Target Individual Name */}
-          <Grid item xs={12}>
-            <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="h6">{t('target.nameSection')}</Typography>
-                {!isEditing && (
-                  <IconButton onClick={handleEditNameClick} color="primary" size="small">
-                    <EditIcon />
-                  </IconButton>
+          }
+        />
+        <Divider />
+        <CardContent>
+          {isLoading && !isTriggeringRun && (
+            <Box display="flex" justifyContent="center" my={3}>
+              <CircularProgress />
+            </Box>
+          )}
+          
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {success}
+            </Alert>
+          )}
+          
+          <Grid container spacing={3}>
+            {/* Target Individual Name */}
+            <Grid item xs={12}>
+              <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                  <Typography variant="h6">{t('target.nameSection')}</Typography>
+                  {!isEditing && (
+                    <IconButton onClick={handleEditNameClick} color="primary" size="small" disabled={isLoading || isTriggeringRun}>
+                      <EditIcon />
+                    </IconButton>
+                  )}
+                </Box>
+                
+                {isEditing ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <TextField
+                      fullWidth
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      label={t('target.nameLabel')}
+                      variant="outlined"
+                      size="small"
+                    />
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      size="small" 
+                      onClick={handleNameSave}
+                      startIcon={<SaveIcon />}
+                    >
+                      {t('common.save')}
+                    </Button>
+                    <Button 
+                      variant="outlined" 
+                      color="secondary" 
+                      size="small" 
+                      onClick={handleCancelEdit}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                  </Box>
+                ) : (
+                  <Typography variant="body1" sx={{ fontWeight: 'bold', py: 1 }}>
+                    {targetConfig.individual_name || t('target.noNameSet')}
+                  </Typography>
                 )}
-              </Box>
-              
-              {isEditing ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              </Paper>
+            </Grid>
+            
+            {/* Query Variations */}
+            <Grid item xs={12}>
+              <Paper elevation={1} sx={{ p: 2 }}>
+                <Typography variant="h6" mb={2}>{t('target.variationsSection')}</Typography>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
                   <TextField
                     fullWidth
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    label={t('target.nameLabel')}
+                    value={newVariation}
+                    onChange={(e) => setNewVariation(e.target.value)}
+                    label={t('target.addVariationLabel')}
                     variant="outlined"
                     size="small"
+                    disabled={isLoading || isTriggeringRun}
                   />
                   <Button 
                     variant="contained" 
                     color="primary" 
-                    size="small" 
-                    onClick={handleNameSave}
-                    startIcon={<SaveIcon />}
+                    startIcon={<AddIcon />}
+                    onClick={handleAddVariation}
+                    disabled={newVariation.trim() === '' || isLoading || isTriggeringRun}
                   >
-                    {t('common.save')}
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    color="secondary" 
-                    size="small" 
-                    onClick={handleCancelEdit}
-                  >
-                    {t('common.cancel')}
+                    {t('common.add')}
                   </Button>
                 </Box>
-              ) : (
-                <Typography variant="body1" sx={{ fontWeight: 'bold', py: 1 }}>
-                  {targetConfig.individual_name || t('target.noNameSet')}
-                </Typography>
-              )}
-            </Paper>
+                
+                <List sx={{ maxHeight: '300px', overflow: 'auto', bgcolor: 'background.paper', borderRadius: 1 }}>
+                  {targetConfig.query_variations.length > 0 ? (
+                    targetConfig.query_variations.map((variation, index) => (
+                      <ListItem
+                        key={index}
+                        divider={index < targetConfig.query_variations.length - 1}
+                        secondaryAction={
+                          <IconButton 
+                            edge="end" 
+                            aria-label="delete"
+                            onClick={() => handleRemoveVariation(variation)}
+                            disabled={isLoading || isTriggeringRun}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        }
+                      >
+                        <ListItemText primary={variation} />
+                      </ListItem>
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      {t('target.noVariations')}
+                    </Typography>
+                  )}
+                </List>
+              </Paper>
+            </Grid>
           </Grid>
-          
-          {/* Query Variations */}
-          <Grid item xs={12}>
-            <Paper elevation={1} sx={{ p: 2 }}>
-              <Typography variant="h6" mb={2}>{t('target.variationsSection')}</Typography>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 1 }}>
-                <TextField
-                  fullWidth
-                  value={newVariation}
-                  onChange={(e) => setNewVariation(e.target.value)}
-                  label={t('target.addVariationLabel')}
-                  variant="outlined"
-                  size="small"
-                />
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  startIcon={<AddIcon />}
-                  onClick={handleAddVariation}
-                  disabled={newVariation.trim() === ''}
-                >
-                  {t('common.add')}
-                </Button>
-              </Box>
-              
-              <List sx={{ maxHeight: '300px', overflow: 'auto', bgcolor: 'background.paper', borderRadius: 1 }}>
-                {targetConfig.query_variations.length > 0 ? (
-                  targetConfig.query_variations.map((variation, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveVariation(variation)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText primary={variation} />
-                    </ListItem>
-                  ))
-                ) : (
-                  <ListItem>
-                    <ListItemText primary={t('target.noVariations')} />
-                  </ListItem>
-                )}
-              </List>
-            </Paper>
-          </Grid>
-        </Grid>
+        </CardContent>
         
-        <Box display="flex" justifyContent="flex-end" mt={3}>
+        <Divider />
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
             color="primary"
-            startIcon={<SaveIcon />}
+            startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
             onClick={handleSave}
-            disabled={isLoading}
+            disabled={isLoading || isTriggeringRun}
           >
-            {isLoading ? <CircularProgress size={24} /> : t('common.saveChanges')}
+            {t('common.saveChanges')}
           </Button>
         </Box>
-      </CardContent>
-    </Card>
+      </Card>
+
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 

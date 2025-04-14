@@ -24,11 +24,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RSSFeedCollector:
-    def __init__(self):
+    def __init__(self, custom_queries=None):
         self.base_path = Path(__file__).parent.parent.parent
         
-        # Use the predefined query variations as keywords for filtering
-        self.qatar_emir_keywords = query_variations
+        # Use provided queries or fall back to predefined query variations as keywords for filtering
+        self.custom_queries = custom_queries or []
         
         # Timeout settings
         self.feed_timeout = 15  # Increased timeout for slower servers
@@ -175,17 +175,17 @@ class RSSFeedCollector:
 
     def _is_relevant_article(self, title: str, description: str, query: str) -> bool:
         """
-        Check if the article is relevant to Qatar Emir based on title and description
+        Check if the article is relevant based on title and description
         """
         text = (title + " " + description).lower()
         
-        # Check if any of the Qatar Emir keywords are present
-        for keyword in self.qatar_emir_keywords:
+        # Check if any of the custom queries are present
+        for keyword in self.custom_queries:
             if keyword.lower() in text:
                 return True
                 
-        # Also check the original query if it's not in the predefined variations
-        if query.lower() not in [var.lower() for var in self.qatar_emir_keywords]:
+        # Also check the original query if it's not in the custom queries
+        if query.lower() not in [var.lower() for var in self.custom_queries]:
             return query.lower() in text
             
         return False
@@ -397,22 +397,27 @@ class RSSFeedCollector:
         
         return all_articles
 
-    def collect_all(self, queries: List[str] = None, output_file: str = None) -> None:
+    def collect_all(self, queries: List[str] = None, output_file: str = None, target_name: str = None) -> None:
         """
         Collect news for all queries and save to CSV
         
         Args:
-            queries: Optional list of additional search queries beyond the predefined variations
+            queries: Optional list of additional search queries
             output_file: Optional output file path. If not provided, will use default path.
+            target_name: Name of the target individual for file naming
         """
         all_articles = []
         
-        # Use predefined variations as the base queries
-        search_queries = self.qatar_emir_keywords.copy()
+        # Use custom queries as the base if available, otherwise use empty list
+        search_queries = self.custom_queries.copy() if self.custom_queries else []
         
         # Add any additional queries if provided
         if queries:
             search_queries.extend(queries)
+        
+        # If no queries are available, fall back to query_variations import
+        if not search_queries and 'query_variations' in globals():
+            search_queries = query_variations
         
         # Remove duplicates while preserving order
         search_queries = list(dict.fromkeys(search_queries))
@@ -434,7 +439,9 @@ class RSSFeedCollector:
             
             # Save to CSV
             if output_file is None:
-                output_file = self.base_path / 'data' / 'raw' / f'rss_news_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+                # Use target name in filename if provided
+                filename_prefix = f"rss_news_{target_name.replace(' ', '_').lower()}" if target_name else "rss_news"
+                output_file = self.base_path / 'data' / 'raw' / f"{filename_prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             
             output_file = Path(output_file)
             output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -444,10 +451,32 @@ class RSSFeedCollector:
         else:
             logger.warning("No articles found for any query")
 
-def main():
-    collector = RSSFeedCollector()
-    # No need to provide queries as we're using predefined variations
-    collector.collect_all()
+def main(target_and_variations: List[str] = None):
+    """
+    Main function called by run_collectors. Accepts target/variations list.
+    
+    Args:
+        target_and_variations: List containing target name as first element and query variations as remaining elements
+    """
+    if not target_and_variations or len(target_and_variations) == 0:
+        print("[RSS Collector] Error: No target/query variations provided.")
+        return
+    
+    target_name = target_and_variations[0]
+    queries = target_and_variations[1:]
+    print(f"[RSS Collector] Received Target: {target_name}, Queries: {queries}")
+    
+    # Construct output file name
+    today = datetime.now().strftime("%Y%m%d")
+    safe_target_name = target_name.replace(" ", "_").lower()
+    output_path = Path(__file__).parent.parent.parent / "data" / "raw" / f"rss_{safe_target_name}_{today}.csv"
+    
+    # Initialize collector with the provided queries
+    collector = RSSFeedCollector(custom_queries=queries)
+    
+    # Collect data using the provided queries
+    collector.collect_all(queries=queries, output_file=output_path, target_name=target_name)
 
 if __name__ == "__main__":
-    main() 
+    print("Running RSS collector directly (without args)... Use run_collectors.py for proper execution.")
+    main([]) # Pass empty list for direct run scenario 

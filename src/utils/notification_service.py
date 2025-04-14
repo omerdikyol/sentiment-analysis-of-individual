@@ -12,33 +12,33 @@ from pathlib import Path
 import numpy as np
 
 from src.utils.mail_sender import MailSender
-from src.utils.mail_config import get_email_recipients, is_email_notification_enabled
+# Remove get_email_recipients, is_email_notification_enabled
+# from src.utils.mail_config import get_email_recipients, is_email_notification_enabled
+
+# Need Session factory type hint for db_factory argument
+from sqlalchemy.orm import sessionmaker, Session
 
 logger = logging.getLogger(__name__)
 
 BASE_PATH = Path(__file__).parent.parent.parent
 
-def send_analysis_report(recipients: List[str] = None) -> bool:
+def send_analysis_report(recipients: List[str], db_factory: sessionmaker) -> bool:
     """
     Load latest dashboard data, compare with previous, generate analysis report,
-    and send it via email.
+    and send it via email using the provided recipients and DB session factory.
     
     Args:
-        recipients (List[str], optional): List of email recipients. 
-                                          If None, uses the configured recipients.
+        recipients (List[str]): List of email recipients (MUST be provided).
+        db_factory (sessionmaker): SQLAlchemy session factory for MailSender.
     
     Returns:
         bool: True if the email was sent successfully, False otherwise
     """
-    if not is_email_notification_enabled():
-        logger.info("Email notifications are disabled. Skipping report email.")
-        return False
+    # Removed check for is_email_notification_enabled() as MailSender handles it via DB
+    # Removed fallback to get_email_recipients() as recipients MUST be provided
     
-    if recipients is None:
-        recipients = get_email_recipients()
-        
     if not recipients:
-        logger.warning("No email recipients configured. Skipping report email.")
+        logger.warning("No email recipients provided to send_analysis_report. Skipping email.")
         return False
 
     try:
@@ -99,14 +99,18 @@ def send_analysis_report(recipients: List[str] = None) -> bool:
             negative_pct = (negative_count / total_mentions * 100)
             neutral_pct = (neutral_count / total_mentions * 100)
 
+            keywords_column_exists = 'keywords' in latest_data.columns
+
             for _, row in latest_data.iterrows():
-                keywords = row['keywords'].split(',') if isinstance(row['keywords'], str) else []
+                keywords = []
+                if keywords_column_exists:
+                    keywords_val = row['keywords']
+                    if isinstance(keywords_val, str):
+                        keywords = [kw.strip() for kw in keywords_val.split(',') if kw.strip()]
+                
                 sentiment = row['sentiment_score']
                 
                 for keyword in keywords:
-                    keyword = keyword.strip()
-                    if not keyword:
-                        continue
                     if sentiment > 0.2:
                         positive_topics[keyword] = positive_topics.get(keyword, 0) + 1
                     elif sentiment < -0.2:
@@ -157,7 +161,7 @@ def send_analysis_report(recipients: List[str] = None) -> bool:
 
     report_content = format_analysis_report(analysis_data)
     
-    mail_sender = MailSender()
+    mail_sender = MailSender() # MailSender now loads config from .env
     
     sentiment_score = analysis_data.get("overall_sentiment", 0)
     prev_sentiment_score = analysis_data.get("previous_overall_sentiment")
@@ -169,16 +173,257 @@ def send_analysis_report(recipients: List[str] = None) -> bool:
         subject = f"ALERT: Sentiment {change_direction} - {subject}"
     
     logger.info(f"Sending analysis report email to: {', '.join(recipients)}")
-    success = mail_sender.send_report_email(
-        recipients,
-        subject,
-        report_content
-    )
+    
+    success = False
+    try:
+        # Get a DB session to pass to send_report_email
+        with db_factory() as db:
+            success = mail_sender.send_report_email(
+                db=db, # Pass the database session
+                recipients=recipients,
+                subject=subject,
+                report_content=report_content
+            )
+    except Exception as e:
+        logger.error(f"Error creating DB session or sending report email: {e}", exc_info=True)
+        # Ensure success remains False
     
     if success:
         logger.info(f"Analysis report email sent successfully to {', '.join(recipients)}")
     else:
         logger.error(f"Failed to send analysis report email to {', '.join(recipients)}")
+        
+    return success
+
+def send_collection_notification(collection_data: Dict[str, Any], recipients: List[str], db_factory: sessionmaker) -> bool:
+    """
+    Send notification that data collection has completed, using DB config.
+    
+    Args:
+        collection_data (Dict[str, Any]): Collection metrics and data.
+                                         Expected keys: collection_success_rate (float), 
+                                         active_sources (int), total_sources (int), 
+                                         total_records (int), duration_seconds (float)
+        recipients (List[str]): List of email recipients (MUST be provided).
+        db_factory (sessionmaker): SQLAlchemy session factory for MailSender.
+    
+    Returns:
+        bool: True if sent successfully, False otherwise
+    """
+    # Removed checks using .env config
+    
+    if not recipients:
+        logger.warning("No recipients provided for collection notification.")
+        return False
+    
+    success_rate = collection_data.get("collection_success_rate", 0) * 100
+    active_sources = collection_data.get("active_sources", 0)
+    total_sources = collection_data.get("total_sources", 0)
+    total_records = collection_data.get("total_records", 0)
+    duration = collection_data.get("duration_seconds", 0)
+    
+    subject = f"Data Collection Complete: {success_rate:.1f}% Success Rate"
+    # Using plain text for consistency with processing notification
+    body = f"""
+    Data collection process finished on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    
+    Collection Metrics:
+    - Duration: {duration:.2f} seconds
+    - Sources Attempted: {total_sources}
+    - Successful Sources: {active_sources} ({success_rate:.1f}%)
+    - Total Records Collected: {total_records}
+    
+    The data processing and analysis phase will begin based on its schedule.
+    """
+    
+    mail_sender = MailSender()
+    success = False
+    try:
+        with db_factory() as db:
+            success = mail_sender.send_email(
+                db=db,
+                recipients=recipients,
+                subject=subject,
+                body=body,
+                html=False # Plain text
+            )
+    except Exception as e:
+         logger.error(f"Error creating DB session or sending collection notification: {e}", exc_info=True)
+
+    if success:
+        logger.info(f"Collection notification email sent successfully to {", ".join(recipients)}.")
+    else:
+        logger.error(f"Failed to send collection notification email to {", ".join(recipients)}.")
+    
+    return success
+
+def detect_sentiment_change(current_data: pd.DataFrame, previous_data: pd.DataFrame, 
+                           threshold: float = 0.1) -> Dict[str, Any]:
+    """
+    Detect significant changes in sentiment between current and previous data.
+    Also identifies new and fading topics based on keywords.
+    
+    Args:
+        current_data (pd.DataFrame): The current processed data (needs 'sentiment_score', optionally 'sentiment_label', 'keywords')
+        previous_data (pd.DataFrame): The previous processed data (needs 'sentiment_score', optionally 'sentiment_label', 'keywords')
+        threshold (float): The minimum absolute change in overall sentiment score to be considered significant.
+    
+    Returns:
+        Dict[str, Any]: Dictionary with change information including:
+            sentiment_changed (bool): True if overall sentiment change exceeds threshold.
+            sentiment_change (float): The difference in mean sentiment score (current - previous).
+            positive_change (float): Percentage point change in positive mentions.
+            negative_change (float): Percentage point change in negative mentions.
+            neutral_change (float): Percentage point change in neutral mentions.
+            new_topics (List[Dict]): List of {'topic': str, 'count': int} for new topics.
+            fading_topics (List[Dict]): List of {'topic': str, 'previous_count': int, 'current_count': int} for fading topics.
+    """
+    result = {
+        "sentiment_changed": False,
+        "sentiment_change": 0,
+        "positive_change": 0,
+        "negative_change": 0,
+        "neutral_change": 0,
+        "new_topics": [],
+        "fading_topics": []
+    }
+    
+    if 'sentiment_score' not in current_data.columns or 'sentiment_score' not in previous_data.columns:
+        logger.warning("Cannot detect sentiment change: 'sentiment_score' column missing in one or both dataframes.")
+        return result
+    if current_data.empty or previous_data.empty:
+         logger.warning("Cannot detect sentiment change: One or both dataframes are empty.")
+         return result
+
+    current_sentiment = np.mean(current_data['sentiment_score'])
+    previous_sentiment = np.mean(previous_data['sentiment_score'])
+    
+    sentiment_change = current_sentiment - previous_sentiment
+    result["sentiment_change"] = sentiment_change
+    
+    def get_sentiment_percentages(df):
+        total = len(df)
+        if total == 0:
+            return {"positive": 0, "negative": 0, "neutral": 0}
+        
+        if 'sentiment_label' in df.columns:
+            positive = len(df[df['sentiment_label'] == 'positive']) / total * 100
+            negative = len(df[df['sentiment_label'] == 'negative']) / total * 100
+            neutral = 100 - positive - negative
+        elif 'sentiment_score' in df.columns:
+            positive = len(df[df['sentiment_score'] > 0.2]) / total * 100
+            negative = len(df[df['sentiment_score'] < -0.2]) / total * 100
+            neutral = 100 - positive - negative
+        else:
+            return {"positive": 0, "negative": 0, "neutral": 0}
+            
+        return {"positive": positive, "negative": negative, "neutral": neutral}
+    
+    current_percentages = get_sentiment_percentages(current_data)
+    previous_percentages = get_sentiment_percentages(previous_data)
+    
+    result["positive_change"] = current_percentages["positive"] - previous_percentages["positive"]
+    result["negative_change"] = current_percentages["negative"] - previous_percentages["negative"]
+    result["neutral_change"] = current_percentages["neutral"] - previous_percentages["neutral"]
+    
+    result["sentiment_changed"] = abs(sentiment_change) >= threshold
+    
+    if 'keywords' in current_data.columns and 'keywords' in previous_data.columns:
+        try:
+            def get_keyword_counts(series):
+                keyword_counts = {}
+                for keywords_str in series.dropna().astype(str):
+                     if keywords_str:
+                          for keyword in keywords_str.split(','):
+                              keyword = keyword.strip()
+                              if keyword:
+                                  keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
+                return keyword_counts
+
+            current_keywords = get_keyword_counts(current_data['keywords'])
+            previous_keywords = get_keyword_counts(previous_data['keywords'])
+            
+            for keyword, count in current_keywords.items():
+                if keyword not in previous_keywords and count >= 3: 
+                    result["new_topics"].append({"topic": keyword, "count": count})
+            
+            for keyword, prev_count in previous_keywords.items():
+                curr_count = current_keywords.get(keyword, 0)
+                if prev_count >= 3 and (curr_count == 0 or curr_count < prev_count * 0.5):
+                    result["fading_topics"].append({
+                        "topic": keyword, 
+                        "previous_count": prev_count,
+                        "current_count": curr_count
+                    })
+            result["new_topics"].sort(key=lambda x: x['count'], reverse=True)
+            result["fading_topics"].sort(key=lambda x: x['previous_count'], reverse=True)
+
+        except Exception as topic_err:
+            logger.error(f"Error detecting topic changes: {topic_err}", exc_info=True)
+            result["new_topics"] = []
+            result["fading_topics"] = []
+            
+    else:
+         logger.warning("Cannot detect topic changes: 'keywords' column missing in one or both dataframes.")
+
+    return result 
+
+def send_processing_notification(processing_data: Dict[str, Any], recipients: List[str], db_factory: sessionmaker) -> bool:
+    """
+    Send a notification about the completion (or failure) of a data processing task.
+    
+    Args:
+        processing_data (Dict[str, Any]): Information about the processing task.
+                                         Expected keys: status ('success'/'failure'), 
+                                         processed_count (int), raw_file_count (int), 
+                                         timestamp (str), error (str, optional)
+        recipients (List[str]): List of email recipients (MUST be provided).
+        db_factory (sessionmaker): SQLAlchemy session factory for MailSender.
+        
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+    """
+    if not recipients:
+        logger.warning("No recipients provided for processing notification.")
+        return False
+
+    status = processing_data.get("status", "unknown")
+    timestamp_str = processing_data.get("timestamp", datetime.now().isoformat())
+    processed_count = processing_data.get("processed_count", 0)
+    raw_count = processing_data.get("raw_file_count", "N/A")
+    error_msg = processing_data.get("error", "None")
+
+    subject = f"Data Processing {status.capitalize()}"
+    body = f"""
+    Data processing task finished at {timestamp_str}.
+    
+    Status: {status.upper()}
+    Raw files processed: {raw_count}
+    Records processed: {processed_count}
+    """
+    if status == 'failure':
+        body += f"\nError Details: {error_msg}"
+        subject = f"ALERT: Data Processing Failed"
+
+    mail_sender = MailSender()
+    success = False
+    try:
+        with db_factory() as db:
+            # Use the basic send_email method
+            success = mail_sender.send_email(
+                db=db,
+                recipients=recipients,
+                subject=subject,
+                body=body,
+                html=False # Plain text for this notification
+            )
+    except Exception as e:
+        logger.error(f"Error creating DB session or sending processing notification: {e}", exc_info=True)
+
+    if success:
+        logger.info(f"Processing notification sent successfully to {', '.join(recipients)}")
+    else:
+        logger.error(f"Failed to send processing notification to {', '.join(recipients)}")
         
     return success
 
@@ -361,180 +606,4 @@ def format_analysis_report(analysis_data: Dict[str, Any]) -> str:
     </html>
     """
     
-    return html_content
-
-def send_collection_notification(collection_data: Dict[str, Any], recipients: List[str] = None) -> bool:
-    """
-    Send notification that data collection has completed.
-    
-    Args:
-        collection_data (Dict[str, Any]): Collection metrics and data
-        recipients (List[str], optional): List of email recipients
-    
-    Returns:
-        bool: True if sent successfully, False otherwise
-    """
-    from src.utils.mail_config import NOTIFY_ON_COLLECTION
-    
-    if not is_email_notification_enabled() or not NOTIFY_ON_COLLECTION:
-        logger.info("Collection notifications disabled. Skipping email.")
-        return False
-        
-    if recipients is None:
-        recipients = get_email_recipients()
-        
-    if not recipients:
-        logger.warning("No recipients configured for collection notification.")
-        return False
-    
-    success_rate = collection_data.get("collection_success_rate", 0) * 100
-    active_sources = collection_data.get("active_sources", 0)
-    total_sources = collection_data.get("total_sources", 0)
-    total_records = collection_data.get("total_records", 0)
-    duration = collection_data.get("duration_seconds", 0)
-    
-    subject = f"Data Collection Complete: {success_rate:.1f}% Success Rate"
-    message = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><title>Collection Complete</title></head>
-    <body>
-        <h2>Data Collection Complete</h2>
-        <p>Collection process finished on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-        
-        <h3>Collection Metrics:</h3>
-        <ul>
-            <li>Duration: {duration:.2f} seconds</li>
-            <li>Sources Attempted: {total_sources}</li>
-            <li>Successful Sources: {active_sources} ({success_rate:.1f}%)</li>
-            <li>Total Records Collected: {total_records}</li>
-        </ul>
-        
-        <p>The data processing and analysis phase will begin based on its schedule.</p>
-        <hr>
-        <p><small>Sentiment Analysis System Notification</small></p>
-    </body>
-    </html>
-    """
-    
-    mail_sender = MailSender()
-    logger.info(f"Sending collection notification email to: {', '.join(recipients)}")
-    success = mail_sender.send_report_email(recipients, subject, message)
-    
-    if success:
-        logger.info(f"Collection notification email sent successfully.")
-    else:
-        logger.error(f"Failed to send collection notification email.")
-    
-    return success
-
-def detect_sentiment_change(current_data: pd.DataFrame, previous_data: pd.DataFrame, 
-                           threshold: float = 0.1) -> Dict[str, Any]:
-    """
-    Detect significant changes in sentiment between current and previous data.
-    Also identifies new and fading topics based on keywords.
-    
-    Args:
-        current_data (pd.DataFrame): The current processed data (needs 'sentiment_score', optionally 'sentiment_label', 'keywords')
-        previous_data (pd.DataFrame): The previous processed data (needs 'sentiment_score', optionally 'sentiment_label', 'keywords')
-        threshold (float): The minimum absolute change in overall sentiment score to be considered significant.
-    
-    Returns:
-        Dict[str, Any]: Dictionary with change information including:
-            sentiment_changed (bool): True if overall sentiment change exceeds threshold.
-            sentiment_change (float): The difference in mean sentiment score (current - previous).
-            positive_change (float): Percentage point change in positive mentions.
-            negative_change (float): Percentage point change in negative mentions.
-            neutral_change (float): Percentage point change in neutral mentions.
-            new_topics (List[Dict]): List of {'topic': str, 'count': int} for new topics.
-            fading_topics (List[Dict]): List of {'topic': str, 'previous_count': int, 'current_count': int} for fading topics.
-    """
-    result = {
-        "sentiment_changed": False,
-        "sentiment_change": 0,
-        "positive_change": 0,
-        "negative_change": 0,
-        "neutral_change": 0,
-        "new_topics": [],
-        "fading_topics": []
-    }
-    
-    if 'sentiment_score' not in current_data.columns or 'sentiment_score' not in previous_data.columns:
-        logger.warning("Cannot detect sentiment change: 'sentiment_score' column missing in one or both dataframes.")
-        return result
-    if current_data.empty or previous_data.empty:
-         logger.warning("Cannot detect sentiment change: One or both dataframes are empty.")
-         return result
-
-    current_sentiment = np.mean(current_data['sentiment_score'])
-    previous_sentiment = np.mean(previous_data['sentiment_score'])
-    
-    sentiment_change = current_sentiment - previous_sentiment
-    result["sentiment_change"] = sentiment_change
-    
-    def get_sentiment_percentages(df):
-        total = len(df)
-        if total == 0:
-            return {"positive": 0, "negative": 0, "neutral": 0}
-        
-        if 'sentiment_label' in df.columns:
-            positive = len(df[df['sentiment_label'] == 'positive']) / total * 100
-            negative = len(df[df['sentiment_label'] == 'negative']) / total * 100
-            neutral = 100 - positive - negative
-        elif 'sentiment_score' in df.columns:
-            positive = len(df[df['sentiment_score'] > 0.2]) / total * 100
-            negative = len(df[df['sentiment_score'] < -0.2]) / total * 100
-            neutral = 100 - positive - negative
-        else:
-            return {"positive": 0, "negative": 0, "neutral": 0}
-            
-        return {"positive": positive, "negative": negative, "neutral": neutral}
-    
-    current_percentages = get_sentiment_percentages(current_data)
-    previous_percentages = get_sentiment_percentages(previous_data)
-    
-    result["positive_change"] = current_percentages["positive"] - previous_percentages["positive"]
-    result["negative_change"] = current_percentages["negative"] - previous_percentages["negative"]
-    result["neutral_change"] = current_percentages["neutral"] - previous_percentages["neutral"]
-    
-    result["sentiment_changed"] = abs(sentiment_change) >= threshold
-    
-    if 'keywords' in current_data.columns and 'keywords' in previous_data.columns:
-        try:
-            def get_keyword_counts(series):
-                keyword_counts = {}
-                for keywords_str in series.dropna().astype(str):
-                     if keywords_str:
-                          for keyword in keywords_str.split(','):
-                              keyword = keyword.strip()
-                              if keyword:
-                                  keyword_counts[keyword] = keyword_counts.get(keyword, 0) + 1
-                return keyword_counts
-
-            current_keywords = get_keyword_counts(current_data['keywords'])
-            previous_keywords = get_keyword_counts(previous_data['keywords'])
-            
-            for keyword, count in current_keywords.items():
-                if keyword not in previous_keywords and count >= 3: 
-                    result["new_topics"].append({"topic": keyword, "count": count})
-            
-            for keyword, prev_count in previous_keywords.items():
-                curr_count = current_keywords.get(keyword, 0)
-                if prev_count >= 3 and (curr_count == 0 or curr_count < prev_count * 0.5):
-                    result["fading_topics"].append({
-                        "topic": keyword, 
-                        "previous_count": prev_count,
-                        "current_count": curr_count
-                    })
-            result["new_topics"].sort(key=lambda x: x['count'], reverse=True)
-            result["fading_topics"].sort(key=lambda x: x['previous_count'], reverse=True)
-
-        except Exception as topic_err:
-            logger.error(f"Error detecting topic changes: {topic_err}", exc_info=True)
-            result["new_topics"] = []
-            result["fading_topics"] = []
-            
-    else:
-         logger.warning("Cannot detect topic changes: 'keywords' column missing in one or both dataframes.")
-
-    return result 
+    return html_content 
