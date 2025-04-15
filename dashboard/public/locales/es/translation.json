@@ -541,7 +541,8 @@
     "contextualSentiment": "Sentimiento Contextual",
     "emotionalSpectrum": "Espectro Emocional",
     "emailConfig": "Notificaciones por Email",
-    "targetConfig": "Individuo Objetivo"
+    "targetConfig": "Individuo Objetivo",
+    "advancedAIFeatures": "Funciones avanzadas de IA"
   },
   "emailConfig": {
     "title": "Configuración de Notificaciones por Email",
@@ -559,8 +560,14 @@
     "invalidEmailError": "Por favor, introduzca una dirección de email válida",
     "duplicateEmailError": "Esta dirección de email ya está en la lista",
     "loadError": "Error al cargar la configuración de email",
-    "saveSuccess": "Configuración de email guardada correctamente",
-    "saveError": "Error al guardar la configuración de email"
+    "saveSuccess": "Configuración de correo electrónico guardada con éxito",
+    "saveError": "Error al guardar la configuración del correo electrónico",
+    "tooltip": "Configurar notificaciones por correo electrónico para diferentes etapas.",
+    "sendTestEmail": "Enviar correo de prueba",
+    "sending": "Enviando...",
+    "noRecipientForTest": "Por favor, añada al menos un destinatario primero.",
+    "testEmailSuccess": "Correo de prueba enviado con éxito a {{recipient}}",
+    "testEmailError": "Error al enviar correo de prueba: {{error}}"
   },
   "target": {
     "title": "Configuración del Individuo Objetivo",
@@ -587,6 +594,11 @@
     "duplicateVariationError": "Esta variación ya existe",
     "noNameSet": "Nombre no establecido",
     "noVariations": "Sin variaciones",
-    "loadError": "Error al cargar"
+    "loadError": "Error de carga",
+    "triggerTooltip": "Iniciar manualmente un ciclo de recopilación y procesamiento de datos",
+    "triggerRun": "Iniciar ejecución del agente",
+    "triggering": "Iniciando...",
+    "triggerSuccess": "Ejecución del agente iniciada con éxito.",
+    "triggerError": "Error al iniciar la ejecución del agente: {{error}}"
   }
 } 

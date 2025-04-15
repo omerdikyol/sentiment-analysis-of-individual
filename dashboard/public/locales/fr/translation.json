@@ -541,7 +541,8 @@
     "contextualSentiment": "Sentiment Contextuel",
     "emotionalSpectrum": "Spectre Émotionnel",
     "emailConfig": "Notifications par Email",
-    "targetConfig": "Individu Cible"
+    "targetConfig": "Individu cible",
+    "advancedAIFeatures": "Fonctionnalités IA avancées"
   },
   "emailConfig": {
     "title": "Paramètres de Notification par Email",
@@ -559,8 +560,14 @@
     "invalidEmailError": "Veuillez entrer une adresse email valide",
     "duplicateEmailError": "Cette adresse email est déjà dans la liste",
     "loadError": "Échec du chargement de la configuration email",
-    "saveSuccess": "Paramètres d'email enregistrés avec succès",
-    "saveError": "Échec de l'enregistrement des paramètres d'email"
+    "saveSuccess": "Paramètres d'e-mail enregistrés avec succès",
+    "saveError": "Échec de l'enregistrement des paramètres d'e-mail",
+    "tooltip": "Configurer les notifications par e-mail pour différentes étapes.",
+    "sendTestEmail": "Envoyer un e-mail de test",
+    "sending": "Envoi en cours...",
+    "noRecipientForTest": "Veuillez ajouter au moins un destinataire d'abord.",
+    "testEmailSuccess": "E-mail de test envoyé avec succès à {{recipient}}",
+    "testEmailError": "Échec de l'envoi de l'e-mail de test: {{error}}"
   },
   "target": {
     "title": "Configuration de l'Individu Cible",
@@ -585,7 +592,12 @@
     "variationRequiredError": "Le nom de la variation est requis",
     "duplicateVariationError": "Cette variation existe déjà",
     "noNameSet": "Nom non défini",
-    "noVariations": "Aucune variation",
-    "loadError": "Erreur de chargement"
+    "noVariations": "Pas de variations",
+    "loadError": "Erreur de chargement",
+    "triggerTooltip": "Démarrer manuellement un cycle de collecte et de traitement des données",
+    "triggerRun": "Démarrer l'agent",
+    "triggering": "Démarrage en cours...",
+    "triggerSuccess": "L'exécution de l'agent a été déclenchée avec succès.",
+    "triggerError": "Échec du déclenchement de l'exécution de l'agent: {{error}}"
   }
 }

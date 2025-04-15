@@ -541,7 +541,8 @@
     "contextualSentiment": "Kontextuelle Stimmung",
     "emotionalSpectrum": "Emotionales Spektrum",
     "emailConfig": "E-Mail-Benachrichtigungen",
-    "targetConfig": "Zielperson"
+    "targetConfig": "Zielperson",
+    "advancedAIFeatures": "Erweiterte KI-Funktionen"
   },
   "emailConfig": {
     "title": "E-Mail-Benachrichtigungseinstellungen",
@@ -560,7 +561,13 @@
     "duplicateEmailError": "Diese E-Mail-Adresse ist bereits in der Liste",
     "loadError": "Fehler beim Laden der E-Mail-Konfiguration",
     "saveSuccess": "E-Mail-Einstellungen erfolgreich gespeichert",
-    "saveError": "Fehler beim Speichern der E-Mail-Einstellungen"
+    "saveError": "Fehler beim Speichern der E-Mail-Einstellungen",
+    "tooltip": "E-Mail-Benachrichtigungen für verschiedene Phasen konfigurieren.",
+    "sendTestEmail": "Test-E-Mail senden",
+    "sending": "Senden...",
+    "noRecipientForTest": "Bitte fügen Sie zuerst mindestens einen Empfänger hinzu.",
+    "testEmailSuccess": "Test-E-Mail erfolgreich an {{recipient}} gesendet",
+    "testEmailError": "Fehler beim Senden der Test-E-Mail: {{error}}"
   },
   "target": {
     "title": "Zielperson-Konfiguration",
@@ -585,8 +592,13 @@
     "nameRequiredError": "Der Name der Zielperson ist erforderlich",
     "variationRequiredError": "Der Name der Variation ist erforderlich",
     "duplicateVariationError": "Diese Variation existiert bereits",
-    "noNameSet": "Name nicht festgelegt",
+    "noNameSet": "Kein Name festgelegt",
     "noVariations": "Keine Variationen",
-    "loadError": "Ladefehler"
+    "loadError": "Ladefehler",
+    "triggerTooltip": "Starten Sie manuell einen Datenerfassungs- und Verarbeitungszyklus",
+    "triggerRun": "Agentenlauf starten",
+    "triggering": "Wird gestartet...",
+    "triggerSuccess": "Agentenlauf erfolgreich gestartet.",
+    "triggerError": "Fehler beim Starten des Agentenlaufs: {{error}}"
   }
 } 

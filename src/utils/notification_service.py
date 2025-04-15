@@ -250,10 +250,11 @@ def send_collection_notification(collection_data: Dict[str, Any], recipients: Li
     except Exception as e:
          logger.error(f"Error creating DB session or sending collection notification: {e}", exc_info=True)
 
+    recipient_str = ", ".join(recipients)
     if success:
-        logger.info(f"Collection notification email sent successfully to {", ".join(recipients)}.")
+        logger.info(f"Collection notification email sent successfully to {recipient_str}.")
     else:
-        logger.error(f"Failed to send collection notification email to {", ".join(recipients)}.")
+        logger.error(f"Failed to send collection notification email to {recipient_str}.")
     
     return success
 

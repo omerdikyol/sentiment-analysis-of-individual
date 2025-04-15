@@ -541,7 +541,8 @@
     "contextualSentiment": "المشاعر السياقية",
     "emotionalSpectrum": "الطيف العاطفي",
     "emailConfig": "إشعارات البريد الإلكتروني",
-    "targetConfig": "الفرد المستهدف"
+    "targetConfig": "الفرد المستهدف",
+    "advancedAIFeatures": "ميزات الذكاء الاصطناعي المتقدمة"
 },
 "emailConfig": {
     "title": "إعدادات إشعارات البريد الإلكتروني",
@@ -560,7 +561,13 @@
     "duplicateEmailError": "عنوان البريد الإلكتروني هذا موجود بالفعل في القائمة",
     "loadError": "فشل في تحميل إعدادات البريد الإلكتروني",
     "saveSuccess": "تم حفظ إعدادات البريد الإلكتروني بنجاح",
-    "saveError": "فشل في حفظ إعدادات البريد الإلكتروني"
+    "saveError": "فشل في حفظ إعدادات البريد الإلكتروني",
+    "tooltip": "تكوين إشعارات البريد الإلكتروني لمراحل مختلفة.",
+    "sendTestEmail": "إرسال بريد إلكتروني تجريبي",
+    "sending": "جاري الإرسال...",
+    "noRecipientForTest": "الرجاء إضافة مستلم واحد على الأقل أولاً.",
+    "testEmailSuccess": "تم إرسال بريد إلكتروني تجريبي بنجاح إلى {{recipient}}",
+    "testEmailError": "فشل في إرسال بريد إلكتروني تجريبي: {{error}}"
 },
 "target": {
     "title": "تكوين الفرد المستهدف",
@@ -585,8 +592,13 @@
     "nameRequiredError": "اسم الفرد المستهدف مطلوب",
     "variationRequiredError": "اسم التنويع مطلوب",
     "duplicateVariationError": "هذا التنويع موجود بالفعل",
-    "noNameSet": "الاسم غير محدد",
+    "noNameSet": "لم يتم تعيين الاسم",
     "noVariations": "لا توجد اختلافات",
-    "loadError": "خطأ في التحميل"
+    "loadError": "خطأ في التحميل",
+    "triggerTooltip": "بدء دورة جمع البيانات ومعالجتها يدويًا",
+    "triggerRun": "بدء تشغيل الوكيل",
+    "triggering": "جاري البدء...",
+    "triggerSuccess": "تم بدء تشغيل الوكيل بنجاح.",
+    "triggerError": "فشل في بدء تشغيل الوكيل: {{error}}"
 }
 }

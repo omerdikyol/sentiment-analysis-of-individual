@@ -544,7 +544,8 @@
     "emotionalSpectrum": "Emotional Spectrum",
     "comparisonReport": "Comparison Report",
     "emailConfig": "Email Notifications",
-    "targetConfig": "Target Individual"
+    "targetConfig": "Target Individual",
+    "advancedAIFeatures": "Advanced AI Features"
   },
   "emailConfig": {
     "title": "Email Notification Settings",
@@ -563,7 +564,13 @@
     "duplicateEmailError": "This email address is already in the list",
     "loadError": "Failed to load email configuration",
     "saveSuccess": "Email settings saved successfully",
-    "saveError": "Failed to save email settings"
+    "saveError": "Failed to save email settings",
+    "tooltip": "Configure email notifications for different stages.",
+    "sendTestEmail": "Send Test Email",
+    "sending": "Sending...",
+    "noRecipientForTest": "Please add at least one recipient email first.",
+    "testEmailSuccess": "Test email sent successfully to {{recipient}}",
+    "testEmailError": "Failed to send test email: {{error}}"
   },
   "common": {
     "save": "Save",
@@ -601,6 +608,11 @@
     "duplicateVariationError": "This variation already exists",
     "noNameSet": "Name not set",
     "noVariations": "No variations",
-    "loadError": "Load error"
+    "loadError": "Load error",
+    "triggerTooltip": "Manually start a data collection and processing cycle",
+    "triggerRun": "Start Agent Run",
+    "triggering": "Starting...",
+    "triggerSuccess": "Agent run successfully triggered.",
+    "triggerError": "Failed to trigger agent run: {{error}}"
   }
 } 
