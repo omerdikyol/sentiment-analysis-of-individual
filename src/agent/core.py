@@ -90,9 +90,12 @@ class SentimentAnalysisAgent:
         self.stop_event = threading.Event()
         self.scheduler_thread = None
 
-        # Initialize processor and analyzer
+        # Initialize processor
         self.data_processor = DataProcessor()
-        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
+        # --- Lazy load analyzer ---
+        self.sentiment_analyzer = None
+        self._analyzer_lock = threading.Lock()
+        # --- End lazy load ---
 
         # --- Initialize base_path and is_running --- 
         # Assuming core.py is in src/agent, base_path goes up three levels to project root
@@ -109,6 +112,24 @@ class SentimentAnalysisAgent:
 
         logger.info(f"Agent initialized. Config loaded from {self.config_path}. Base path: {self.base_path}")
         logger.info(f"Database session factory provided: {db_factory}")
+
+    def _get_analyzer(self):
+        """Get the sentiment analyzer, initializing it on first call (thread-safe)."""
+        if self.sentiment_analyzer is None:
+            with self._analyzer_lock:
+                # Double-check after acquiring the lock
+                if self.sentiment_analyzer is None:
+                    logger.info("Initializing ImprovedSentimentAnalyzer (lazy loading)...")
+                    start_time = time.time()
+                    try:
+                        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
+                        end_time = time.time()
+                        logger.info(f"ImprovedSentimentAnalyzer initialized in {end_time - start_time:.2f} seconds.")
+                    except Exception as e:
+                        logger.error(f"Failed to initialize ImprovedSentimentAnalyzer: {e}", exc_info=True)
+                        # Raise the exception to signal failure - process_data should handle this
+                        raise
+        return self.sentiment_analyzer
 
     def load_config(self) -> Dict[str, Any]:
         """Load agent configuration from JSON file, excluding the 'target' key."""
@@ -472,10 +493,17 @@ class SentimentAnalysisAgent:
         try:
             logger.info("Performing sentiment analysis...")
             if 'text' in all_data.columns:
-                 # Ensure sentiment_analyzer is initialized before using it
-                 if hasattr(self, 'sentiment_analyzer') and self.sentiment_analyzer is not None:
+                 # --- Use lazy loaded analyzer ---
+                 try:
+                    analyzer = self._get_analyzer()
+                 except Exception as e_init:
+                    # Handle initialization failure
+                    logger.error(f"Could not get/initialize sentiment analyzer: {e_init}")
+                    return False # Stop processing if analyzer cannot be loaded
+
+                 if analyzer:
                      sentiment_results = all_data['text'].apply(
-                        lambda x: self.sentiment_analyzer.analyze(x) if isinstance(x, str) and pd.notna(x) else ('neutral', 0.5)
+                        lambda x: analyzer.analyze(x) if isinstance(x, str) and pd.notna(x) else ('neutral', 0.5)
                      )
                      # Assign label and score from the results
                      all_data['sentiment_label'] = sentiment_results.apply(lambda res: res[0])
@@ -483,9 +511,11 @@ class SentimentAnalysisAgent:
                      logger.info("Sentiment analysis completed.")
                      processed_df = all_data # Use the modified DataFrame
                  else:
-                     logger.error("Sentiment analyzer is not initialized. Skipping sentiment analysis.")
-                     # Decide if processing should continue without sentiment - for now, let's stop.
+                     # This case should ideally be caught by the exception handling above,
+                     # but keep for robustness.
+                     logger.error("Sentiment analyzer is None after attempting initialization. Skipping sentiment analysis.")
                      return False
+                 # --- End use lazy loaded analyzer ---
             else:
                  logger.error("Column 'text' not found for sentiment analysis.")
                  # Decide if processing should continue without sentiment - for now, let's stop.
