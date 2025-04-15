@@ -50,3 +50,5 @@ gunicorn>=20.1.0
 sqlalchemy
 psycopg2-binary
 alembic
+
+hf_xet
