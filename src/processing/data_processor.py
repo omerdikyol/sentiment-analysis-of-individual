@@ -25,12 +25,27 @@ logger = logging.getLogger('DataProcessor')
 class DataProcessor:
     def __init__(self):
         self.base_path = Path(__file__).parent.parent.parent
-        self.sentiment_analyzer = ImprovedSentimentAnalyzer()
+        self.sentiment_analyzer = None
         random.seed(42)  # For consistent random values
+
+    def _get_analyzer(self):
+        """Get the sentiment analyzer, initializing it on first call."""
+        if self.sentiment_analyzer is None:
+            logger.info("Initializing ImprovedSentimentAnalyzer within DataProcessor...")
+            try:
+                self.sentiment_analyzer = ImprovedSentimentAnalyzer()
+            except Exception as e:
+                logger.error(f"Failed to initialize ImprovedSentimentAnalyzer in DataProcessor: {e}", exc_info=True)
+                raise
+        return self.sentiment_analyzer
 
     def get_sentiment(self, text):
         """Get sentiment for a piece of text using the improved analyzer"""
-        return self.sentiment_analyzer.analyze(text)
+        analyzer = self._get_analyzer()
+        if not analyzer:
+            logger.error("Sentiment analyzer could not be initialized in get_sentiment.")
+            return ('neutral', 0.5)
+        return analyzer.analyze(text)
 
     def normalize_text(self, text):
         """Clean text for better duplicate detection"""
@@ -582,7 +597,12 @@ class DataProcessor:
         
         # Apply sentiment analysis
         logger.info("Applying sentiment analysis...")
-        sentiments = df['text'].apply(self.get_sentiment)
+        analyzer = self._get_analyzer()
+        if not analyzer:
+            logger.error("Sentiment analyzer could not be initialized in process_data. Cannot apply sentiments.")
+            return False
+            
+        sentiments = df['text'].apply(lambda x: analyzer.analyze(x) if isinstance(x, str) and pd.notna(x) else ('neutral', 0.5))
         df['sentiment_label'], df['sentiment_score'] = zip(*sentiments)
 
         # Drop temporary columns
