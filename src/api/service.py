@@ -698,20 +698,46 @@ async def update_target_individual(target_config: TargetIndividualConfig, db: Se
 
 @app.post("/agent/trigger-run", status_code=status.HTTP_202_ACCEPTED)
 async def trigger_agent_run(background_tasks: BackgroundTasks):
-    """Manually triggers the agent's data collection cycle in the background."""
-    if not agent:
+    """Triggers the agent's collect and process cycle in the background."""
+    global agent # Ensure we are using the global agent instance
+    if agent is None:
         raise HTTPException(status_code=503, detail="Agent is not initialized.")
-        
+
+    if agent.task_status['is_busy']:
+        raise HTTPException(status_code=409, detail=f"Agent is already busy with task: {agent.task_status['current_task']}. Please wait.")
+
+    # Run the potentially long-running task in the background
+    logger.info("Scheduling agent collect_and_process cycle in background.")
+    background_tasks.add_task(agent._run_collect_and_process) # Assuming this method exists in the agent
+    
+    return {"message": "Agent collect and process cycle triggered in the background."}
+
+@app.get("/agent/initialize-analyzer")
+async def initialize_analyzer():
+    """Explicitly initializes the sentiment analyzer if not already loaded."""
+    global agent
+    if agent is None:
+        raise HTTPException(status_code=503, detail="Agent is not initialized.")
+
+    if agent.sentiment_analyzer is not None:
+        return JSONResponse(content={"status": "success", "message": "Sentiment analyzer already initialized."}) 
+
+    logger.info("Received request to explicitly initialize sentiment analyzer...")
     try:
-        # Schedule the agent's collect_data method to run in the background
-        background_tasks.add_task(agent.collect_data)
-        logger.info("Manual agent data collection task added to background via API.")
-        return {"status": "success", "message": "Agent data collection triggered successfully in the background."}
-        
+        # This call will trigger the initialization logic within the agent
+        analyzer_instance = agent._get_analyzer()
+        if analyzer_instance:
+             logger.info("Sentiment analyzer initialization successful via endpoint.")
+             return JSONResponse(content={"status": "success", "message": "Sentiment analyzer initialization successful."}) 
+        else:
+             # This case might occur if _get_analyzer returns None despite no exception (unlikely with current code)
+             logger.error("Analyzer instance is None after initialization attempt via endpoint.")
+             raise HTTPException(status_code=500, detail="Initialization returned None without error.")
     except Exception as e:
-        # This exception would likely occur during task *scheduling*, not execution
-        logger.error(f"Error scheduling agent run via API: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error scheduling agent run: {str(e)}")
+        logger.error(f"Failed to initialize sentiment analyzer via endpoint: {e}", exc_info=True)
+        # Provide a more specific error if possible, but avoid leaking sensitive details
+        error_detail = f"Failed to initialize sentiment analyzer: {type(e).__name__}" 
+        raise HTTPException(status_code=500, detail=error_detail)
 
 @app.on_event("startup")
 async def startup_event():
