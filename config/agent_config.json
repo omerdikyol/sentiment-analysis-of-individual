@@ -1,6 +1,6 @@
 {
-    "collection_interval_minutes": 60,
-    "processing_interval_minutes": 120,
+    "collection_interval_minutes": 360,
+    "processing_interval_minutes": 360,
     "data_retention_days": 30,
     "sentiment_model": "default",
     "analysis_level": "medium",
