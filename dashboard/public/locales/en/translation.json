@@ -613,6 +613,8 @@
     "triggerRun": "Start Agent Run",
     "triggering": "Starting...",
     "triggerSuccess": "Agent run successfully triggered.",
-    "triggerError": "Failed to trigger agent run: {{error}}"
+    "triggerError": "Failed to trigger agent run: {{error}}",
+    "saveSuccess": "Target configuration saved successfully.",
+    "saveError": "Failed to save target configuration. Please try again."
   }
 } 
