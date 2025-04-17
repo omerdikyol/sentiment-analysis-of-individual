@@ -10,6 +10,7 @@ from pathlib import Path
 from .sentiment_analyzer import ImprovedSentimentAnalyzer
 from dateutil import parser
 from difflib import SequenceMatcher
+from typing import Optional
 
 # Add this import for file rotation
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -24,13 +25,19 @@ logger = logging.getLogger('DataProcessor')
 
 class DataProcessor:
     def __init__(self):
+        logger.debug("DataProcessor.__init__: Initializing...")
         self.base_path = Path(__file__).parent.parent.parent
+        logger.debug(f"DataProcessor.__init__: Base path set to {self.base_path}")
+        logger.debug("DataProcessor.__init__: Initializing ImprovedSentimentAnalyzer...")
         self.sentiment_analyzer = ImprovedSentimentAnalyzer()
         random.seed(42)  # For consistent random values
+        logger.debug("DataProcessor.__init__: Initialization finished.")
 
     def get_sentiment(self, text):
-        """Get sentiment for a piece of text using the improved analyzer"""
-        return self.sentiment_analyzer.analyze(text)
+        logger.debug(f"DataProcessor.get_sentiment: Analyzing text (first 50 chars): '{str(text)[:50]}...'")
+        result = self.sentiment_analyzer.analyze(text)
+        logger.debug(f"DataProcessor.get_sentiment: Result: {result}")
+        return result
 
     def normalize_text(self, text):
         """Clean text for better duplicate detection"""
@@ -603,6 +610,112 @@ class DataProcessor:
             df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
 
         return True
+
+    def process_files(self) -> Optional[pd.DataFrame]:
+        logger.debug("DataProcessor.process_files: Entering method.")
+        raw_data_dir = self.base_path / "data" / "raw"
+        processed_dir = self.base_path / "data" / "processed"
+        processed_file_path = processed_dir / "processed_data.csv"
+        processed_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.debug(f"DataProcessor.process_files: Looking for CSVs in {raw_data_dir}")
+        csv_files = list(raw_data_dir.glob("*.csv"))
+        logger.debug(f"DataProcessor.process_files: Found {len(csv_files)} CSV files: {csv_files}")
+
+        if not csv_files:
+            logger.warning("No raw CSV files found to process.")
+            logger.debug("DataProcessor.process_files: Exiting method - no files.")
+            return None
+
+        all_data = []
+        required_columns = {'text', 'id', 'published_date', 'source', 'country'} # Example
+        processed_files_record = []
+
+        for file_path in csv_files:
+            logger.debug(f"DataProcessor.process_files: Processing file: {file_path}")
+            try:
+                df = pd.read_csv(file_path)
+                logger.debug(f"DataProcessor.process_files: Read {len(df)} rows from {file_path}. Columns: {list(df.columns)}")
+
+                # --- Add more debug logs for cleaning steps --- 
+                logger.debug("DataProcessor.process_files: Starting data cleaning steps...")
+                # df = self.standardize_columns(df)
+                # df = self.handle_missing_values(df)
+                # df = self.normalize_dates(df)
+                # df = self.deduplicate_data(df)
+                logger.debug("DataProcessor.process_files: Finished data cleaning steps.")
+                # --- End cleaning logs --- 
+
+                if 'text' in df.columns:
+                    texts_to_analyze = df['text'].fillna('').astype(str).tolist()
+                    logger.debug(f"DataProcessor.process_files: Extracted {len(texts_to_analyze)} texts for sentiment analysis.")
+                    if texts_to_analyze:
+                        logger.debug(f"DataProcessor.process_files: Starting batch sentiment analysis...")
+                        sentiment_results = self.sentiment_analyzer.batch_analyze(texts_to_analyze)
+                        logger.debug(f"DataProcessor.process_files: Batch sentiment analysis completed. Got {len(sentiment_results)} results.")
+                        if len(sentiment_results) == len(df):
+                             df['sentiment_label'] = [res[0] for res in sentiment_results]
+                             df['sentiment_score'] = [res[1] for res in sentiment_results]
+                             logger.debug("DataProcessor.process_files: Added sentiment columns to DataFrame.")
+                        else:
+                            logger.warning(f"Sentiment results count ({len(sentiment_results)}) doesn't match DataFrame rows ({len(df)}). Skipping sentiment assignment for {file_path}.")
+                    else:
+                        logger.debug("DataProcessor.process_files: No non-empty texts found in this file for analysis.")
+                        df['sentiment_label'] = 'neutral' # Assign default if no text
+                        df['sentiment_score'] = 0.5
+                else:
+                    logger.warning(f"Column 'text' not found in {file_path}. Skipping sentiment analysis.")
+                    df['sentiment_label'] = 'neutral' # Assign default if no text
+                    df['sentiment_score'] = 0.5
+
+                # --- Add enrichment logs --- 
+                # df = self.enrich_data(df) # Add logs inside this if it exists
+                # --- End enrichment --- 
+                
+                df['file_source'] = file_path.name # Track source file
+                all_data.append(df)
+                processed_files_record.append(str(file_path))
+                logger.debug(f"DataProcessor.process_files: Added DataFrame from {file_path} to combined list.")
+
+            except Exception as e:
+                logger.error(f"Failed to process file {file_path}: {e}", exc_info=True)
+                continue # Skip to the next file
+
+        if not all_data:
+            logger.warning("No data was successfully processed from any file.")
+            logger.debug("DataProcessor.process_files: Exiting method - no data processed.")
+            return None
+
+        logger.debug(f"DataProcessor.process_files: Concatenating {len(all_data)} DataFrames...")
+        final_df = pd.concat(all_data, ignore_index=True)
+        logger.debug(f"DataProcessor.process_files: Concatenated DataFrame shape: {final_df.shape}")
+
+        # Final global deduplication if needed
+        # final_df = self.deduplicate_data(final_df, global_scope=True)
+        # logger.debug(f"DataProcessor.process_files: DataFrame shape after final deduplication: {final_df.shape}")
+
+        try:
+            self.save_processed_data(final_df, processed_file_path)
+            logger.info(f"Processed data saved to {processed_file_path}")
+            # Rotate processed raw files after successful save
+            rotate_processed_files(processed_files_record, raw_data_dir)
+        except Exception as e:
+            logger.error(f"Failed to save processed data or rotate files: {e}", exc_info=True)
+            logger.debug("DataProcessor.process_files: Exiting method - save failed.")
+            return None # Indicate failure
+            
+        logger.debug("DataProcessor.process_files: Finished method successfully.")
+        return final_df
+
+    def save_processed_data(self, df: pd.DataFrame, file_path: Path):
+        logger.debug(f"DataProcessor.save_processed_data: Entering method. Saving DataFrame (shape: {df.shape}) to {file_path}")
+        try:
+            df.to_csv(file_path, index=False)
+            logger.debug(f"DataProcessor.save_processed_data: Save successful to {file_path}.")
+        except Exception as e:
+            logger.error(f"Error saving DataFrame to {file_path}: {e}", exc_info=True)
+            raise # Re-raise the exception
+        logger.debug(f"DataProcessor.save_processed_data: Exiting method.")
 
 if __name__ == "__main__":
     processor = DataProcessor()

@@ -58,6 +58,7 @@ class SentimentAnalysisAgent:
         """
         self.db_factory = db_factory
         self.config_path = Path(config_path)
+        logger.debug(f"SentimentAnalysisAgent.__init__ started. db_factory: {db_factory}, config_path: {config_path}")
         self.config = self.load_config() # Load config from file (excluding target)
         self.status = "idle"
         self.last_run_times = {"collect": None, "process": None, "cleanup": None}
@@ -109,9 +110,11 @@ class SentimentAnalysisAgent:
 
         logger.info(f"Agent initialized. Config loaded from {self.config_path}. Base path: {self.base_path}")
         logger.info(f"Database session factory provided: {db_factory}")
+        logger.debug(f"SentimentAnalysisAgent.__init__ finished. Initial config: {self.config}")
 
     def load_config(self) -> Dict[str, Any]:
         """Load agent configuration from JSON file, excluding the 'target' key."""
+        logger.debug(f"load_config: Attempting to load config from {self.config_path}")
         default_config = {
             "collection_interval_minutes": 60,
             "processing_interval_minutes": 120,
@@ -135,6 +138,7 @@ class SentimentAnalysisAgent:
                     # We should ensure defaults cover all *expected* keys now
                     merged_config = default_config.copy()
                     merged_config.update(loaded_conf)
+                    logger.debug(f"load_config: Loaded config: {merged_config}")
                     return merged_config
             else:
                 logger.warning(f"Config file {self.config_path} not found. Using default configuration.")
@@ -148,9 +152,12 @@ class SentimentAnalysisAgent:
 
     def _get_latest_target_config(self, db: Session) -> Optional[TargetIndividualConfiguration]:
         """Fetches the latest target config model object from DB."""
+        logger.debug("_get_latest_target_config: Entering method.")
         try:
             # Query directly for the model object
-            return db.query(TargetIndividualConfiguration).order_by(TargetIndividualConfiguration.created_at.desc()).first()
+            latest_config = db.query(TargetIndividualConfiguration).order_by(TargetIndividualConfiguration.created_at.desc()).first()
+            logger.debug(f"_get_latest_target_config: Found config: {latest_config}")
+            return latest_config
         except Exception as e:
             logger.error(f"Error getting target config for agent: {e}", exc_info=True)
             return None
@@ -158,6 +165,7 @@ class SentimentAnalysisAgent:
     # --- Example of using target config ---
     def collect_data(self):
         """Collect data by running the external run_collectors.py script."""
+        logger.debug("collect_data: Entering method.")
         logger.info("Starting data collection cycle by triggering run_collectors.py...")
         self.status = "collecting"
         target_name = "Default Target"
@@ -174,6 +182,7 @@ class SentimentAnalysisAgent:
         try:
             # Get target config from DB
             with self.db_factory() as db:
+                logger.debug("collect_data: Fetching target config...")
                 target_config = self._get_latest_target_config(db)
                 if target_config:
                     target_name = target_config.individual_name
@@ -288,6 +297,7 @@ class SentimentAnalysisAgent:
             except Exception as e:
                 logger.error(f"Error checking DB or sending collection notification: {str(e)}", exc_info=True)
         
+        logger.debug("collect_data: Finished method.")
         return collection_success
 
     # Update other methods like process_data, run_analysis etc. similarly 
@@ -353,24 +363,30 @@ class SentimentAnalysisAgent:
     # --- Placeholder methods for agent lifecycle and tasks ---
     def start(self):
         # Logic to start the agent's main loop/scheduler
+        logger.debug("start: Entering method.")
         logger.info("Agent starting...")
         self.stop_event.clear()
         # Example: Start scheduler thread if using 'schedule' library
-        # self.scheduler_thread = threading.Thread(target=self._run_scheduler)
-        # self.scheduler_thread.start()
-        pass # Add actual start logic
+        self.scheduler_thread = threading.Thread(target=self._run_scheduler)
+        logger.debug("start: Starting scheduler thread.")
+        self.scheduler_thread.start()
+        logger.debug("start: Finished method.")
 
     def stop(self):
         # Logic to gracefully stop the agent
+        logger.debug("stop: Entering method.")
         logger.info("Agent stopping...")
         self.stop_event.set()
         # Example: Wait for threads to join
-        # if self.scheduler_thread:
-        #     self.scheduler_thread.join()
+        if self.scheduler_thread:
+            self.scheduler_thread.join()
+        logger.debug("stop: Stop event set.")
         pass # Add actual stop logic
+        logger.debug("stop: Finished method.")
 
     def process_data(self):
         """Process collected raw data, perform analysis, and send to API."""
+        logger.debug("process_data: Entering method.")
         # --- [RESTORED] Original data processing logic --- 
         logger.info("Starting data processing...")
         raw_data_path = self.base_path / 'data' / 'raw'
@@ -749,11 +765,12 @@ class SentimentAnalysisAgent:
 
     def _run_task(self, task_func: Callable, task_name: str) -> bool:
         """Runs a given task function, updates status, and handles basic timing/errors."""
+        logger.debug(f"_run_task: Preparing to run task '{task_name}'. Current busy status: {self.task_status['is_busy']}")
         if self.task_status['is_busy']:
             logger.warning(f"Agent is already busy with task: {self.task_status['current_task']}. Cannot start '{task_name}'.")
             return False # Indicate task did not run
             
-        logger.info(f"Starting task: {task_name}...")
+        logger.debug(f"_run_task: Starting task '{task_name}'...")
         self.task_status['is_busy'] = True
         self.task_status['current_task'] = task_name
         start_time = datetime.now()
@@ -789,15 +806,14 @@ class SentimentAnalysisAgent:
             self.task_status['current_task'] = None
             logger.info(f"Finished task: {task_name}. Success: {success}. Duration: {duration:.2f}s.")
             
+        logger.debug(f"_run_task: Task '{task_name}' finished with status: {success}")
         return success # Return the success status of the task
 
     def _run_collect_and_process(self):
         """Run collection and processing in sequence, handling analysis notification."""
-        logger.info("Starting collect_and_process sequence...")
-        # Run collection task
-        # We use _run_task to manage status, but capture success for notification logic
-        # Assuming _run_task exists and handles setting self.status and logging
-        collection_success = self._run_task(self.collect_data, 'collect') 
+        logger.debug("_run_collect_and_process: Entering sequence.")
+        logger.debug("_run_collect_and_process: Calling collect_data...")
+        collect_success = self._run_task(self.collect_data, 'collect') 
         
         # Always run processing after collection, regardless of collection success?
         # Or only process if collection_success? Let's assume always run for now.
@@ -850,7 +866,7 @@ class SentimentAnalysisAgent:
         else:
             logger.warning("Skipping analysis notification because the data processing step failed.")
         
-        logger.info("collect_and_process sequence finished.")
+        logger.debug("_run_collect_and_process: Finished sequence.")
 
     def update_metrics(self, latest_data: pd.DataFrame, analysis_result: Dict[str, Any]):
         """Update system metrics and performance indicators with Autogen insights"""
@@ -895,6 +911,7 @@ class SentimentAnalysisAgent:
 
     async def optimize_system(self):
         """Optimize system parameters using Autogen based on performance data."""
+        logger.debug("optimize_system: Entering async method.")
         logger.info("Starting system optimization...")
         try:
             # Gather performance data
@@ -987,6 +1004,7 @@ class SentimentAnalysisAgent:
 
     def cleanup_old_data(self):
         """Clean up old data files based on retention policy"""
+        logger.debug("cleanup_old_data: Entering method.")
         try:
             retention_days = self.config['data_retention_days']
             current_time = datetime.now()
@@ -1022,6 +1040,7 @@ class SentimentAnalysisAgent:
             logger.info("Data cleanup completed successfully")
         except Exception as e:
             logger.error(f"Failed to clean up old data: {str(e)}")
+        logger.debug("cleanup_old_data: Finished method.")
 
     def run(self):
         """Main execution loop with enhanced Autogen-powered optimization"""
@@ -1048,6 +1067,7 @@ class SentimentAnalysisAgent:
             schedule.every(6).hours.do(
                 lambda: self._run_task(self.optimize_system, 'optimize'))
 
+        logger.debug("run: Setting up scheduler...")
         logger.info("Agent started successfully with Autogen enhancement. Starting main loop...")
         
         while self.is_running:
@@ -1076,6 +1096,7 @@ class SentimentAnalysisAgent:
                     self._run_task(self.optimize_system, 'optimize')
             
             time.sleep(1)
+        logger.debug("run: Exited main loop (is_running is False).")
 
 def parse_delay_to_seconds(delay_str: str) -> Optional[int]:
     """Parses a delay string (e.g., '10min', '30sec', 'now') into seconds."""
@@ -1108,7 +1129,16 @@ def parse_delay_to_seconds(delay_str: str) -> Optional[int]:
         return None
 
 if __name__ == "__main__":
+    # --- Configure root logger for DEBUG level ---
+    logging.basicConfig(
+        level=logging.DEBUG, # Set level to DEBUG
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    # -----------------------------------------------
+    logger.debug("Root logger configured for DEBUG level.") # Add debug log
+
     # Need to initialize DB connection when running directly
+    logger.debug("Attempting database initialization...") # Add debug log
     try:
         from src.api.database import SessionLocal, engine # Import SessionLocal and engine
         # Optional: Test connection or create tables if needed
@@ -1121,10 +1151,32 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Failed to initialize database connection: {e}")
         sys.exit(1)
+    logger.debug("Database initialization successful.") # Add debug log
 
     # Pass the db_factory (SessionLocal) to the agent constructor
-    agent = SentimentAnalysisAgent(db_factory=SessionLocal)
+    logger.debug("Initializing SentimentAnalysisAgent...") # Add debug log
+    try:
+        agent = SentimentAnalysisAgent(db_factory=SessionLocal)
+        logger.info("Agent initialized successfully.")
+    except Exception as agent_init_e:
+        logger.error(f"CRITICAL ERROR during SentimentAnalysisAgent initialization: {agent_init_e}", exc_info=True)
+        sys.exit(1)
+
     logger.info("Performing initial data collection and processing...")
-    agent._run_collect_and_process()  # Run collection and processing once at the start
-    logger.info("Starting agent's main loop...")
-    agent.run()
+    try:
+        logger.debug("Calling agent._run_collect_and_process()...") # Add debug log
+        agent._run_collect_and_process()
+        logger.debug("Finished agent._run_collect_and_process().") # Add debug log
+        logger.info("Initial data collection and processing finished.")
+    except Exception as initial_run_e:
+        logger.error(f"CRITICAL ERROR during initial _run_collect_and_process: {initial_run_e}", exc_info=True)
+        sys.exit(1)
+
+    logger.info("Attempting to start agent's main loop...")
+    try:
+        logger.debug("Calling agent.run()...") # Add debug log
+        agent.run()
+    except Exception as run_e:
+        logger.error(f"CRITICAL ERROR during agent.run(): {run_e}", exc_info=True)
+        sys.exit(1)
+    logger.debug("agent.run() exited unexpectedly (should loop indefinitely).") # Add debug log
