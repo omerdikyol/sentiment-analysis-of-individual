@@ -874,17 +874,40 @@ class DataService {
 
   // Add target individual management methods
   async getTargetIndividual() {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Use env var or default
+    const endpoint = `${apiUrl}/target`;
     try {
-      const response = await fetch('http://localhost:8000/target');
+      console.log(`Getting target individual config from: ${endpoint}`);
+      const response = await fetch(endpoint);
+      
+      // Handle non-OK responses
+      if (!response.ok) {
+        let errorBody = `Failed to fetch target config: ${response.status} ${response.statusText}`;
+        try {
+            const errorJson = await response.json();
+            errorBody = errorJson.detail || errorBody; // Use detail from FastAPI if available
+        } catch(e) { /* Ignore if response is not JSON */ }
+        throw new Error(errorBody);
+      }
+
       const data = await response.json();
-      return data;
+      
+      // Check API-level status if available
+      if (data.status && data.status !== 'success') {
+        throw new Error(data.message || 'API returned an error status for target config.');
+      }
+      
+      console.log("Received target config:", data);
+      return data; // Expecting { status: 'success', data: {...} } or similar
     } catch (error) {
       console.error('Error getting target individual configuration:', error);
+      // Return the error structure consistent with API errors
       return { 
         status: 'error', 
-        message: error.message,
+        message: error.message || 'Unknown error occurred fetching target config.',
+        // Provide default data structure on failure
         data: {
-          individual_name: 'Unknown',
+          individual_name: 'Error loading',
           query_variations: []
         }
       };
@@ -892,8 +915,11 @@ class DataService {
   }
 
   async updateTargetIndividual(targetConfig) {
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Use env var or default
+    const endpoint = `${apiUrl}/target`;
     try {
-      const response = await fetch('http://localhost:8000/target', {
+      console.log(`Updating target individual config at: ${endpoint}`);
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -901,11 +927,31 @@ class DataService {
         body: JSON.stringify(targetConfig),
       });
       
+      // Handle non-OK responses
+      if (!response.ok) {
+        let errorBody = `Failed to update target config: ${response.status} ${response.statusText}`;
+        try {
+            const errorJson = await response.json();
+            errorBody = errorJson.detail || errorBody; // Use detail from FastAPI if available
+        } catch(e) { /* Ignore if response is not JSON */ }
+        throw new Error(errorBody);
+      }
+      
       const data = await response.json();
-      return data;
+      
+      // Check API-level status
+      if (data.status !== 'success') {
+        throw new Error(data.message || 'API returned an error status after updating target config.');
+      }
+
+      console.log("Update target config response:", data);
+      return data; // Return the success response from API { status: 'success', ... }
     } catch (error) {
       console.error('Error updating target individual configuration:', error);
-      return { status: 'error', message: error.message };
+      // Re-throw the specific error message so the component can handle it
+      throw error; 
+      // Or return an error object: 
+      // return { status: 'error', message: error.message || 'Unknown error updating target config.' };
     }
   }
 
