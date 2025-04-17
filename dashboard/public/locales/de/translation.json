@@ -118,13 +118,21 @@
     "veryNegative": "Sehr Negativ"
   },
   "emotions": {
+    "Joy": "Freude",
     "joy": "Freude",
-    "anger": "Wut",
-    "fear": "Angst",
+    "Sadness": "Traurigkeit",
     "sadness": "Traurigkeit",
-    "trust": "Vertrauen",
+    "Fear": "Angst",
+    "fear": "Angst",
+    "Anger": "Wut",
+    "anger": "Wut",
+    "Surprise": "Überraschung",
     "surprise": "Überraschung",
+    "Anticipation": "Erwartung",
     "anticipation": "Erwartung",
+    "Trust": "Vertrauen",
+    "trust": "Vertrauen",
+    "Disgust": "Ekel",
     "disgust": "Ekel"
   },
   "platforms": {

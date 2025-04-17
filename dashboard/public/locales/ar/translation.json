@@ -118,13 +118,21 @@
     "veryNegative": "سلبي جدًا"
 },
 "emotions": {
+    "Joy": "فرح",
     "joy": "فرح",
-    "anger": "غضب",
-    "fear": "خوف",
+    "Sadness": "حزن",
     "sadness": "حزن",
-    "trust": "ثقة",
+    "Fear": "خوف",
+    "fear": "خوف",
+    "Anger": "غضب",
+    "anger": "غضب",
+    "Surprise": "مفاجأة",
     "surprise": "مفاجأة",
+    "Anticipation": "توقع",
     "anticipation": "توقع",
+    "Trust": "ثقة",
+    "trust": "ثقة",
+    "Disgust": "اشمئزاز",
     "disgust": "اشمئزاز"
 },
 "platforms": {
