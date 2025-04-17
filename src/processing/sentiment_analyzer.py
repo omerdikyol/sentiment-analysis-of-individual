@@ -11,9 +11,10 @@ logger = logging.getLogger('SentimentAnalyzer')
 
 class ImprovedSentimentAnalyzer:
     def __init__(self):
-        self.base_path = Path(__file__).parent.parent.parent
-        self.model_name = "distilbert-base-uncased-finetuned-sst-2-english"
+        self.base_path = Path(__file__).resolve().parent.parent.parent
         self.model_dir = self.base_path / "models" / "sentiment_improved"
+        logger.info(f"!!! Determined model directory path: {self.model_dir} !!!")
+        self.model_name = "distilbert-base-uncased-finetuned-sst-2-english"
         self.sentiment_pipeline = self.get_sentiment_model()
 
     def get_sentiment_model(self):
