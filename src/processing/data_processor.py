@@ -172,6 +172,27 @@ class DataProcessor:
                     return True
             return False
         
+        # Helper function to detect Indic scripts
+        def contains_indic_script(text):
+            indic_ranges = [
+                (0x0900, 0x097F),  # Devanagari
+                (0x0980, 0x09FF),  # Bengali
+                (0x0A00, 0x0A7F),  # Gurmukhi
+                (0x0A80, 0x0AFF),  # Gujarati
+                (0x0B00, 0x0B7F),  # Oriya
+                (0x0B80, 0x0BFF),  # Tamil
+                (0x0C00, 0x0C7F),  # Telugu
+                (0x0C80, 0x0CFF),  # Kannada
+                (0x0D00, 0x0D7F),  # Malayalam
+                # Add other relevant Indic script ranges if needed
+            ]
+            
+            for char in text:
+                code_point = ord(char)
+                if any(start <= code_point <= end for start, end in indic_ranges):
+                    return True
+            return False
+        
         # Check for social media platforms
         if source.lower() in ['x', 'twitter', 'facebook', 'instagram', 'tiktok'] or platform.lower() in ['x', 'twitter', 'facebook', 'instagram', 'tiktok']:
             # Check user_location
@@ -256,6 +277,9 @@ class DataProcessor:
                     # Check for Arabic script
                     if contains_arabic(name):
                         country_scores['Qatar'] += 3
+                    # Check for Indic script
+                    if contains_indic_script(name):
+                        country_scores['India'] += 3
             
             # Check text content for country mentions
             us_terms = ['america', 'american', 'washington', 'new york', 'california', 'texas', 'usa', 'united states', 'white house', 'congress', 'nfl', 'nba']
@@ -288,6 +312,9 @@ class DataProcessor:
             # Check for Arabic script in text (strong indicator for Qatar)
             if contains_arabic(text):
                 country_scores['Qatar'] += 3
+            # Check for Indic script in text (strong indicator for India)
+            if contains_indic_script(text):
+                country_scores['India'] += 3
         
         # Check for news sources
         elif source.lower() == 'news' or platform.lower() in ['cnn', 'bbc', 'fox', 'nbc', 'abc', 'cbs', 'newsweek', 'huffpost', 'pbs']:
@@ -382,6 +409,9 @@ class DataProcessor:
             # Check for Arabic script in text (strong indicator for Qatar)
             if contains_arabic(text):
                 country_scores['Qatar'] += 3
+            # Check for Indic script in text (strong indicator for India)
+            if contains_indic_script(text):
+                country_scores['India'] += 3
         
         # Determine the country with the highest score
         MIN_SCORE_THRESHOLD = 2 # Require at least this score to assign a country
