@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import time
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from dotenv import load_dotenv
 from apify_client import ApifyClient
@@ -37,8 +37,8 @@ def collect_twitter_apify(queries: List[str], output_file=None, max_items=200, q
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     # Date range for search (covering full year of 2024)
-    since_date = "2024-01-01_00:00:00_UTC"
-    until_date = "2024-12-31_23:59:59_UTC"
+    since_date = "2021-01-01_00:00:00_UTC"
+    until_date = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H:%M:%S_UTC")
     
     all_data = []
     
