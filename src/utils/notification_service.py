@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import List, Dict, Any, Union, Optional
 from pathlib import Path
 import numpy as np
+import requests
+import json
 
 from src.utils.mail_sender import MailSender
 # Remove get_email_recipients, is_email_notification_enabled
@@ -21,11 +23,15 @@ from sqlalchemy.orm import sessionmaker, Session
 logger = logging.getLogger(__name__)
 
 BASE_PATH = Path(__file__).parent.parent.parent
+# Define API endpoint URL (Best practice: move to config or env var)
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000") # Default for local dev
+COMPARISON_DATA_ENDPOINT = f"{API_BASE_URL}/comparison-data"
 
 def send_analysis_report(recipients: List[str], db_factory: sessionmaker) -> bool:
     """
-    Load latest dashboard data, compare with previous, generate analysis report,
-    and send it via email using the provided recipients and DB session factory.
+    Fetches latest and previous data from the API, compares them, generates an 
+    analysis report, and sends it via email using the provided recipients and 
+    DB session factory.
     
     Args:
         recipients (List[str]): List of email recipients (MUST be provided).
@@ -34,91 +40,136 @@ def send_analysis_report(recipients: List[str], db_factory: sessionmaker) -> boo
     Returns:
         bool: True if the email was sent successfully, False otherwise
     """
-    # Removed check for is_email_notification_enabled() as MailSender handles it via DB
-    # Removed fallback to get_email_recipients() as recipients MUST be provided
-    
     if not recipients:
         logger.warning("No email recipients provided to send_analysis_report. Skipping email.")
         return False
 
-    try:
-        dashboard_dir = BASE_PATH / 'dashboard' / 'public'
-        latest_file = dashboard_dir / 'processed_data.csv'
-        previous_file = dashboard_dir / 'processed_data_old.csv'
+    latest_data_df = pd.DataFrame() # Initialize empty DataFrame
+    previous_data_df = None # Initialize as None
 
-        if not latest_file.exists():
-            logger.error(f"Cannot generate report: Latest data file not found at {latest_file}")
+    try:
+        # --- Fetch data from API instead of CSV ---
+        logger.info(f"Fetching comparison data from API endpoint: {COMPARISON_DATA_ENDPOINT}")
+        response = requests.get(COMPARISON_DATA_ENDPOINT, timeout=60)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+
+        api_data = response.json()
+        
+        if not api_data.get('latest_data'):
+            logger.error("API response missing 'latest_data'. Cannot generate report.")
             return False
 
-        logger.info(f"Loading latest data from {latest_file}")
-        latest_data = pd.read_csv(latest_file)
+        # Convert list of dicts to DataFrame
+        latest_data_list = api_data.get('latest_data', [])
+        latest_data_df = pd.DataFrame(latest_data_list)
+        logger.info(f"Received {len(latest_data_df)} latest records from API.")
 
-        previous_data = None
-        if previous_file.exists():
-            logger.info(f"Loading previous data from {previous_file}")
-            previous_data = pd.read_csv(previous_file)
+        # Convert timestamps if they exist (adjust column names as needed)
+        for col in ['published_date', 'date', 'published_at']:
+            if col in latest_data_df.columns:
+                # Convert to datetime objects, coerce errors to NaT
+                latest_data_df[col] = pd.to_datetime(latest_data_df[col], errors='coerce')
+
+        if api_data.get('previous_data'):
+            previous_data_list = api_data.get('previous_data', [])
+            previous_data_df = pd.DataFrame(previous_data_list)
+            logger.info(f"Received {len(previous_data_df)} previous records from API.")
+            # Convert timestamps if they exist
+            for col in ['published_date', 'date', 'published_at']:
+                 if col in previous_data_df.columns:
+                     previous_data_df[col] = pd.to_datetime(previous_data_df[col], errors='coerce')
         else:
-            logger.info(f"Previous data file not found at {previous_file}. Skipping comparison.")
+            logger.info("No 'previous_data' found in API response. Skipping comparison.")
+        # --- End API data fetching ---
 
         sentiment_change_data = {}
-        if previous_data is not None:
+        if previous_data_df is not None and not previous_data_df.empty: # Check if df exists and is not empty
             logger.info("Detecting sentiment change...")
-            sentiment_change_data = detect_sentiment_change(latest_data, previous_data) 
+            # Pass DataFrames to detect_sentiment_change
+            sentiment_change_data = detect_sentiment_change(latest_data_df, previous_data_df) 
             if sentiment_change_data.get("sentiment_changed"):
                 change_direction = "Improved" if sentiment_change_data.get("sentiment_change", 0) > 0 else "Declined"
                 logger.info(f"Significant sentiment change detected: {change_direction}")
             else:
                 logger.info("No significant sentiment change detected.")
+        else:
+             logger.info("Skipping sentiment change detection due to missing or empty previous data.")
         
         logger.info("Calculating metrics for the report...")
-        overall_sentiment_score = 0
-        positive_pct = 0
-        negative_pct = 0
-        neutral_pct = 0
+        overall_sentiment_score = 0.0 # Use float
+        positive_pct = 0.0
+        negative_pct = 0.0
+        neutral_pct = 0.0
         positive_count = 0
         negative_count = 0
         neutral_count = 0
-        total_mentions = len(latest_data)
+        total_mentions = len(latest_data_df)
         positive_topics = {}
         negative_topics = {}
         source_metrics = {}
         
-        if total_mentions > 0 and 'sentiment_score' in latest_data.columns:
-            overall_sentiment_score = latest_data['sentiment_score'].mean()
+        # Ensure 'sentiment_score' column exists and handle potential NaN/None before mean()
+        if total_mentions > 0 and 'sentiment_score' in latest_data_df.columns and latest_data_df['sentiment_score'].notna().any():
+            overall_sentiment_score = latest_data_df['sentiment_score'].mean(skipna=True) # Skip NaNs
             
-            if 'sentiment_label' in latest_data.columns:
-                 positive_count = (latest_data['sentiment_label'] == 'positive').sum()
-                 negative_count = (latest_data['sentiment_label'] == 'negative').sum()
-                 neutral_count = total_mentions - positive_count - negative_count
+            # Use 'sentiment_label' if available, otherwise calculate based on score
+            if 'sentiment_label' in latest_data_df.columns:
+                 positive_count = (latest_data_df['sentiment_label'] == 'positive').sum()
+                 negative_count = (latest_data_df['sentiment_label'] == 'negative').sum()
+                 # Calculate neutral based on total - positive - negative
+                 # Ensure counts don't exceed total due to potential 'neutral' labels not counted above
+                 neutral_count = max(0, total_mentions - positive_count - negative_count) 
             else:
-                 positive_count = (latest_data['sentiment_score'] > 0.2).sum()
-                 negative_count = (latest_data['sentiment_score'] < -0.2).sum()
-                 neutral_count = total_mentions - positive_count - negative_count
+                 # Calculate counts based on score, ensuring sentiment_score exists and is not null
+                 if 'sentiment_score' in latest_data_df.columns:
+                     valid_scores = latest_data_df['sentiment_score'].dropna() # Drop NaNs before comparison
+                     positive_count = (valid_scores > 0.2).sum()
+                     negative_count = (valid_scores < -0.2).sum()
+                     neutral_count = len(valid_scores) - positive_count - negative_count
+                 else:
+                      logger.warning("'sentiment_score' column needed for calculating sentiment counts when 'sentiment_label' is missing.")
 
-            positive_pct = (positive_count / total_mentions * 100)
-            negative_pct = (negative_count / total_mentions * 100)
-            neutral_pct = (neutral_count / total_mentions * 100)
+            if total_mentions > 0: # Avoid division by zero
+                positive_pct = (positive_count / total_mentions * 100)
+                negative_pct = (negative_count / total_mentions * 100)
+                neutral_pct = (neutral_count / total_mentions * 100)
 
-            keywords_column_exists = 'keywords' in latest_data.columns
+            # Topic extraction (assuming 'keywords' column exists and contains comma-separated strings)
+            keywords_column_exists = 'keywords' in latest_data_df.columns
 
-            for _, row in latest_data.iterrows():
-                keywords = []
-                if keywords_column_exists:
-                    keywords_val = row['keywords']
-                    if isinstance(keywords_val, str):
-                        keywords = [kw.strip() for kw in keywords_val.split(',') if kw.strip()]
-                
-                sentiment = row['sentiment_score']
-                
-                for keyword in keywords:
-                    if sentiment > 0.2:
-                        positive_topics[keyword] = positive_topics.get(keyword, 0) + 1
-                    elif sentiment < -0.2:
-                        negative_topics[keyword] = negative_topics.get(keyword, 0) + 1
+            # Check if 'sentiment_score' exists before iterating
+            if 'sentiment_score' in latest_data_df.columns:
+                for _, row in latest_data_df.iterrows():
+                    # Handle potential None/NaN in sentiment_score
+                    sentiment = row['sentiment_score']
+                    if pd.isna(sentiment): 
+                        continue # Skip rows with no sentiment score
 
-            if 'source' in latest_data.columns:
-                source_groups = latest_data.groupby('source')['sentiment_score']
-                source_metrics = source_groups.agg(['mean', 'count']).to_dict('index')
+                    keywords = []
+                    if keywords_column_exists:
+                        keywords_val = row.get('keywords') # Use .get for safety
+                        if isinstance(keywords_val, str):
+                            keywords = [kw.strip() for kw in keywords_val.split(',') if kw.strip()]
+                    
+                    for keyword in keywords:
+                        # Normalize keyword case if needed: keyword = keyword.lower()
+                        if sentiment > 0.2:
+                            positive_topics[keyword] = positive_topics.get(keyword, 0) + 1
+                        elif sentiment < -0.2:
+                            negative_topics[keyword] = negative_topics.get(keyword, 0) + 1
+            else:
+                logger.warning("Skipping topic extraction as 'sentiment_score' column is missing.")
+
+            # Source metrics extraction
+            if 'source' in latest_data_df.columns and 'sentiment_score' in latest_data_df.columns:
+                # Filter out rows where sentiment_score is NaN before grouping
+                valid_source_data = latest_data_df.dropna(subset=['sentiment_score'])
+                if not valid_source_data.empty:
+                     source_groups = valid_source_data.groupby('source')['sentiment_score']
+                     source_metrics = source_groups.agg(['mean', 'count']).to_dict('index')
+            else:
+                 logger.warning("Skipping source metrics calculation due to missing 'source' or 'sentiment_score' columns.")
+
 
         analysis_data = {
             "overall_sentiment": overall_sentiment_score,
@@ -132,12 +183,19 @@ def send_analysis_report(recipients: List[str], db_factory: sessionmaker) -> boo
             "positive_topics": positive_topics,
             "negative_topics": negative_topics,
             "source_metrics": source_metrics,
-            "insights": []
+            "insights": [] # Initialize insights list
         }
-
+        # Add comparison data if available
         if sentiment_change_data:
-            analysis_data.update(sentiment_change_data)
+            analysis_data.update(sentiment_change_data) # Add keys like 'sentiment_changed', 'previous_overall_sentiment' etc.
+            # Generate insights based on changes
             if sentiment_change_data.get("sentiment_changed"):
+                 # Add overall change insight
+                 change_val = sentiment_change_data.get("sentiment_change", 0)
+                 change_dir = "improved" if change_val > 0 else "declined"
+                 analysis_data["insights"].append(f"Overall sentiment has {change_dir} significantly (Score change: {change_val:+.3f}).")
+
+                 # Add topic change insights
                  for topic_data in sentiment_change_data.get("new_topics", []):
                      topic = topic_data.get("topic")
                      count = topic_data.get("count")
@@ -148,23 +206,32 @@ def send_analysis_report(recipients: List[str], db_factory: sessionmaker) -> boo
                      curr_count = topic_data.get("current_count")
                      dec_text = f"reduced from {prev_count} to {curr_count}" if curr_count > 0 else f"disappeared (was {prev_count})"
                      analysis_data["insights"].append(f"Topic declining: '{topic}' {dec_text} mentions")
+            else:
+                 analysis_data["insights"].append("No significant change in overall sentiment detected.")
 
-    except FileNotFoundError as e:
-        logger.error(f"Error loading data for report: {e}")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching data from API for report: {e}")
         return False
-    except pd.errors.EmptyDataError:
-        logger.error(f"Error loading data for report: {latest_file} is empty.")
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding API response JSON: {e}")
+        return False
+    except pd.errors.EmptyDataError: # Should not happen with API, but keep for safety
+        logger.error(f"Error preparing report: Received empty data structure.")
         return False
     except Exception as e:
         logger.error(f"Unexpected error preparing analysis data for report: {e}", exc_info=True)
         return False
 
-    report_content = format_analysis_report(analysis_data)
-    
+    # --- Format and Send Email (existing logic) ---
+    try:
+        report_content = format_analysis_report(analysis_data)
+    except Exception as e:
+        logger.error(f"Error formatting analysis report: {e}", exc_info=True)
+        return False
+        
     mail_sender = MailSender() # MailSender now loads config from .env
     
     sentiment_score = analysis_data.get("overall_sentiment", 0)
-    prev_sentiment_score = analysis_data.get("previous_overall_sentiment")
     overall_sentiment_text = "Positive" if sentiment_score > 0.2 else ("Negative" if sentiment_score < -0.2 else "Neutral")
     
     subject = f"Sentiment Analysis Report: {overall_sentiment_text} ({datetime.now().strftime('%Y-%m-%d')})"

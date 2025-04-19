@@ -123,7 +123,7 @@ class DataProcessor:
     def detect_country(self, row):
         """
         Detect country information based on available data.
-        Supported countries: US, UK, Qatar, UAE
+        Supported countries: US, UK, Qatar, UAE, India
         Uses a scoring system to determine the most likely country.
         """
         # If country already exists and is valid, don't overwrite it
@@ -139,7 +139,7 @@ class DataProcessor:
         user_handle = str(row.get('user_handle', '')).lower() if not pd.isna(row.get('user_handle')) else ''
         
         # Initialize country scores
-        country_scores = {'US': 0, 'UK': 0, 'Qatar': 0, 'UAE': 0}
+        country_scores = {'US': 0, 'UK': 0, 'Qatar': 0, 'UAE': 0, 'India': 0}
         
         # Helper function to detect language patterns
         def detect_language_patterns(text):
@@ -184,12 +184,15 @@ class DataProcessor:
                     country_scores['Qatar'] += 3
                 elif any(loc in user_location for loc in ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah']):
                     country_scores['UAE'] += 3
+                elif any(loc in user_location for loc in ['india', 'bharat', 'hindustan']):
+                    country_scores['India'] += 3
                 
                 # Check for cities/states
                 us_locations = ['new york', 'california', 'texas', 'florida', 'chicago', 'los angeles', 'boston', 'washington', 'seattle', 'atlanta']
                 uk_locations = ['london', 'manchester', 'liverpool', 'birmingham', 'leeds', 'glasgow', 'edinburgh', 'bristol', 'cardiff', 'belfast']
                 qatar_locations = ['doha', 'al wakrah', 'al rayyan', 'lusail', 'al khor', 'dukhan', 'mesaieed', 'al shamal']
                 uae_locations = ['dubai', 'abu dhabi', 'sharjah', 'ajman', 'ras al khaimah', 'fujairah', 'umm al quwain', 'al ain']
+                india_locations = ['mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'pune', 'ahmedabad', 'jaipur', 'surat', 'lucknow', 'kanpur', 'nagpur', 'indore', 'thane', 'bhopal', 'visakhapatnam', 'patna', 'vadodara', 'ghaziabad', 'ludhiana', 'agra', 'nashik', 'faridabad', 'meerut', 'rajkot', 'kalyan-dombivli', 'vasai-virar', 'varanasi', 'srinagar', 'aurangabad', 'dhanbad', 'amritsar', 'navi mumbai', 'allahabad', 'ranchi', 'howrah', 'coimbatore', 'jabalpur', 'gwalior', 'vijayawada', 'jodhpur', 'madurai', 'raipur', 'kota', 'guwahati', 'chandigarh']
                 
                 for loc in us_locations:
                     if loc in user_location:
@@ -203,6 +206,9 @@ class DataProcessor:
                 for loc in uae_locations:
                     if loc in user_location:
                         country_scores['UAE'] += 2
+                for loc in india_locations:
+                    if loc in user_location:
+                        country_scores['India'] += 2
             
             # Check username and handle
             for name in [user_name, user_handle]:
@@ -216,6 +222,8 @@ class DataProcessor:
                         country_scores['Qatar'] += 2
                     elif re.search(r'\b(ae|uae)\b', name) or name.endswith('_ae') or name.endswith('_uae'):
                         country_scores['UAE'] += 2
+                    elif re.search(r'\b(in|india|bharat)\b', name) or name.endswith('_in') or name.endswith('_india'):
+                        country_scores['India'] += 2
                     
                     # Check for city/state names
                     if any(city in name for city in ['nyc', 'newyork', 'chicago', 'la', 'losangeles', 'boston', 'texas', 'florida', 'cali', 'california']):
@@ -226,6 +234,8 @@ class DataProcessor:
                         country_scores['Qatar'] += 1
                     elif any(city in name for city in ['dubai', 'abu dhabi', 'sharjah', 'ajman', 'ras al khaimah', 'fujairah', 'umm al quwain', 'al ain']):
                         country_scores['UAE'] += 1
+                    elif any(city in name for city in ['mumbai', 'delhi', 'bangalore', 'bengaluru', 'chennai', 'kolkata', 'hyderabad', 'pune', 'ahmedabad', 'jaipur']):
+                        country_scores['India'] += 1
                     
                     # Check for common name patterns
                     if name.startswith('american') or 'american' in name:
@@ -236,6 +246,8 @@ class DataProcessor:
                         country_scores['Qatar'] += 1
                     elif name.startswith('uae') or 'uae' in name:
                         country_scores['UAE'] += 1
+                    elif name.startswith('indian') or 'indian' in name:
+                        country_scores['India'] += 1
                     
                     # Check for Arabic names (common in Qatar)
                     if any(pattern in name for pattern in ['al-', 'bin-', 'ibn-', 'abdul', 'sheikh']):
@@ -250,6 +262,7 @@ class DataProcessor:
             uk_terms = ['britain', 'british', 'london', 'manchester', 'liverpool', 'uk', 'united kingdom', 'england', 'scotland', 'wales', 'bbc', 'nhs', 'parliament']
             qatar_terms = ['qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian', 'sharia', 'islamic']
             uae_terms = ['uae', 'dubai', 'abu dhabi', 'sharjah', 'ajman', 'ras al khaimah', 'fujairah', 'umm al quwain', 'al ain']
+            india_terms = ['india', 'indian', 'bharat', 'hindustan', 'mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'bollywood', 'cricket', 'modi', 'rupee', 'hindi', 'tamil', 'telugu', 'bengali']
             
             for term in us_terms:
                 if term in text:
@@ -263,6 +276,9 @@ class DataProcessor:
             for term in uae_terms:
                 if term in text:
                     country_scores['UAE'] += 1
+            for term in india_terms:
+                if term in text:
+                    country_scores['India'] += 1
             
             # Check for language patterns
             language_scores = detect_language_patterns(text)
@@ -285,6 +301,11 @@ class DataProcessor:
                     'al-watan', 'qatar living', 'iloveqatar', 'marhaba', 'qatar observer', 'qatar gazette',
                     'qatar chronicle', 'qna', 'thepeninsulaqatar'
                 ]
+                india_sources = [
+                    'times of india', 'the hindu', 'hindustan times', 'indian express', 'ndtv', 'india today',
+                    'republic world', 'zee news', 'news18', 'firstpost', 'the wire', 'scroll.in', 'the quint',
+                    'business standard', 'economic times', 'livemint', 'moneycontrol', 'ani', 'pti'
+                ]
                 
                 for src in us_sources:
                     if src in platform.lower():
@@ -295,16 +316,24 @@ class DataProcessor:
                 for src in qatar_sources:
                     if src in platform.lower():
                         country_scores['Qatar'] += 4
+                for src in india_sources:
+                    if src in platform.lower():
+                        country_scores['India'] += 4
             
             # Check user_location (domain) for news sources
             if user_location:
-                if '.com' in user_location or '.org' in user_location or '.net' in user_location or '.qa' in user_location:
+                if '.com' in user_location or '.org' in user_location or '.net' in user_location or '.qa' in user_location or '.in' in user_location or '.co.in' in user_location:
                     us_domains = ['cnn', 'foxnews', 'nbc', 'abc', 'cbs', 'usatoday', 'nytimes', 'washingtonpost', 'wsj', 'latimes']
                     uk_domains = ['bbc', 'guardian', 'telegraph', 'independent', 'dailymail', 'ft.com', 'economist', 'reuters']
                     qatar_domains = [
                         'aljazeera', 'gulf-times', 'thepeninsulaqatar', 'qatar', 'qna.org.qa', 'dohanews',
                         'qatarliving', 'iloveqatar', 'marhaba.qa', 'qatarday', 'lusailnews', 'alarab.qa',
                         'al-sharq', 'raya', 'al-watan', 'qatargazette', 'qatarchronicle', 'qatarobserver'
+                    ]
+                    india_domains = [
+                        'timesofindia', 'thehindu', 'hindustantimes', 'indianexpress', 'ndtv', 'indiatoday',
+                        'republicworld', 'zeenews', 'news18', 'firstpost', 'thewire', 'scroll', 'thequint',
+                        'business-standard', 'economictimes', 'livemint', 'moneycontrol', 'aninews', 'ptinews'
                     ]
                     
                     for domain in us_domains:
@@ -316,6 +345,9 @@ class DataProcessor:
                     for domain in qatar_domains:
                         if domain in user_location:
                             country_scores['Qatar'] += 3
+                    for domain in india_domains:
+                        if domain in user_location:
+                            country_scores['India'] += 3
             
             # Check text content for country mentions
             us_terms = ['america', 'american', 'washington', 'new york', 'california', 'texas', 'usa', 'united states', 'white house', 'congress']
@@ -324,6 +356,9 @@ class DataProcessor:
                 'qatar', 'doha', 'qatari', 'al thani', 'emir', 'gulf', 'middle east', 'arabian',
                 'lusail', 'al wakrah', 'al khor', 'education city', 'katara', 'the pearl', 'west bay',
                 'aspire', 'hamad', 'khalifa', 'corniche', 'souq waqif', 'msheireb', 'al sadd'
+            ]
+            india_terms = [ # Reuse or expand from social media list
+                'india', 'indian', 'bharat', 'hindustan', 'mumbai', 'delhi', 'bangalore', 'hyderabad', 'chennai', 'kolkata', 'bollywood', 'cricket', 'modi', 'rupee', 'hindi', 'tamil', 'telugu', 'bengali', 'parliament', 'lok sabha', 'rajya sabha', 'supreme court'
             ]
             
             for term in us_terms:
@@ -335,6 +370,9 @@ class DataProcessor:
             for term in qatar_terms:
                 if term in text:
                     country_scores['Qatar'] += 1
+            for term in india_terms:
+                if term in text:
+                    country_scores['India'] += 1
             
             # Check for language patterns
             language_scores = detect_language_patterns(text)
@@ -346,8 +384,9 @@ class DataProcessor:
                 country_scores['Qatar'] += 3
         
         # Determine the country with the highest score
+        MIN_SCORE_THRESHOLD = 2 # Require at least this score to assign a country
         max_score = max(country_scores.values())
-        if max_score > 0:
+        if max_score >= MIN_SCORE_THRESHOLD:
             # Get the country with the highest score
             for country, score in country_scores.items():
                 if score == max_score:
