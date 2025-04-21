@@ -80,6 +80,7 @@ def main():
         'collectors.collect_news_apify',
         'collectors.collect_social_searcher_api',
         'collectors.collect_twitter_apify',
+        'collectors.collect_reddit_apify',
         # 'collectors.collect_rss', # Still commented out
     ]
     
