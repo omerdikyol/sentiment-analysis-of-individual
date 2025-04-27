@@ -110,6 +110,18 @@ class DataProcessor:
                 parsed_date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
                 return parsed_date
             
+            # Handle format like '02/19/2025, 08:00 AM, +0000 UTC'
+            if re.match(r'\d{2}/\d{2}/\d{4}, \d{1,2}:\d{2}\s+(AM|PM), \+\d{4} UTC', date_str):
+                try:
+                    # Extract the main part and parse
+                    date_part = date_str.split(', +')[0]
+                    parsed_date = datetime.strptime(date_part, '%m/%d/%Y, %I:%M %p')
+                    # Note: We are ignoring the timezone offset for naive datetime, as per other logic
+                    return parsed_date
+                except ValueError as ve:
+                    # If parsing fails despite regex match, log and proceed to fallback
+                    logger.debug(f"Regex matched but strptime failed for '{date_str}': {ve}")
+            
             # Try parsing with dateutil as fallback
             parsed_date = parser.parse(date_str)
             # Make naive if timezone info exists (as DB expects naive)
