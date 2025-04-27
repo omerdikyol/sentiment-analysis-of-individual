@@ -15,7 +15,7 @@ class ImprovedSentimentAnalyzer:
         self.base_path = Path(__file__).resolve().parent.parent.parent
         self.model_dir = self.base_path / "models" / "sentiment_improved"
         logger.info(f"!!! Determined model directory path: {self.model_dir} !!!")
-        self.model_name = "distilbert-base-uncased-finetuned-sst-2-english"
+        self.model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
         logger.debug(f"ImprovedSentimentAnalyzer.__init__: Model name set to '{self.model_name}'.")
         logger.debug("ImprovedSentimentAnalyzer.__init__: Calling get_sentiment_model()...")
         self.sentiment_pipeline = self.get_sentiment_model()
@@ -33,8 +33,9 @@ class ImprovedSentimentAnalyzer:
                 logger.debug("get_sentiment_model: Loading tokenizer...")
                 tokenizer = AutoTokenizer.from_pretrained(str(self.model_dir))
                 logger.info("Model and tokenizer loaded successfully.")
-                logger.debug("get_sentiment_model: Creating pipeline...")
-                pipeline_obj = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+                logger.debug("get_sentiment_model: Creating pipeline with all scores...")
+                # Use top_k=None instead of deprecated return_all_scores=True
+                pipeline_obj = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, top_k=None)
                 logger.debug("get_sentiment_model: Pipeline created. Exiting method.")
                 return pipeline_obj
             except Exception as load_e:
@@ -45,7 +46,8 @@ class ImprovedSentimentAnalyzer:
         logger.info(f"Config file not found at {config_file_path} or loading failed. Downloading and saving improved model...")
         try:
             logger.debug(f"get_sentiment_model: Downloading pipeline for model '{self.model_name}'...")
-            sentiment_pipe = pipeline("sentiment-analysis", model=self.model_name)
+            # Download the specific model, requesting all scores using top_k=None
+            sentiment_pipe = pipeline("sentiment-analysis", model=self.model_name, top_k=None)
             logger.debug("get_sentiment_model: Download complete.")
             logger.info(f"Attempting to save model to {self.model_dir}...")
             logger.debug(f"get_sentiment_model: Creating directory {self.model_dir} if needed...")
@@ -62,32 +64,47 @@ class ImprovedSentimentAnalyzer:
             raise RuntimeError(f"Fatal error: Could not download/save sentiment model.") from download_e
 
     def analyze(self, text):
-        # logger.debug(f"analyze: Entering method for text: '{str(text)[:50]}...'")
         if not text or str(text).strip() == "" or str(text).lower() == "none":
             return "neutral", 0.5
 
-        # Ensure text is a string and limit length to prevent issues
         text = str(text)[:512]
         
         try:
-            # logger.debug(f"analyze: Calling pipeline...")
-            result = self.sentiment_pipeline(text)[0]
-            # logger.debug(f"analyze: Pipeline returned: {result}")
+            # Pipeline now returns a list containing a list of dicts (one for each label)
+            # e.g., [[{'label': 'Negative', 'score': 0.1}, {'label': 'Neutral', 'score': 0.5}, {'label': 'Positive', 'score': 0.4}]]
+            all_results = self.sentiment_pipeline(text)[0]
             
-            # Map the model output to our desired format
-            # The model outputs POSITIVE/NEGATIVE
-            sentiment = result["label"].lower()
-            score = result["score"]
+            # Sort results by score descending
+            all_results.sort(key=lambda x: x['score'], reverse=True)
             
-            # Convert binary classification to include neutral based on confidence
-            if score < 0.6:  # If model isn't very confident
-                return "neutral", score
+            top_result = all_results[0]
+            top_sentiment = top_result["label"].lower()
+            top_score = top_result["score"]
             
-            return sentiment, score
+            final_sentiment = top_sentiment
+            final_score = top_score # Return the score of the originally highest label
+
+            # Check for ambiguity if there's more than one label result
+            if len(all_results) > 1:
+                second_score = all_results[1]['score']
+                score_diff = top_score - second_score
+                
+                # Define ambiguity threshold (tune if needed)
+                ambiguity_threshold = 0.2 
+                
+                if score_diff < ambiguity_threshold:
+                    # logger.debug(f"Ambiguity detected (score diff {score_diff:.4f} < {ambiguity_threshold}). Overriding {top_sentiment} with neutral.")
+                    final_sentiment = "neutral"
+                    # Find the neutral score to return (optional, could also return top_score)
+                    for res in all_results:
+                        if res['label'].lower() == 'neutral':
+                            final_score = res['score']
+                            break
+            
+            return final_sentiment, final_score
             
         except Exception as e:
-            # logger.debug(f"analyze: Exception occurred.")
-            logger.error(f"Error in sentiment analysis: {str(e)}")
+            logger.error(f"Error in sentiment analysis for text '{text[:50]}...': {str(e)}", exc_info=True)
             return "neutral", 0.5
 
     def batch_analyze(self, texts):
@@ -95,34 +112,54 @@ class ImprovedSentimentAnalyzer:
         if not texts:
             return []
 
-        # Filter out None/empty texts and limit length
-        processed_texts = [str(text)[:512] for text in texts if text and str(text).strip() and str(text).lower() != "none"]
+        original_indices = [i for i, text in enumerate(texts) if text and str(text).strip() and str(text).lower() != "none"]
+        processed_texts = [str(texts[i])[:512] for i in original_indices]
         
+        final_results = [("neutral", 0.5)] * len(texts)
+
         if not processed_texts:
-            return [(("neutral", 0.5)) for _ in texts]
+            logger.debug("batch_analyze: No valid texts to process.")
+            return final_results
 
         logger.debug(f"batch_analyze: Processing {len(processed_texts)} non-empty texts.")
         try:
             logger.debug(f"batch_analyze: Calling pipeline for batch...")
-            results = self.sentiment_pipeline(processed_texts)
-            logger.debug(f"batch_analyze: Pipeline returned {len(results)} results.")
+            batch_results_list = self.sentiment_pipeline(processed_texts)
+            logger.debug(f"batch_analyze: Pipeline returned {len(batch_results_list)} results for the batch.")
             
-            # Process results
-            sentiments = []
-            for result in results:
-                sentiment = result["label"].lower()
-                score = result["score"]
-                
-                # Convert to neutral if low confidence
-                if score < 0.6:
-                    sentiments.append(("neutral", score))
-                else:
-                    sentiments.append((sentiment, score))
+            ambiguity_threshold = 0.2 # Define ambiguity threshold
+            
+            for i, all_results in enumerate(batch_results_list):
+                original_index = original_indices[i]
+
+                # Sort results by score descending
+                all_results.sort(key=lambda x: x['score'], reverse=True)
+            
+                top_result = all_results[0]
+                top_sentiment = top_result["label"].lower()
+                top_score = top_result["score"]
+
+                final_sentiment = top_sentiment
+                final_score = top_score
+
+                # Check for ambiguity
+                if len(all_results) > 1:
+                    second_score = all_results[1]['score']
+                    score_diff = top_score - second_score
                     
-            logger.debug(f"batch_analyze: Exiting method. Returning {len(sentiments)} results.")
-            return sentiments
+                    if score_diff < ambiguity_threshold:
+                        final_sentiment = "neutral"
+                        for res in all_results:
+                            if res['label'].lower() == 'neutral':
+                                final_score = res['score']
+                                break
+                
+                final_results[original_index] = (final_sentiment, final_score)
+                    
+            logger.debug(f"batch_analyze: Exiting method. Returning {len(final_results)} results (including defaults).")
+            return final_results
             
         except Exception as e:
-            logger.debug(f"batch_analyze: Exception occurred. Returning default results.")
-            logger.error(f"Error in batch sentiment analysis: {str(e)}")
+            logger.debug(f"batch_analyze: Exception occurred. Returning default results for all.")
+            logger.error(f"Error in batch sentiment analysis: {str(e)}", exc_info=True)
             return [("neutral", 0.5) for _ in texts] 
