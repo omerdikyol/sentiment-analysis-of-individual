@@ -90,7 +90,7 @@ class ImprovedSentimentAnalyzer:
                 score_diff = top_score - second_score
                 
                 # Define ambiguity threshold (tune if needed)
-                ambiguity_threshold = 0.2 
+                ambiguity_threshold = 0.5 
                 
                 if score_diff < ambiguity_threshold:
                     # logger.debug(f"Ambiguity detected (score diff {score_diff:.4f} < {ambiguity_threshold}). Overriding {top_sentiment} with neutral.")
