@@ -34,7 +34,7 @@ def run_tests():
         {"text": "Is this the correct address?", "expected_sentiment": "neutral", "desc": "Neutral Question 1"},
         {"text": "The sky is blue most of the time.", "expected_sentiment": "neutral", "desc": "Neutral Observation 1"},
         {"text": "He walked into the room and sat down.", "expected_sentiment": "neutral", "desc": "Neutral Action 1"},
-        {"text": "The item is currently out of stock.", "expected_sentiment": "negative", "desc": "Neutral Status 1 (Observed Negative)"},
+        {"text": "The item is currently out of stock.", "expected_sentiment": "neutral", "desc": "Neutral Status 1"},
         {"text": "What time does the train leave?", "expected_sentiment": "neutral", "desc": "Neutral Question 2"},
         {"text": "The presentation covered all the main points.", "expected_sentiment": "neutral", "desc": "Neutral Summary 1"},
         {"text": "Consider the options before deciding.", "expected_sentiment": "neutral", "desc": "Neutral Advice 1"},
@@ -48,8 +48,8 @@ def run_tests():
         {"text": "Can you please pass the salt?", "expected_sentiment": "neutral", "desc": "Neutral Request 1"},
         {"text": "The software update is available for download.", "expected_sentiment": "neutral", "desc": "Neutral Information 1"},
         {"text": "There are several ways to approach this problem.", "expected_sentiment": "neutral", "desc": "Neutral Statement 1"},
-        {"text": "This film received mixed reviews.", "expected_sentiment": "negative", "desc": "Neutral Ambiguous 1 (Observed Negative)"},
-        {"text": "The restaurant is okay, not great but not bad.", "expected_sentiment": "positive", "desc": "Neutral Ambiguous 2 (Observed Positive)"},
+        {"text": "This film received mixed reviews.", "expected_sentiment": "neutral", "desc": "Neutral Ambiguous 1"},
+        {"text": "The restaurant is okay, not great but not bad.", "expected_sentiment": "neutral", "desc": "Neutral Ambiguous 2"},
         {"text": "I have no strong opinion on the matter.", "expected_sentiment": "neutral", "desc": "Neutral Indifference 1"},
         {"text": "The event proceeded as planned.", "expected_sentiment": "neutral", "desc": "Neutral Outcome 1"},
         {"text": "Let me check the schedule.", "expected_sentiment": "neutral", "desc": "Neutral Action 2"},
@@ -73,12 +73,21 @@ def run_tests():
         {"text": "The battery level is at 50%.", "expected_sentiment": "neutral", "desc": "Neutral Fact 7"},
         {"text": "Traffic seems average for this time of day.", "expected_sentiment": "neutral", "desc": "Neutral Observation 4"},
         {"text": "Let's review the agenda.", "expected_sentiment": "neutral", "desc": "Neutral Suggestion 1"},
-        {"text": "The experiment yielded inconclusive results.", "expected_sentiment": "negative", "desc": "Neutral Outcome 2 (Observed Negative)"},
+        {"text": "The experiment yielded inconclusive results.", "expected_sentiment": "neutral", "desc": "Neutral Outcome 2"},
         {"text": "Please wait for further instructions.", "expected_sentiment": "neutral", "desc": "Neutral Instruction 2"},
-        {"text": "This chair is made of wood.", "expected_sentiment": "negative", "desc": "Neutral Fact 8 (Observed Negative)"},
+        {"text": "This chair is made of wood.", "expected_sentiment": "neutral", "desc": "Neutral Fact 8"},
         {"text": "I neither agree nor disagree.", "expected_sentiment": "neutral", "desc": "Neutral Indifference 2"},
         {"text": "The computer is processing the request.", "expected_sentiment": "neutral", "desc": "Neutral Status 4"},
         # --- End of added neutral/ambiguous examples ---
+        # New test cases for improved neutral classification
+        {"text": "Meeting with Emir of Qatar", "expected_sentiment": "neutral", "desc": "Factual Statement 1"},
+        {"text": "Discussed trade agreements with China", "expected_sentiment": "neutral", "desc": "Factual Statement 2"},
+        {"text": "The software uses machine learning algorithms", "expected_sentiment": "neutral", "desc": "Technical Statement 1"},
+        {"text": "The API returns JSON formatted data", "expected_sentiment": "neutral", "desc": "Technical Statement 2"},
+        {"text": "I like the design but the performance needs work", "expected_sentiment": "neutral", "desc": "Mixed Sentiment 1"},
+        {"text": "The food was good but the service was slow", "expected_sentiment": "neutral", "desc": "Mixed Sentiment 2"},
+        {"text": "This is somewhat interesting", "expected_sentiment": "neutral", "desc": "Borderline Score 1 (0.3-0.4)"},
+        {"text": "I'm fairly satisfied with the results", "expected_sentiment": "neutral", "desc": "Borderline Score 2 (0.6-0.7)"},
         # Add more test cases as needed
     ]
 
@@ -92,7 +101,7 @@ def run_tests():
                 "The weather is cloudy today.",   # Neutral
                 "none"                            # Invalid
             ],
-            "expected_sentiments": ["positive", "neutral", "negative", "neutral", "negative", "neutral"],
+            "expected_sentiments": ["positive", "neutral", "negative", "neutral", "neutral", "neutral"],
             "desc": "Mixed Batch"
         },
         {
