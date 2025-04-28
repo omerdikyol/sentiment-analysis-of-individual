@@ -646,9 +646,9 @@ function App() {
                 onClose={handleProfileMenuClose}
                 sx={{ mt: '45px' }}
               >
-                <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/'); }}>Dashboard</MenuItem>
-                <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/profile'); }}>Profile</MenuItem>
-                <MenuItem onClick={() => { handleProfileMenuClose(); signOut(); }}>Logout</MenuItem>
+                <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/'); }}>{t('general.dashboard')}</MenuItem>
+                <MenuItem onClick={() => { handleProfileMenuClose(); navigate('/profile'); }}>{t('general.profile')}</MenuItem>
+                <MenuItem onClick={() => { handleProfileMenuClose(); signOut(); }}>{t('general.logout')}</MenuItem>
               </Menu>
               
               {/* Mobile Menu */}
