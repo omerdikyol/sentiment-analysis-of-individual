@@ -125,14 +125,21 @@ class ImprovedSentimentAnalyzer:
         if len(all_results) > 1:
             second_score = all_results[1]['score']
             score_diff = top_score - second_score
-            ambiguity_threshold = 0.2
             
-            if score_diff < ambiguity_threshold:
-                logger.debug(f"Ambiguity detected (score diff {score_diff:.4f} < {ambiguity_threshold})")
+            # Define ambiguity thresholds (tune if needed)
+            ambiguity_threshold = 0.2 
+            negative_ambiguity_threshold = 0.1 # Lower threshold for negative cases
+            
+            # Select the threshold based on the top sentiment
+            current_threshold = negative_ambiguity_threshold if top_sentiment == "negative" else ambiguity_threshold
+
+            if score_diff < current_threshold:
+                logger.debug(f"Ambiguity detected (top: {top_sentiment}, score diff {score_diff:.4f} < {current_threshold}). Overriding with neutral.")
+                final_sentiment = "neutral"
                 for res in all_results:
                     if res['label'].lower() == 'neutral':
-                        return "neutral", res['score']
-                return "neutral", 0.5
+                        return final_sentiment, res['score']
+                return final_sentiment, 0.5
         
         return top_sentiment, top_score
 
@@ -171,10 +178,36 @@ class ImprovedSentimentAnalyzer:
             batch_results_list = self.sentiment_pipeline(processed_texts)
             logger.debug(f"batch_analyze: Pipeline returned {len(batch_results_list)} results for the batch.")
             
+            # Define ambiguity thresholds
+            ambiguity_threshold = 0.2 
+            negative_ambiguity_threshold = 0.1 # Lower threshold for negative cases
+            
             for i, all_results in enumerate(batch_results_list):
                 original_index = original_indices[i]
                 text = processed_texts[i]
-                final_results[original_index] = self._determine_sentiment(all_results, text)
+                top_sentiment, top_score = self._determine_sentiment(all_results, text)
+                
+                # Check for ambiguity
+                if len(all_results) > 1:
+                    second_score = all_results[1]['score']
+                    score_diff = top_score - second_score
+                    
+                    # Select the threshold based on the top sentiment
+                    current_threshold = negative_ambiguity_threshold if top_sentiment == "negative" else ambiguity_threshold
+
+                    if score_diff < current_threshold:
+                        logger.debug(f"Batch Ambiguity detected (top: {top_sentiment}, score diff {score_diff:.4f} < {current_threshold}). Overriding with neutral.")
+                        final_sentiment = "neutral"
+                        for res in all_results:
+                            if res['label'].lower() == 'neutral':
+                                final_results[original_index] = (final_sentiment, res['score'])
+                                break
+                        else:
+                            final_results[original_index] = (final_sentiment, 0.5)
+                    else:
+                        final_results[original_index] = (top_sentiment, top_score)
+                else:
+                    final_results[original_index] = (top_sentiment, top_score)
                     
             logger.debug(f"batch_analyze: Exiting method. Returning {len(final_results)} results (including defaults).")
             return final_results
