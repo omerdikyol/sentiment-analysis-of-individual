@@ -133,6 +133,10 @@ class ImprovedSentimentAnalyzer:
             # Select the threshold based on the top sentiment
             current_threshold = negative_ambiguity_threshold if top_sentiment == "negative" else ambiguity_threshold
 
+            # -- DEBUGGING LOG --
+            logger.debug(f"Ambiguity Check: Top='{top_sentiment}'({top_score:.4f}), Second='{all_results[1]['label']}'({second_score:.4f}), Diff={score_diff:.4f}, Threshold={current_threshold}")
+            # -- END DEBUGGING LOG --
+
             if score_diff < current_threshold:
                 logger.debug(f"Ambiguity detected (top: {top_sentiment}, score diff {score_diff:.4f} < {current_threshold}). Overriding with neutral.")
                 final_sentiment = "neutral"
@@ -194,6 +198,10 @@ class ImprovedSentimentAnalyzer:
                     
                     # Select the threshold based on the top sentiment
                     current_threshold = negative_ambiguity_threshold if top_sentiment == "negative" else ambiguity_threshold
+
+                    # -- DEBUGGING LOG --
+                    logger.debug(f"Batch Ambiguity Check (Index {original_index}): Top='{top_sentiment}'({top_score:.4f}), Second='{all_results[1]['label']}'({second_score:.4f}), Diff={score_diff:.4f}, Threshold={current_threshold}")
+                    # -- END DEBUGGING LOG --
 
                     if score_diff < current_threshold:
                         logger.debug(f"Batch Ambiguity detected (top: {top_sentiment}, score diff {score_diff:.4f} < {current_threshold}). Overriding with neutral.")
