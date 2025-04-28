@@ -575,7 +575,8 @@
     "sending": "Senden...",
     "noRecipientForTest": "Bitte fügen Sie zuerst mindestens einen Empfänger hinzu.",
     "testEmailSuccess": "Test-E-Mail erfolgreich an {{recipient}} gesendet",
-    "testEmailError": "Fehler beim Senden der Test-E-Mail: {{error}}"
+    "testEmailError": "Fehler beim Senden der Test-E-Mail: {{error}}",
+    "saveError": "Fehler beim Speichern der Zielkonfiguration. Bitte versuchen Sie es erneut."
   },
   "target": {
     "title": "Zielperson-Konfiguration",
@@ -608,5 +609,30 @@
     "triggering": "Wird gestartet...",
     "triggerSuccess": "Agentenlauf erfolgreich gestartet.",
     "triggerError": "Fehler beim Starten des Agentenlaufs: {{error}}"
+  },
+  "profile": {
+    "title": "Profileinstellungen",
+    "accountInfo": "Kontoinformationen",
+    "emailLabel": "E-Mail",
+    "displayNameLabel": "Anzeigename",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "notSet": "Nicht festgelegt",
+    "edit": "Bearbeiten",
+    "accountCreated": "Konto erstellt am:",
+    "lastSignedIn": "Zuletzt angemeldet am:",
+    "password": "Passwort",
+    "changePassword": "Passwort ändern",
+    "newPassword": "Neues Passwort",
+    "confirmNewPassword": "Neues Passwort bestätigen",
+    "updatePasswordButton": "Passwort aktualisieren",
+    "passwordUpdateSuccess": "Passwort erfolgreich aktualisiert!",
+    "nameUpdateSuccess": "Anzeigename erfolgreich aktualisiert!"
+  },
+  "validation": {
+    "passwordMinLength": "Mindestens 8 Zeichen",
+    "passwordUppercase": "Mindestens ein Großbuchstabe",
+    "passwordLowercase": "Mindestens ein Kleinbuchstabe",
+    "passwordNumber": "Mindestens eine Zahl"
   }
 } 

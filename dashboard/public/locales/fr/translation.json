@@ -606,6 +606,32 @@
     "triggerRun": "Démarrer l'agent",
     "triggering": "Démarrage en cours...",
     "triggerSuccess": "L'exécution de l'agent a été déclenchée avec succès.",
-    "triggerError": "Échec du déclenchement de l'exécution de l'agent: {{error}}"
+    "triggerError": "Échec du déclenchement de l'exécution de l'agent: {{error}}",
+    "saveError": "Échec de la sauvegarde de la configuration cible. Veuillez réessayer."
+  },
+  "profile": {
+    "title": "Paramètres du Profil",
+    "accountInfo": "Informations du Compte",
+    "emailLabel": "Email",
+    "displayNameLabel": "Nom Affiché",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "notSet": "Non défini",
+    "edit": "Modifier",
+    "accountCreated": "Compte Créé :",
+    "lastSignedIn": "Dernière Connexion :",
+    "password": "Mot de Passe",
+    "changePassword": "Changer le Mot de Passe",
+    "newPassword": "Nouveau Mot de Passe",
+    "confirmNewPassword": "Confirmer le Nouveau Mot de Passe",
+    "updatePasswordButton": "Mettre à Jour le Mot de Passe",
+    "passwordUpdateSuccess": "Mot de passe mis à jour avec succès !",
+    "nameUpdateSuccess": "Nom affiché mis à jour avec succès !"
+  },
+  "validation": {
+    "passwordMinLength": "Au moins 8 caractères",
+    "passwordUppercase": "Au moins une lettre majuscule",
+    "passwordLowercase": "Au moins une lettre minuscule",
+    "passwordNumber": "Au moins un chiffre"
   }
 }

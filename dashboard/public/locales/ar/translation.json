@@ -569,7 +569,7 @@
     "duplicateEmailError": "عنوان البريد الإلكتروني هذا موجود بالفعل في القائمة",
     "loadError": "فشل في تحميل إعدادات البريد الإلكتروني",
     "saveSuccess": "تم حفظ إعدادات البريد الإلكتروني بنجاح",
-    "saveError": "فشل في حفظ إعدادات البريد الإلكتروني",
+    "saveError": "فشل حفظ تكوين الهدف. يرجى المحاولة مرة أخرى.",
     "tooltip": "تكوين إشعارات البريد الإلكتروني لمراحل مختلفة.",
     "sendTestEmail": "إرسال بريد إلكتروني تجريبي",
     "sending": "جاري الإرسال...",
@@ -607,6 +607,32 @@
     "triggerRun": "بدء تشغيل الوكيل",
     "triggering": "جاري البدء...",
     "triggerSuccess": "تم بدء تشغيل الوكيل بنجاح.",
-    "triggerError": "فشل في بدء تشغيل الوكيل: {{error}}"
+    "triggerError": "فشل في بدء تشغيل الوكيل: {{error}}",
+    "saveError": "فشل حفظ تكوين الهدف. يرجى المحاولة مرة أخرى."
+},
+"profile": {
+    "title": "إعدادات الملف الشخصي",
+    "accountInfo": "معلومات الحساب",
+    "emailLabel": "البريد الإلكتروني",
+    "displayNameLabel": "الاسم المعروض",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "notSet": "لم يتم التعيين",
+    "edit": "تعديل",
+    "accountCreated": "تاريخ إنشاء الحساب:",
+    "lastSignedIn": "آخر تسجيل دخول:",
+    "password": "كلمة المرور",
+    "changePassword": "تغيير كلمة المرور",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+    "updatePasswordButton": "تحديث كلمة المرور",
+    "passwordUpdateSuccess": "تم تحديث كلمة المرور بنجاح!",
+    "nameUpdateSuccess": "تم تحديث الاسم المعروض بنجاح!"
+},
+"validation": {
+    "passwordMinLength": "8 أحرف على الأقل",
+    "passwordUppercase": "حرف كبير واحد على الأقل",
+    "passwordLowercase": "حرف صغير واحد على الأقل",
+    "passwordNumber": "رقم واحد على الأقل"
 }
 }

@@ -368,41 +368,22 @@
     }
   },
   "sentimentTable": {
+    "title": "Sentiment Data Table",
+    "infoTooltip": "Detailed view of mentions, including content, sentiment score, source, and date",
+    "searchMentions": "Search mentions...",
+    "columns": {
+      "content": "Content",
+      "sentiment": "Sentiment",
+      "score": "Score",
+      "source": "Source",
+      "date": "Date"
+    },
+    "pagination": {
+      "rowsPerPage": "Rows per page:",
+      "of": "of"
+    },
     "highestSentiment": "Highest Sentiment Mentions",
-    "lowestSentiment": "Lowest Sentiment Mentions",
-    "score": "Score",
-    "content": "Content",
-    "source": "Source",
-    "unknownSource": "Unknown Source",
-    "unknown": "Unknown",
-    "notAvailable": "N/A",
-    "anonymous": "Anonymous",
-    "copyText": "Copy Text",
-    "openSource": "Open Source",
-    "mentionDetails": "Mention Details",
-    "sentimentScore": "Sentiment Score",
-    "sourceInformation": "Source Information",
-    "additionalDetails": "Additional Details",
-    "username": "Username",
-    "location": "Location",
-    "url": "URL",
-    "country": "Country",
-    "title": "Sentiment Data",
-    "records": "records",
-    "clearAllFilters": "Clear all filters",
-    "date": "Date",
-    "dateRange": "Date range",
-    "platform": "Platform",
-    "sentiment": "Sentiment",
-    "author": "Author",
-    "contains": "Contains",
-    "search": "Search...",
-    "unknownLocation": "Unknown Location",
-    "noDataFound": "No data found. Please check the CSV file format or try adjusting the filters.",
-    "rowsPerPage": "Rows per page:",
-    "detailsTitle": "Sentiment Data Details",
-    "additionalInfo": "Additional Information",
-    "viewOriginalSource": "View Original Source"
+    "lowestSentiment": "Lowest Sentiment Mentions"
   },
   "table": {
     "id": "ID",
@@ -624,5 +605,33 @@
     "triggerError": "Failed to trigger agent run: {{error}}",
     "saveSuccess": "Target configuration saved successfully.",
     "saveError": "Failed to save target configuration. Please try again."
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "accountInfo": "Account Information",
+    "emailLabel": "Email",
+    "displayNameLabel": "Display Name",
+    "cancel": "Cancel",
+    "save": "Save",
+    "notSet": "Not Set",
+    "edit": "Edit",
+    "accountCreated": "Account Created:",
+    "lastSignedIn": "Last Signed In:",
+    "password": "Password",
+    "changePassword": "Change Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updatePasswordButton": "Update Password",
+    "passwordUpdateSuccess": "Password updated successfully!",
+    "nameUpdateSuccess": "Display name updated successfully!"
+  },
+  "validation": {
+    "passwordMinLength": "At least 8 characters",
+    "passwordUppercase": "At least one uppercase letter",
+    "passwordLowercase": "At least one lowercase letter",
+    "passwordNumber": "At least one number"
+  },
+  "languageSwitcher": {
+    "changeLanguage": "Change Language"
   }
 } 

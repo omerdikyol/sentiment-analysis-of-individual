@@ -607,6 +607,32 @@
     "triggerRun": "Iniciar ejecución del agente",
     "triggering": "Iniciando...",
     "triggerSuccess": "Ejecución del agente iniciada con éxito.",
-    "triggerError": "Error al iniciar la ejecución del agente: {{error}}"
+    "triggerError": "Error al iniciar la ejecución del agente: {{error}}",
+    "saveError": "Error al guardar la configuración del objetivo. Por favor, inténtalo de nuevo."
+  },
+  "profile": {
+    "title": "Configuración del Perfil",
+    "accountInfo": "Información de la Cuenta",
+    "emailLabel": "Correo Electrónico",
+    "displayNameLabel": "Nombre para Mostrar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "notSet": "No establecido",
+    "edit": "Editar",
+    "accountCreated": "Cuenta Creada:",
+    "lastSignedIn": "Último Inicio de Sesión:",
+    "password": "Contraseña",
+    "changePassword": "Cambiar Contraseña",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "updatePasswordButton": "Actualizar Contraseña",
+    "passwordUpdateSuccess": "¡Contraseña actualizada correctamente!",
+    "nameUpdateSuccess": "¡Nombre para mostrar actualizado correctamente!"
+  },
+  "validation": {
+    "passwordMinLength": "Al menos 8 caracteres",
+    "passwordUppercase": "Al menos una letra mayúscula",
+    "passwordLowercase": "Al menos una letra minúscula",
+    "passwordNumber": "Al menos un número"
   }
 } 
