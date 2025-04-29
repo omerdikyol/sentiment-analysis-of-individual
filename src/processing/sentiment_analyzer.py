@@ -181,13 +181,15 @@ class ImprovedSentimentAnalyzer:
             sentiment_from_stars = self._map_stars_to_sentiment(star_label)
 
             # --- Confidence-based Ambiguity Check ---
-            confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
-            final_sentiment = sentiment_from_stars
-
-            if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
-                logger.debug(f"Confidence Check: Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
-                final_sentiment = "neutral"
+            # Removing this section to accept the model's star rating directly
+            # confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
+            # final_sentiment = sentiment_from_stars
+            # if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
+            #    logger.debug(f"Confidence Check: Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
+            #    final_sentiment = "neutral"
             # --- End Confidence-based Ambiguity Check ---
+
+            final_sentiment = sentiment_from_stars # Use the direct mapping
 
             return final_sentiment, score
 
@@ -230,13 +232,15 @@ class ImprovedSentimentAnalyzer:
                 sentiment_from_stars = self._map_stars_to_sentiment(star_label)
 
                 # --- Confidence-based Ambiguity Check ---
-                confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
-                final_sentiment = sentiment_from_stars
-
-                if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
-                    logger.debug(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
-                    final_sentiment = "neutral"
+                # Removing this section to accept the model's star rating directly
+                # confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
+                # final_sentiment = sentiment_from_stars
+                # if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
+                #    logger.debug(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
+                #    final_sentiment = "neutral"
                 # --- End Confidence-based Ambiguity Check ---
+
+                final_sentiment = sentiment_from_stars # Use the direct mapping
 
                 final_results[original_index] = (final_sentiment, score)
 
