@@ -15,7 +15,7 @@ class ImprovedSentimentAnalyzer:
         self.base_path = Path(__file__).resolve().parent.parent.parent
         self.model_dir = self.base_path / "models" / "sentiment_improved"
         logger.info(f"!!! Determined model directory path: {self.model_dir} !!!")
-        self.model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+        self.model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
         logger.debug(f"ImprovedSentimentAnalyzer.__init__: Model name set to '{self.model_name}'.")
         logger.debug("ImprovedSentimentAnalyzer.__init__: Calling get_sentiment_model()...")
         self.sentiment_pipeline = self.get_sentiment_model()
@@ -147,17 +147,50 @@ class ImprovedSentimentAnalyzer:
         
         return top_sentiment, top_score
 
+    def _map_stars_to_sentiment(self, star_label):
+        """Maps star rating labels (e.g., '1 star') to sentiment categories."""
+        if star_label in ["1 star", "2 stars"]:
+            return "negative"
+        elif star_label == "3 stars":
+            return "neutral"
+        elif star_label in ["4 stars", "5 stars"]:
+            return "positive"
+        else:
+            logger.warning(f"Unexpected star label encountered: {star_label}. Defaulting to neutral.")
+            return "neutral" # Default fallback
+
     def analyze(self, text):
         if not text or str(text).strip() == "" or str(text).lower() == "none":
-            logger.debug("Empty/None text - returning neutral")
             return "neutral", 0.5
 
         text = str(text)[:512]
-        
+
         try:
+            # Pipeline returns a list containing a list of dicts (one for each star rating)
+            # e.g., [[{'label': '5 stars', 'score': 0.8}, {'label': '4 stars', 'score': 0.1}, ...]]
             all_results = self.sentiment_pipeline(text)[0]
-            return self._determine_sentiment(all_results, text)
-            
+
+            # Sort results by score descending (though pipeline usually does this)
+            all_results.sort(key=lambda x: x['score'], reverse=True)
+
+            top_result = all_results[0]
+            star_label = top_result["label"]
+            score = top_result["score"] # Score of the top star prediction
+
+            # Map the top star rating to our sentiment categories
+            sentiment_from_stars = self._map_stars_to_sentiment(star_label)
+
+            # --- Confidence-based Ambiguity Check ---
+            confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
+            final_sentiment = sentiment_from_stars
+
+            if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
+                logger.debug(f"Confidence Check: Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
+                final_sentiment = "neutral"
+            # --- End Confidence-based Ambiguity Check ---
+
+            return final_sentiment, score
+
         except Exception as e:
             logger.error(f"Error in sentiment analysis for text '{text[:50]}...': {str(e)}", exc_info=True)
             return "neutral", 0.5
@@ -169,7 +202,7 @@ class ImprovedSentimentAnalyzer:
 
         original_indices = [i for i, text in enumerate(texts) if text and str(text).strip() and str(text).lower() != "none"]
         processed_texts = [str(texts[i])[:512] for i in original_indices]
-        
+
         final_results = [("neutral", 0.5)] * len(texts)
 
         if not processed_texts:
@@ -179,47 +212,37 @@ class ImprovedSentimentAnalyzer:
         logger.debug(f"batch_analyze: Processing {len(processed_texts)} non-empty texts.")
         try:
             logger.debug(f"batch_analyze: Calling pipeline for batch...")
+            # The pipeline returns a list of lists of dictionaries
             batch_results_list = self.sentiment_pipeline(processed_texts)
             logger.debug(f"batch_analyze: Pipeline returned {len(batch_results_list)} results for the batch.")
-            
-            # Define ambiguity thresholds
-            ambiguity_threshold = 0.2 
-            negative_ambiguity_threshold = 0.1 # Lower threshold for negative cases
-            
+
             for i, all_results in enumerate(batch_results_list):
                 original_index = original_indices[i]
-                text = processed_texts[i]
-                top_sentiment, top_score = self._determine_sentiment(all_results, text)
-                
-                # Check for ambiguity
-                if len(all_results) > 1:
-                    second_score = all_results[1]['score']
-                    score_diff = top_score - second_score
-                    
-                    # Select the threshold based on the top sentiment
-                    current_threshold = negative_ambiguity_threshold if top_sentiment == "negative" else ambiguity_threshold
 
-                    # -- DEBUGGING LOG --
-                    logger.debug(f"Batch Ambiguity Check (Index {original_index}): Top='{top_sentiment}'({top_score:.4f}), Second='{all_results[1]['label']}'({second_score:.4f}), Diff={score_diff:.4f}, Threshold={current_threshold}")
-                    # -- END DEBUGGING LOG --
+                # Sort results by score descending
+                all_results.sort(key=lambda x: x['score'], reverse=True)
 
-                    if score_diff < current_threshold:
-                        logger.debug(f"Batch Ambiguity detected (top: {top_sentiment}, score diff {score_diff:.4f} < {current_threshold}). Overriding with neutral.")
-                        final_sentiment = "neutral"
-                        for res in all_results:
-                            if res['label'].lower() == 'neutral':
-                                final_results[original_index] = (final_sentiment, res['score'])
-                                break
-                        else:
-                            final_results[original_index] = (final_sentiment, 0.5)
-                    else:
-                        final_results[original_index] = (top_sentiment, top_score)
-                else:
-                    final_results[original_index] = (top_sentiment, top_score)
-                    
+                top_result = all_results[0]
+                star_label = top_result["label"]
+                score = top_result["score"]
+
+                # Map the top star rating to our sentiment categories
+                sentiment_from_stars = self._map_stars_to_sentiment(star_label)
+
+                # --- Confidence-based Ambiguity Check ---
+                confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
+                final_sentiment = sentiment_from_stars
+
+                if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
+                    logger.debug(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
+                    final_sentiment = "neutral"
+                # --- End Confidence-based Ambiguity Check ---
+
+                final_results[original_index] = (final_sentiment, score)
+
             logger.debug(f"batch_analyze: Exiting method. Returning {len(final_results)} results (including defaults).")
             return final_results
-            
+
         except Exception as e:
             logger.debug(f"batch_analyze: Exception occurred. Returning default results for all.")
             logger.error(f"Error in batch sentiment analysis: {str(e)}", exc_info=True)
