@@ -147,18 +147,6 @@ class ImprovedSentimentAnalyzer:
         
         return top_sentiment, top_score
 
-    def _map_stars_to_sentiment(self, star_label):
-        """Maps star rating labels (e.g., '1 star') to sentiment categories."""
-        if star_label in ["1 star", "2 stars"]:
-            return "negative"
-        elif star_label == "3 stars":
-            return "neutral"
-        elif star_label in ["4 stars", "5 stars"]:
-            return "positive"
-        else:
-            logger.warning(f"Unexpected star label encountered: {star_label}. Defaulting to neutral.")
-            return "neutral" # Default fallback
-
     def analyze(self, text):
         if not text or str(text).strip() == "" or str(text).lower() == "none":
             return "neutral", 0.5
@@ -170,26 +158,27 @@ class ImprovedSentimentAnalyzer:
             # e.g., [[{'label': '5 stars', 'score': 0.8}, {'label': '4 stars', 'score': 0.1}, ...]]
             all_results = self.sentiment_pipeline(text)[0]
 
-            # Sort results by score descending (though pipeline usually does this)
+            # --- DEBUGGING LOG ---
+            # logger.debug(f"Raw pipeline output for '{text[:50]}...': {all_results}") # Can likely remove this now
+            # --- END DEBUGGING LOG ---
+
+            # Assuming pipeline returns POSITIVE/NEGATIVE/NEUTRAL directly based on warnings
+            # Find the highest scoring label (pipeline with top_k=None returns list of dicts)
             all_results.sort(key=lambda x: x['score'], reverse=True)
-
             top_result = all_results[0]
-            star_label = top_result["label"]
-            score = top_result["score"] # Score of the top star prediction
 
-            # Map the top star rating to our sentiment categories
-            sentiment_from_stars = self._map_stars_to_sentiment(star_label)
+            raw_label = top_result["label"]
+            score = top_result["score"]
+            sentiment_from_pipeline = raw_label.lower() # Convert POSITIVE -> positive etc.
 
-            # --- Confidence-based Ambiguity Check ---
-            # Removing this section to accept the model's star rating directly
-            # confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
-            # final_sentiment = sentiment_from_stars
-            # if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
-            #    logger.debug(f"Confidence Check: Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
-            #    final_sentiment = "neutral"
+            # Re-introducing Confidence-based Ambiguity Check
+            confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
+            final_sentiment = sentiment_from_pipeline
+
+            if sentiment_from_pipeline in ["positive", "negative"] and score < confidence_threshold:
+                logger.debug(f"Confidence Check: Score {score:.4f} < {confidence_threshold} for {sentiment_from_pipeline} prediction. Overriding to neutral.")
+                final_sentiment = "neutral"
             # --- End Confidence-based Ambiguity Check ---
-
-            final_sentiment = sentiment_from_stars # Use the direct mapping
 
             return final_sentiment, score
 
@@ -221,26 +210,23 @@ class ImprovedSentimentAnalyzer:
             for i, all_results in enumerate(batch_results_list):
                 original_index = original_indices[i]
 
-                # Sort results by score descending
+                # Assuming pipeline returns POSITIVE/NEGATIVE/NEUTRAL directly
+                # Find the highest scoring label
                 all_results.sort(key=lambda x: x['score'], reverse=True)
-
                 top_result = all_results[0]
-                star_label = top_result["label"]
+
+                raw_label = top_result["label"]
                 score = top_result["score"]
+                sentiment_from_pipeline = raw_label.lower()
 
-                # Map the top star rating to our sentiment categories
-                sentiment_from_stars = self._map_stars_to_sentiment(star_label)
+                # Re-introducing Confidence-based Ambiguity Check
+                confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
+                final_sentiment = sentiment_from_pipeline
 
-                # --- Confidence-based Ambiguity Check ---
-                # Removing this section to accept the model's star rating directly
-                # confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
-                # final_sentiment = sentiment_from_stars
-                # if sentiment_from_stars in ["positive", "negative"] and score < confidence_threshold:
-                #    logger.debug(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {confidence_threshold} for {sentiment_from_stars} prediction. Overriding to neutral.")
-                #    final_sentiment = "neutral"
+                if sentiment_from_pipeline in ["positive", "negative"] and score < confidence_threshold:
+                    logger.debug(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {confidence_threshold} for {sentiment_from_pipeline} prediction. Overriding to neutral.")
+                    final_sentiment = "neutral"
                 # --- End Confidence-based Ambiguity Check ---
-
-                final_sentiment = sentiment_from_stars # Use the direct mapping
 
                 final_results[original_index] = (final_sentiment, score)
 
