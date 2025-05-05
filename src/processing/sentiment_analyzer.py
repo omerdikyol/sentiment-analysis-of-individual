@@ -1,6 +1,8 @@
 import logging
+import os
 from pathlib import Path
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
+import openai
 
 # Configure logging
 logging.basicConfig(
@@ -17,6 +19,26 @@ class ImprovedSentimentAnalyzer:
         logger.info(f"!!! Determined model directory path: {self.model_dir} !!!")
         self.model_name = "nlptown/bert-base-multilingual-uncased-sentiment"
         logger.debug(f"ImprovedSentimentAnalyzer.__init__: Model name set to '{self.model_name}'.")
+        
+        # Define confidence threshold as an instance attribute
+        self.confidence_threshold = 0.45 
+        logger.debug(f"ImprovedSentimentAnalyzer.__init__: Confidence threshold set to {self.confidence_threshold}.")
+        
+        # --- OpenAI Setup ---
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        if not self.openai_api_key:
+            logger.warning("OPENAI_API_KEY environment variable not set. ChatGPT fallback will not function.")
+            self.openai_client = None
+        else:
+            try:
+                # Use the modern client initialization
+                self.openai_client = openai.OpenAI(api_key=self.openai_api_key)
+                logger.info("OpenAI client initialized successfully.")
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI client: {e}", exc_info=True)
+                self.openai_client = None
+        # --- End OpenAI Setup ---
+        
         logger.debug("ImprovedSentimentAnalyzer.__init__: Calling get_sentiment_model()...")
         self.sentiment_pipeline = self.get_sentiment_model()
         logger.debug("ImprovedSentimentAnalyzer.__init__: Initialization finished.")
@@ -147,6 +169,71 @@ class ImprovedSentimentAnalyzer:
         
         return top_sentiment, top_score
 
+    def _call_chatgpt_for_sentiment(self, text):
+        """Calls ChatGPT API to get sentiment analysis for low-confidence cases."""
+        if not self.openai_client:
+            logger.warning("OpenAI client not available. Skipping ChatGPT check.")
+            return None # Indicate failure or unavailability
+        
+        prompt = (
+            "Analyse the below mentioned text and suggest what is the sentiment "
+            "(Positive, Neutral and Negative) of this text by considering from the "
+            "subject 'Emir of Qatar' perspective along with the justification of "
+            "recommending sentiment. Provide the suggestion in the below format "
+            "as key value format.\n"
+            "Sentiment = Value\n"
+            "Justification = Value\n\n"
+            f"Text: \"{text}\""
+        )
+        
+        logger.debug(f"Calling ChatGPT for text: '{text[:50]}...'")
+        try:
+            # Using the chat completions endpoint
+            response = self.openai_client.chat.completions.create(
+                model="gpt-3.5-turbo", # Or another suitable model like gpt-4o-mini
+                messages=[
+                    {"role": "system", "content": "You are an assistant analyzing sentiment from the perspective of the Emir of Qatar."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=100, 
+                temperature=0.2 # Lower temperature for more deterministic output
+            )
+            
+            content = response.choices[0].message.content.strip()
+            logger.debug(f"ChatGPT response content: {content}")
+            
+            # Parse the response
+            sentiment = None
+            justification = None
+            lines = content.split('\n')
+            for line in lines:
+                if line.lower().startswith("sentiment ="):
+                    sentiment_value = line.split("=", 1)[1].strip().lower()
+                    if sentiment_value in ["positive", "negative", "neutral"]:
+                        sentiment = sentiment_value
+                    else:
+                        logger.warning(f"ChatGPT returned unexpected sentiment value: '{sentiment_value}'")
+                elif line.lower().startswith("justification ="):
+                    justification = line.split("=", 1)[1].strip()
+                    
+            if sentiment:
+                logger.info(f"ChatGPT analysis result: Sentiment='{sentiment}', Justification='{justification if justification else 'N/A'}'")
+                return sentiment
+            else:
+                logger.warning(f"Could not parse sentiment from ChatGPT response: {content}")
+                return None
+                
+        except openai.APIError as e:
+            logger.error(f"OpenAI API returned an API Error: {e}", exc_info=True)
+        except openai.APIConnectionError as e:
+            logger.error(f"Failed to connect to OpenAI API: {e}", exc_info=True)
+        except openai.RateLimitError as e:
+             logger.error(f"OpenAI API request exceeded rate limit: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during ChatGPT call: {e}", exc_info=True)
+            
+        return None # Return None on any error
+
     def analyze(self, text):
         if not text or str(text).strip() == "" or str(text).lower() == "none":
             return "neutral", 0.5
@@ -169,15 +256,35 @@ class ImprovedSentimentAnalyzer:
 
             raw_label = top_result["label"]
             score = top_result["score"]
-            sentiment_from_pipeline = raw_label.lower() # Convert POSITIVE -> positive etc.
+            # sentiment_from_pipeline = raw_label.lower() # Convert POSITIVE -> positive etc. # Removed this line
+
+            # Map star rating to sentiment category
+            raw_label_lower = raw_label.lower()
+            if '1 star' in raw_label_lower or '2 stars' in raw_label_lower:
+                sentiment_category = "negative"
+            elif '3 stars' in raw_label_lower:
+                sentiment_category = "neutral"
+            elif '4 stars' in raw_label_lower or '5 stars' in raw_label_lower:
+                sentiment_category = "positive"
+            else:
+                 # Fallback if label is unexpected (e.g., POSITIVE/NEGATIVE directly)
+                 sentiment_category = raw_label_lower if raw_label_lower in ["positive", "negative", "neutral"] else "neutral"
+            logger.debug(f"Mapped raw label '{raw_label}' to sentiment category: '{sentiment_category}'")
 
             # Re-introducing Confidence-based Ambiguity Check
-            confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
-            final_sentiment = sentiment_from_pipeline
+            final_sentiment = sentiment_category # Use the mapped category
 
-            if sentiment_from_pipeline in ["positive", "negative"] and score < confidence_threshold:
-                logger.debug(f"Confidence Check: Score {score:.4f} < {confidence_threshold} for {sentiment_from_pipeline} prediction. Overriding to neutral.")
-                final_sentiment = "neutral"
+            if sentiment_category in ["positive", "negative"] and score < self.confidence_threshold:
+                logger.info(f"Confidence Check: Score {score:.4f} < {self.confidence_threshold} for {sentiment_category} prediction. Attempting ChatGPT check.")
+                gpt_sentiment = self._call_chatgpt_for_sentiment(text)
+                if gpt_sentiment:
+                    logger.info(f"ChatGPT Override: Original='{sentiment_category}' ({score:.4f}), New='{gpt_sentiment}'")
+                    final_sentiment = gpt_sentiment
+                    score = 0.5 # Reset score to indicate AI override
+                else:
+                    logger.warning(f"ChatGPT check failed or returned no valid sentiment. Falling back to neutral due to low confidence.")
+                    final_sentiment = "neutral"
+                    score = 0.5 # Set score for neutral fallback
             # --- End Confidence-based Ambiguity Check ---
 
             return final_sentiment, score
@@ -209,6 +316,7 @@ class ImprovedSentimentAnalyzer:
 
             for i, all_results in enumerate(batch_results_list):
                 original_index = original_indices[i]
+                current_text = processed_texts[i]
 
                 # Assuming pipeline returns POSITIVE/NEGATIVE/NEUTRAL directly
                 # Find the highest scoring label
@@ -217,15 +325,34 @@ class ImprovedSentimentAnalyzer:
 
                 raw_label = top_result["label"]
                 score = top_result["score"]
-                sentiment_from_pipeline = raw_label.lower()
+                # sentiment_from_pipeline = raw_label.lower() # Removed this line
+
+                # Map star rating to sentiment category
+                raw_label_lower = raw_label.lower()
+                if '1 star' in raw_label_lower or '2 stars' in raw_label_lower:
+                    sentiment_category = "negative"
+                elif '3 stars' in raw_label_lower:
+                    sentiment_category = "neutral"
+                elif '4 stars' in raw_label_lower or '5 stars' in raw_label_lower:
+                    sentiment_category = "positive"
+                else:
+                    sentiment_category = raw_label_lower if raw_label_lower in ["positive", "negative", "neutral"] else "neutral"
+                logger.debug(f"Batch (Index {original_index}): Mapped raw label '{raw_label}' to sentiment category: '{sentiment_category}'")
 
                 # Re-introducing Confidence-based Ambiguity Check
-                confidence_threshold = 0.45 # If score is below this, consider overriding pos/neg to neutral
-                final_sentiment = sentiment_from_pipeline
+                final_sentiment = sentiment_category # Use the mapped category
 
-                if sentiment_from_pipeline in ["positive", "negative"] and score < confidence_threshold:
-                    logger.debug(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {confidence_threshold} for {sentiment_from_pipeline} prediction. Overriding to neutral.")
-                    final_sentiment = "neutral"
+                if sentiment_category in ["positive", "negative"] and score < self.confidence_threshold:
+                    logger.info(f"Batch Confidence Check (Index {original_index}): Score {score:.4f} < {self.confidence_threshold} for {sentiment_category} prediction. Attempting ChatGPT check.")
+                    gpt_sentiment = self._call_chatgpt_for_sentiment(current_text)
+                    if gpt_sentiment:
+                        logger.info(f"ChatGPT Override (Index {original_index}): Original='{sentiment_category}' ({score:.4f}), New='{gpt_sentiment}'")
+                        final_sentiment = gpt_sentiment
+                        score = 0.5 # Reset score
+                    else:
+                        logger.warning(f"ChatGPT check failed for batch item (Index {original_index}). Falling back to neutral.")
+                        final_sentiment = "neutral"
+                        score = 0.5 # Set score for neutral fallback
                 # --- End Confidence-based Ambiguity Check ---
 
                 final_results[original_index] = (final_sentiment, score)
