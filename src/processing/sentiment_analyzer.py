@@ -190,7 +190,7 @@ class ImprovedSentimentAnalyzer:
         try:
             # Using the chat completions endpoint
             response = self.openai_client.chat.completions.create(
-                model="gpt-3.5-turbo", # Or another suitable model like gpt-4o-mini
+                model="gpt-4.1-nano", # Or another suitable model like gpt-4o-mini
                 messages=[
                     {"role": "system", "content": "You are an assistant analyzing sentiment from the perspective of the Emir of Qatar."},
                     {"role": "user", "content": prompt}
