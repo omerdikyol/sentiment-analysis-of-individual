@@ -1,6 +1,17 @@
-# Sentiment Analysis Agent
+# Sentiment collection and analysis prototype
 
-An advanced Agentic AI system for autonomous data collection, real-time sentiment analysis, and actionable insights generation.
+A Python collection/processing pipeline with an agent layer and React dashboard for inspecting sentiment over collected text. The analyzer maps a pretrained model’s star labels to sentiment categories and can ask an LLM to review low-confidence results.
+
+## Scope and entry points
+
+This is an experimental analysis workflow, not a benchmarked general sentiment service. The current LLM fallback uses a subject-specific Emir of Qatar prompt; review that scope before applying it to another person. Collector availability depends on each source’s credentials and access.
+
+- [Agent core](src/agent/core.py): workflow coordination.
+- [Collector runner](src/collectors/run_collectors.py): source collection.
+- [Sentiment analyzer](src/processing/sentiment_analyzer.py): label mapping and fallback behavior.
+- [Analyzer tests](tests/test_sentiment_analyzer.py): mocked examples; the negative-test fixture currently contradicts its expected fallback behavior and needs correction.
+
+Model scores and LLM overrides should not be interpreted as measured accuracy without a labelled evaluation set.
 
 ## Project Structure
 
@@ -31,6 +42,7 @@ sentiment-analysis/
 │   ├── public/           # Public assets
 │   └── build/            # Production build
 └── requirements.txt      # Python dependencies
+```
 
 ## Setup
 
@@ -43,7 +55,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 2. Install dependencies:
 ```bash
 pip install -r requirements.txt
-cd dashboard && npm install
+(cd dashboard && npm install)
 ```
 
 3. Configure the system:
@@ -71,9 +83,9 @@ cd dashboard && npm start
 ## Features
 
 - Multi-source data collection (X, News, Instagram, LinkedIn, etc.)
-- Real-time sentiment analysis with advanced NLP models
+- Sentiment classification with a pretrained model and optional LLM fallback
 - Automated data processing and cleanup
-- Interactive dashboard with real-time updates
+- Dashboard charts and collected-data views
 - Historical data comparison with visualization reports
 - Configurable data retention and processing intervals
 - Automatic log rotation and archiving
@@ -138,38 +150,10 @@ Main dependencies include:
 - Add tests in `tests/`
 - Update dashboard components in `dashboard/src/components/`
 
-## Email Configuration
+## Notification configuration
 
-### Using Proton Mail
-
-The system supports both Proton Mail and Gmail for sending email notifications. To configure Proton Mail:
-
-1. Create a Proton Mail account if you don't already have one.
-2. Set up the following in your `config/.env` file:
-
-```
-EMAIL_PROVIDER=protonmail
-SMTP_SERVER=smtp.protonmail.ch
-SMTP_PORT=587
-SMTP_USERNAME=your-protonmail-address@protonmail.com
-SMTP_PASSWORD=your-protonmail-password
-SENDER_EMAIL=your-protonmail-address@protonmail.com
-```
-
-3. For Proton Mail, make sure you have enabled SMTP/IMAP access in your Proton Mail account settings.
-4. You may need to generate an app-specific password for SMTP access.
-
-To test your Proton Mail configuration, use the API endpoint:
-
-```
-POST /email/protonmail-test
-{
-  "recipient": "test@example.com"
-}
-```
-
-You can also switch between Gmail and Proton Mail through the dashboard's email configuration section.
+Inspect the checked-in configuration templates and notification code for the provider you intend to use. SMTP access and authentication depend on the provider; do not treat an account password or a guessed SMTP host as a portable setup.
 
 ## License
 
-MIT License 
+MIT License
