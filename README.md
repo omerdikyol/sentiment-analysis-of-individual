@@ -1,4 +1,10 @@
-# Sentiment collection and analysis prototype
+<h1 align="center">Sentiment collection and analysis prototype</h1>
+
+<p align="center">
+  <img alt="language: Python" src="https://img.shields.io/badge/language-Python-3776AB">
+  <img alt="dashboard: React" src="https://img.shields.io/badge/dashboard-React-61DAFB">
+  <img alt="status: experimental" src="https://img.shields.io/badge/status-experimental-yellow">
+</p>
 
 A Python collection/processing pipeline with an agent layer and React dashboard for inspecting sentiment over collected text. The analyzer maps a pretrained model’s star labels to sentiment categories and can ask an LLM to review low-confidence results.
 
