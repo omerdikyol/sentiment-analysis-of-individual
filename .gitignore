@@ -68,3 +68,7 @@ node_modules
 sentiment_model/
 
 *.log
+# Runtime artifacts and collected data (never commit real posts)
+.cache/
+src/agent/logs/
+dashboard/public/*.csv

@@ -84,15 +84,10 @@ The dashboard now includes a Comparison Report feature that allows users to anal
 ### How to Use
 
 1. Navigate to the "Comparison Report" page using the sidebar menu
-2. By default, the system compares `processed_data_old.csv` and `processed_data.csv`
-3. You can change the filenames in the input fields if needed
-4. Click "Compare Files" to generate a new comparison report
-5. Use the Export PDF button to save the report
+2. The dashboard requests the two most recent collection runs from the API (`GET /comparison-data`)
+3. Use the Export PDF button to save the report
 
 ### Technical Details
 
-The comparison functionality uses the following files:
-- `ComparisonService.js`: Handles loading and analyzing CSV files
+- `ComparisonService.js`: Fetches the latest and previous runs from the API and computes the differences
 - `ComparisonReport.js`: React component for displaying the comparison results
-
-CSV files are automatically copied from `data/processed/` to the `public` directory when running the dashboard.
