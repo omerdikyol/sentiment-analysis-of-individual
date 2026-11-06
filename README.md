@@ -8,6 +8,10 @@
 
 A Python collection/processing pipeline with an agent layer and React dashboard for inspecting sentiment over collected text. The analyzer maps a pretrained model’s star labels to sentiment categories and can ask an LLM to review low-confidence results.
 
+## Live demo
+
+**[omerdikyol.github.io/sentiment-analysis-of-individual](https://omerdikyol.github.io/sentiment-analysis-of-individual/)**: the React dashboard built as a static site. It runs against an in-browser mock backend with generated posts about a fictional person ("Alex Example"); no real posts, accounts, or collected data are included. Build it locally with `REACT_APP_DEMO_MODE=1 npm run build` inside `dashboard/`.
+
 ## Scope and entry points
 
 This is an experimental analysis workflow, not a benchmarked general sentiment service. The current LLM fallback uses a subject-specific Emir of Qatar prompt; review that scope before applying it to another person. Collector availability depends on each source’s credentials and access.

@@ -384,7 +384,39 @@
       "of": "of"
     },
     "highestSentiment": "Highest Sentiment Mentions",
-    "lowestSentiment": "Lowest Sentiment Mentions"
+    "lowestSentiment": "Lowest Sentiment Mentions",
+    "additionalDetails": "Additional details",
+    "additionalInfo": "Additional info",
+    "anonymous": "Anonymous",
+    "author": "Author",
+    "clearAllFilters": "Clear all filters",
+    "contains": "Contains",
+    "content": "Content",
+    "copyText": "Copy text",
+    "country": "Country",
+    "date": "Date",
+    "dateRange": "Date range",
+    "detailsTitle": "Mention details",
+    "location": "Location",
+    "mentionDetails": "Mention details",
+    "noDataFound": "No data found",
+    "notAvailable": "Not available",
+    "openSource": "Open source",
+    "platform": "Platform",
+    "records": "records",
+    "rowsPerPage": "Rows per page:",
+    "score": "Score",
+    "search": "Search...",
+    "sentiment": "Sentiment",
+    "sentimentScore": "Sentiment score",
+    "source": "Source",
+    "sourceInformation": "Source information",
+    "unknown": "Unknown",
+    "unknownLocation": "Unknown location",
+    "unknownSource": "Unknown source",
+    "url": "URL",
+    "username": "Username",
+    "viewOriginalSource": "View original source"
   },
   "table": {
     "id": "ID",
@@ -535,7 +567,8 @@
     "comparisonReport": "Comparison Report",
     "emailConfig": "Email Notifications",
     "targetConfig": "Target Individual",
-    "advancedAIFeatures": "Advanced AI Features"
+    "advancedAIFeatures": "Advanced AI Features",
+    "languageSettings": "Language settings"
   },
   "emailConfig": {
     "title": "Email Notification Settings",
@@ -635,4 +668,4 @@
   "languageSwitcher": {
     "changeLanguage": "Change Language"
   }
-} 
+}

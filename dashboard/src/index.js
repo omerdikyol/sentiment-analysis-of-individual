@@ -10,11 +10,19 @@ import { AuthProvider } from './contexts/AuthContext.tsx'; // Added .tsx extensi
 // Import BrowserRouter
 import { BrowserRouter as Router } from 'react-router-dom';
 
+// Demo builds swap the API for generated mock data (see src/demo/mockBackend.js).
+if (process.env.REACT_APP_DEMO_MODE === '1') require('./demo/mockBackend');
+
 const root = ReactDOM.createRoot(document.getElementById('root')); // Removed 'as HTMLElement'
 root.render(
   <React.StrictMode>
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <AuthProvider>
+        {process.env.REACT_APP_DEMO_MODE === '1' && (
+          <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 2000, maxWidth: 360, background: '#1a2035', color: '#fff', font: '12px Inter, sans-serif', padding: '8px 12px', borderRadius: 8 }}>
+            Demo with generated data. "Alex Example" is a fictional person; no real posts or accounts are shown.
+          </div>
+        )}
         <App />
       </AuthProvider>
     </Router>

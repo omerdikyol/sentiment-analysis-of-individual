@@ -19,7 +19,7 @@ i18n
       escapeValue: false, // React already escapes values
     },
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      loadPath: `${process.env.PUBLIC_URL}/locales/{{lng}}/{{ns}}.json`,
     },
     detection: {
       order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
